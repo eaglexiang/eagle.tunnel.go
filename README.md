@@ -44,8 +44,8 @@
 
 配置文件示例：
 
-> relayer = *.*.*.* # 服务端的IP
-> http = on
+> relayer = *.*.*.* # 服务端的IP  
+> http = on  
 > socks = on
 
 **注意** ：服务端必须打开TCP-8080端口的防火墙
