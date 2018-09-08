@@ -1,0 +1,1 @@
+cd src && CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ../bin/et.go.exe main.go

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8"/>
+        <title>服务端配置</title>
+        <link href="main.css" rel="stylesheet" type="text/css"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body onload="init();">
+        <form class="basic-grey">
+            <h1>服务端配置</h1>
+            <label>
+                <span>监听：</span>
+                <input id="listen" type="text" name="listen" placeholder="0.0.0.0:8080"/>
+            </label>
+            <label>
+                <span>用户验证：</span>
+                <select id="user-check" name="user-check" onchange="changeUserCheck();">
+                    <option>关闭</option>
+                    <option>启用</option>
+                </select>
+            </label>
+            <label id="users_label">
+                <span>用户列表：</span>
+                <textarea id="users" name="users" placeholder="id:password (for each line)" ></textarea>
+            </label>
+            <label>
+                <span>&nbsp;</span>
+                <input type="button" class="button" value="保存" />
+                <input type="button" class="button" value="取消" onclick="location='/'"/>
+            </label>
+        </form>
+    </body>
+    <script type="text/javascript" src="server.js"></script>
+</html>
