@@ -9,13 +9,30 @@ import (
 
 func main() {
 	args := os.Args
-	var configPath string
+	var firstArg string
 	if len(args) < 2 {
-		configPath = "./eagle-tunnel.conf"
+		firstArg = "./eagle-tunnel.conf"
 	} else {
-		configPath = args[1]
+		firstArg = args[1]
 	}
-	err := eagletunnel.Init(configPath)
+	switch firstArg {
+	case "-u", "--ui":
+		startUI()
+	default:
+		startTunnel(firstArg)
+	}
+}
+
+func startUI() {
+	_ = eagletunnel.Init("./eagle-tunnel.conf")
+	err := eagletunnel.StartUI()
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func startTunnel(pathOfConfig string) {
+	err := eagletunnel.Init(pathOfConfig)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -27,9 +44,4 @@ func main() {
 	}
 	relayer := eagletunnel.Relayer{}
 	relayer.Start()
-
-	// err = eagletunnel.StartUI()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
 }

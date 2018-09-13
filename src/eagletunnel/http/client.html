@@ -3,25 +3,32 @@
     <head>
         <meta charset="UTF-8"/>
         <title>客户端配置</title>
-        <link href="main.css" rel="stylesheet" type="text/css"/>
+        <link href="css/main.css" rel="stylesheet" type="text/css"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body onload="init();">
-        <form class="basic-grey">
+        <form class="basic-grey" method="POST">
             <h1>客户端配置</h1>
             <label>
                 <span>服务器：</span>
-                <input id="relayer" type="text" name="relayer" placeholder="0.0.0.0:8080"/>
+                <input id="relayer" type="text" name="relayer" placeholder="必填项"/>
             </label>
             <label>
                 <span>本地：</span>
                 <input id="listen" type="text" name="listen" placeholder="0.0.0.0:8080"/>
             </label>
             <label>
+                <span>账户验证：</span>
+                <select id="user-check" type="checkbox" name="user-check" onchange="changeUserCheck();">
+                    <option>关闭</option>
+                    <option>开启</option>
+                </select>
+            </label>
+            <label id="id_label">
                 <span>账户：</span>
                 <input id="id" type="text" name="id"/>
             </label>
-            <label>
+            <label id="password_label">
                 <span>密码：</span>
                 <input id="password" type="password" name="password"/>
             </label>
@@ -38,10 +45,10 @@
             </label>
             <label>
                 <span>&nbsp;</span>
-                <input type="button" class="button" value="保存" />
+                <input type="submit" class="button" value="保存" />
                 <input type="button" class="button" value="取消" onclick="location='/'"/>
             </label>
         </form>
     </body>
-    <script type="text/javascript" src="client.js"></script>
+    <script type="text/javascript" src="js/client.js"></script>
 </html>

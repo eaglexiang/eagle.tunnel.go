@@ -2,7 +2,6 @@ package eagletunnel
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -28,7 +27,7 @@ func Init(filePath string) error {
 	ConfigPath = filePath
 	allConfLines, err := readLines(ConfigPath)
 	if err != nil {
-		return errors.New("failed to read " + ConfigPath)
+		fmt.Println("failed to read " + ConfigPath)
 	}
 
 	ConfigKeyValues, _ := getKeyValues(allConfLines)
@@ -52,7 +51,7 @@ func Init(filePath string) error {
 		usersPath := ConfigDir + "/users.list"
 		err = importUsers(usersPath)
 		if err != nil {
-			return err
+			fmt.Println(err)
 		}
 	}
 
@@ -71,26 +70,18 @@ func Init(filePath string) error {
 	var user string
 	user, ok = ConfigKeyValues["user"]
 	if ok {
-		LocalUser, err = ParseEagleUser(user)
+		LocalUser, err = ParseEagleUser(user, nil)
 		if err != nil {
-			return err
+			fmt.Println(err)
 		}
 	}
 
 	var localIpe string
-	localIpe, ok = ConfigKeyValues["listen"]
+	_localIpe, ok := ConfigKeyValues["listen"]
 	if ok {
-		items := strings.Split(localIpe, ":")
-		LocalAddr = items[0]
-		if len(items) >= 2 {
-			LocalPort = items[1]
-		} else {
-			LocalPort = "8080"
-		}
-	} else {
-		LocalAddr = "0.0.0.0"
-		LocalPort = "8080"
+		localIpe = _localIpe
 	}
+	SetListen(localIpe)
 
 	var socks string
 	socks, ok = ConfigKeyValues["socks"]
@@ -114,13 +105,7 @@ func Init(filePath string) error {
 		var remoteIpe string
 		remoteIpe, ok = ConfigKeyValues["relayer"]
 		if ok {
-			items := strings.Split(remoteIpe, ":")
-			RemoteAddr = items[0]
-			if len(items) >= 2 {
-				RemotePort = items[1]
-			} else {
-				RemotePort = "8080"
-			}
+			SetRelayer(remoteIpe)
 		}
 	}
 
@@ -153,24 +138,49 @@ func SPrintConfig() string {
 		status = "enable"
 	default:
 	}
-
-	var localId string
+	var localUser string
 	if LocalUser != nil {
-		localId = LocalUser.Id
+		localUser = LocalUser.toString()
+	} else {
+		localUser = "null"
+	}
+	var user_check string
+	if EnableUserCheck {
+		user_check = "on"
+	} else {
+		user_check = "off"
+	}
+	var http string
+	if EnableHTTP {
+		http = "on"
+	} else {
+		http = "off"
+	}
+	var socks string
+	if EnableSOCKS5 {
+		socks = "on"
+	} else {
+		socks = "off"
+	}
+	var et string
+	if EnableET {
+		et = "on"
+	} else {
+		et = "off"
 	}
 
 	var configStr string
-	configStr += "ConfigPath: " + ConfigPath + "\n"
-	configStr += "ConfigDir: " + ConfigDir + "\n"
-	configStr += "RemoteAddr: " + RemoteAddr + ":" + RemotePort + "\n"
-	configStr += "LocalAddr: " + LocalAddr + ":" + LocalPort + "\n"
-	configStr += "EncryptKey: " + strconv.Itoa(int(EncryptKey)) + "\n"
-	configStr += "Count of Users: " + strconv.Itoa(len(Users)) + "\n"
-	configStr += "Local User: " + localId + "\n"
-	configStr += "HTTP: " + strconv.FormatBool(EnableHTTP) + "\n"
-	configStr += "SOCKS5: " + strconv.FormatBool(EnableSOCKS5) + "\n"
-	configStr += "ET: " + strconv.FormatBool(EnableET) + "\n"
-	configStr += "Status: " + status + "\n"
+	configStr += "config-path=" + ConfigPath + "\n"
+	configStr += "config-dir=" + ConfigDir + "\n"
+	configStr += "relayer=" + RemoteAddr + ":" + RemotePort + "\n"
+	configStr += "listen=" + LocalAddr + ":" + LocalPort + "\n"
+	configStr += "data-key=" + strconv.Itoa(int(EncryptKey)) + "\n"
+	configStr += "user=" + localUser + "\n"
+	configStr += "user-check=" + user_check + "\n"
+	configStr += "http=" + http + "\n"
+	configStr += "socks=" + socks + "\n"
+	configStr += "et=" + et + "\n"
+	configStr += "proxy-status=" + status + "\n"
 	return configStr
 }
 
@@ -203,7 +213,7 @@ func importUsers(usersPath string) error {
 	}
 	var user *EagleUser
 	for _, line := range userLines {
-		user, err = ParseEagleUser(line)
+		user, err = ParseEagleUser(line, nil)
 		if err != nil {
 			return err
 		} else {
@@ -238,4 +248,27 @@ func exportKeyValues(keyValues *map[string]string, keys []string) string {
 		result += key + " = " + (*keyValues)[key] + "\r\n"
 	}
 	return result
+}
+
+func SetRelayer(remoteIpe string) {
+	items := strings.Split(remoteIpe, ":")
+	RemoteAddr = strings.TrimSpace(items[0])
+	if len(items) >= 2 {
+		RemotePort = strings.TrimSpace(items[1])
+	} else {
+		RemotePort = "8080"
+	}
+}
+
+func SetListen(localIpe string) {
+	if localIpe == "" {
+		localIpe = "0.0.0.0:8080"
+	}
+	items := strings.Split(localIpe, ":")
+	LocalAddr = items[0]
+	if len(items) >= 2 {
+		LocalPort = items[1]
+	} else {
+		LocalPort = "8080"
+	}
 }

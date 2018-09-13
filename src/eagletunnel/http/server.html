@@ -3,11 +3,11 @@
     <head>
         <meta charset="UTF-8"/>
         <title>服务端配置</title>
-        <link href="main.css" rel="stylesheet" type="text/css"/>
+        <link href="css/main.css" rel="stylesheet" type="text/css"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body onload="init();">
-        <form class="basic-grey">
+        <form class="basic-grey" method="POST">
             <h1>服务端配置</h1>
             <label>
                 <span>监听：</span>
@@ -17,7 +17,7 @@
                 <span>用户验证：</span>
                 <select id="user-check" name="user-check" onchange="changeUserCheck();">
                     <option>关闭</option>
-                    <option>启用</option>
+                    <option>开启</option>
                 </select>
             </label>
             <label id="users_label">
@@ -31,5 +31,5 @@
             </label>
         </form>
     </body>
-    <script type="text/javascript" src="server.js"></script>
+    <script type="text/javascript" src="js/server.js"></script>
 </html>
