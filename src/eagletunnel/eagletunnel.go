@@ -288,17 +288,16 @@ func (et *EagleTunnel) checkUserOfReq(tunnel *Tunnel) (isValid bool) {
 		count, _ := tunnel.readLeft(buffer)
 		if count > 0 {
 			userStr := string(buffer[:count])
-			user, err := ParseEagleUser(userStr)
-			var valid bool
+			user, err := ParseEagleUser(userStr, (*tunnel.left).RemoteAddr())
 			if err == nil {
-				valid = Users[user.Id].Check(user)
+				err = Users[user.Id].Check(user)
 			}
-			if valid {
+			if err == nil {
 				reply := "valid"
 				count, _ = tunnel.writeLeft([]byte(reply))
 				result = count == 5
 			} else {
-				reply := "invalid"
+				reply := err.Error()
 				_, _ = tunnel.writeLeft([]byte(reply))
 			}
 		}
