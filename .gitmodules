@@ -1,0 +1,3 @@
+[submodule "src/whitelistdomains"]
+	path = src/whitelistdomains
+	url = git@github.com:eaglexiang/SmartDNSDomainList.git
