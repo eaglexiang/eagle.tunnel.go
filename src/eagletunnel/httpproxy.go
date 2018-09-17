@@ -133,23 +133,6 @@ func (conn *HttpProxy) createNewRequest(oldRequest string) string {
 					newReq += "\r\n" + line
 				}
 			}
-			// keyValues, keys := conn.getKeyValues(lines[1:])
-			// connection, ok := keyValues["Proxy-Connection"]
-			// if ok {
-			// 	delete(keyValues, "Proxy-Connection")
-			// 	keyValues["Connection"] = connection
-			// }
-			// keyValuesStr := conn.exportKeyValues(&keyValues, keys)
-			// newReq += newFirstLine + keyValuesStr + "\r\n"
-			// count := len(keyValues)
-			// if len(lines) > count+2 {
-			// 	newReq += lines[count+2]
-			// 	if len(lines) > count+3 {
-			// 		for _, line := range lines[4+count:] {
-			// 			newReq += "\r\n" + line
-			// 		}
-			// 	}
-			// }
 		} else {
 			fmt.Println(oldRequest)
 		}
