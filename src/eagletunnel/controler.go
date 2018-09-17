@@ -3,6 +3,7 @@ package eagletunnel
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -126,6 +127,8 @@ func Init(filePath string) error {
 	whiteDomainsPath := ConfigDir + "/whitelist_domain.txt"
 	WhitelistDomains, _ = readLines(whiteDomainsPath)
 
+	readHosts(ConfigDir)
+
 	return err
 }
 
@@ -198,6 +201,7 @@ func readLines(filePath string) ([]string, error) {
 		items := strings.Split(line, "#")
 		line = strings.TrimSpace(items[0])
 		if line != "" {
+			line = strings.Replace(line, "\t", " ", -1)
 			line = strings.ToLower(line)
 			lines = append(lines, line)
 		}
@@ -270,5 +274,46 @@ func SetListen(localIpe string) {
 		LocalPort = items[1]
 	} else {
 		LocalPort = "8080"
+	}
+}
+
+func readHosts(configDir string) {
+	hostsDir := configDir + "/hosts"
+
+	hostsFiles := getHostsList(hostsDir)
+
+	var hosts []string
+	for _, file := range hostsFiles {
+		newHosts, err := readLines(hostsDir + "/" + file)
+		if err == nil {
+			hosts = append(hosts, newHosts...)
+		}
+	}
+
+	for _, host := range hosts {
+		items := strings.Split(host, " ")
+		if len(items) >= 2 {
+			domain := strings.TrimSpace(items[0])
+			ip := strings.TrimSpace(items[1])
+			if domain != "" && ip != "" {
+				hostsCache[domain] = ip
+			}
+		}
+	}
+}
+
+func getHostsList(hostsDir string) []string {
+	files, err := ioutil.ReadDir(hostsDir)
+	if err != nil {
+		return nil
+	} else {
+		var hosts []string
+		for _, file := range files {
+			if !file.IsDir() {
+				filename := file.Name()
+				hosts = append(hosts, filename)
+			}
+		}
+		return hosts
 	}
 }

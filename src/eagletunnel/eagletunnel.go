@@ -28,6 +28,7 @@ var WhitelistDomains []string
 var insideCache = sync.Map{}
 var dnsRemoteCache = sync.Map{}
 var dnsLocalCache = sync.Map{}
+var hostsCache = make(map[string]string)
 
 type EagleTunnel struct {
 }
@@ -77,17 +78,22 @@ func (conn *EagleTunnel) send(e *NetArg) (succeed bool) {
 
 func (et *EagleTunnel) sendDnsReq(e *NetArg) (succeed bool) {
 	var result bool
-	switch PROXY_STATUS {
-	case PROXY_SMART:
-		white := et.isWhiteDomain(e.domain)
-		if white {
+	ip, result := hostsCache[e.domain]
+	if result {
+		e.ip = ip
+	} else {
+		switch PROXY_STATUS {
+		case PROXY_SMART:
+			white := et.isWhiteDomain(e.domain)
+			if white {
+				result = et.resolvDnsByProxy(e) == nil
+			} else {
+				result = et.resolvDnsByLocal(e, true) == nil
+			}
+		case PROXY_ENABLE:
 			result = et.resolvDnsByProxy(e) == nil
-		} else {
-			result = et.resolvDnsByLocal(e, true) == nil
+		default:
 		}
-	case PROXY_ENABLE:
-		result = et.resolvDnsByProxy(e) == nil
-	default:
 	}
 	return result
 }
