@@ -25,7 +25,7 @@ if [ -f ${ConfDesPath}/server.conf ]; then
 else
     cp ${ConfSrcPath}/server.conf ${ConfDesPath}
 fi
-cp -f ${ConfSrcPath}whitelist_domain.txt ${ConfDesPath}
+cp -f ${ConfSrcPath}/whitelist_domain.txt ${ConfDesPath}
 cp -rf ${ConfSrcPath}/hosts ${ConfDesPath}
 
 ./scripts/after-install.sh
