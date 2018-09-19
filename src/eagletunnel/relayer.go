@@ -7,8 +7,6 @@ import (
 	"net/http"
 )
 
-const protocolVersion string = "1.1"
-
 var LocalAddr string
 var LocalPort string
 

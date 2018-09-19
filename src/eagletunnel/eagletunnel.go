@@ -24,6 +24,9 @@ const (
 	PROXY_SMART
 )
 
+var protocolVersion, _ = CreateVersion("1.1")
+var version, _ = CreateVersion("0.1")
+
 var WhitelistDomains []string
 var insideCache = sync.Map{}
 var dnsRemoteCache = sync.Map{}
@@ -221,7 +224,7 @@ func (et *EagleTunnel) connect2Relayer() (tunnelCreated Tunnel, err error) {
 }
 
 func (et *EagleTunnel) checkVersionOfRelayer(tunnel *Tunnel) error {
-	req := "eagle_tunnel " + protocolVersion + " simple"
+	req := "eagle_tunnel " + protocolVersion.raw + " simple"
 	count, err := tunnel.writeRight([]byte(req))
 	if err != nil {
 		return err
@@ -247,10 +250,15 @@ func (et *EagleTunnel) checkVersionOfReq(headers []string, tunnel *Tunnel) (isVa
 		} else {
 			replys[0] = "invalid"
 		}
-		if headers[1] == protocolVersion {
-			replys[1] = "valid"
+		versionOfReq, err := CreateVersion(headers[1])
+		if err == nil {
+			if protocolVersion.isBThanOrE2(&versionOfReq) {
+				replys[1] = "valid"
+			} else {
+				replys[1] = "server is elder"
+			}
 		} else {
-			replys[1] = "invalid"
+			replys[1] = err.Error()
 		}
 		if headers[2] == "simple" {
 			replys[2] = "valid"
