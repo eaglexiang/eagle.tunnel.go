@@ -10,5 +10,6 @@ EtSrcPath="${SrcPath}/eagletunnel"
 HttpSrcPath="${EtSrcPath}/http"
 WhiteListSrcPath="${SrcPath}/whitelistdomains"
 HostsSrcPath="${SrcPath}/hosts"
+ServiceSrcPath="${SrcPath}/services"
 
 echo "done"

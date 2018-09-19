@@ -1,0 +1,12 @@
+[Unit]
+Description=Eagle Tunnel Smart Service
+
+[Service]
+Type=simple
+User=root
+Environment=TERM='xterm'
+ExecStart=/usr/bin/et /etc/eagle-tunnel.smart.conf
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
