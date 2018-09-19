@@ -9,5 +9,6 @@ ScriptPath="${RootPath}/scripts"
 EtSrcPath="${SrcPath}/eagletunnel"
 HttpSrcPath="${EtSrcPath}/http"
 WhiteListSrcPath="${SrcPath}/whitelistdomains"
+HostsSrcPath="${SrcPath}/hosts"
 
 echo "done"
