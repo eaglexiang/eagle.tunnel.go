@@ -2,7 +2,7 @@
 
 echo "begin to copy hosts files..."
 
-mkdir -p ${BinPath}/hosts
-cp ${HostsSrcPath}/* ${BinPath}/hosts/
+mkdir -p ${HostsDesPath}
+cp -f ${HostsSrcPath}/* ${HostsDesPath}
 
 echo "done"

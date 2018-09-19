@@ -2,9 +2,9 @@
 
 echo "copy http files..."
 
-echo "from ${HttpSrcPath} to ${BinPath}"
+echo "from ${HttpSrcPath} to ${HttpDesPath}"
 
-mkdir -p ${BinPath}/http
-cp -r ${HttpSrcPath}/* ${BinPath}/http
+mkdir -p ${HttpDesPath}
+cp -rf ${HttpSrcPath}/* ${HttpDesPath}
 
 echo "done"

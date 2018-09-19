@@ -2,7 +2,7 @@
 
 echo "begin to copy service files..."
 
-mkdir -p ${BinPath}/services
-cp ${ServiceSrcPath}/* ${BinPath}/services
+mkdir -p ${ServiceDesPath}
+cp -f ${ServiceSrcPath}/* ${ServiceDesPath}
 
 echo "done"

@@ -7,7 +7,7 @@ else
 fi
 echo "des: ${des}"
 
-mkdir -p ${BinPath}
+mkdir -p ${PublishPath}
 
 case ${des} in
     "linux")
@@ -20,7 +20,7 @@ case ${des} in
     source ${ScriptPath}/build4Mac.sh
     ;;
     "clean")
-    rm -rf ${BinPath}
+    rm -rf ${PublishPath}
     exit
     ;;
     *)
