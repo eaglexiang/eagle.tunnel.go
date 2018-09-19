@@ -1,4 +1,4 @@
-source ./scripts/env.sh
+source ./scripts/env_build.sh
 
 if [ $# -gt 0 ]; then
     des=$1
@@ -32,3 +32,4 @@ source ${ScriptPath}/copy-http.sh
 source ${ScriptPath}/copy-whitelist.sh
 source ${ScriptPath}/copy-hosts.sh
 source ${ScriptPath}/copy-services.sh
+source ${ScriptPath}/copy-conf.sh
