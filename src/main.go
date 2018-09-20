@@ -11,7 +11,7 @@ func main() {
 	args := os.Args
 	var firstArg string
 	if len(args) < 2 {
-		firstArg = "./eagle-tunnel.conf"
+		firstArg = "./config/client.conf"
 	} else {
 		firstArg = args[1]
 	}
@@ -24,7 +24,7 @@ func main() {
 }
 
 func startUI() {
-	_ = eagletunnel.Init("./eagle-tunnel.conf")
+	_ = eagletunnel.Init("./client.conf")
 	err := eagletunnel.StartUI()
 	if err != nil {
 		fmt.Println(err)
