@@ -1,27 +1,49 @@
 package eagletunnel
 
 import (
+	"container/list"
 	"errors"
+	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
+// EagleUser 提供基本和轻量的账户系统
 type EagleUser struct {
-	Id         string
-	Password   string
-	lastAddr   net.Addr
-	lastTime   time.Time
-	loginMutex sync.Mutex
+	ID             string
+	Password       string
+	lastAddr       net.Addr  // 上次登陆地
+	lastTime       time.Time // 上次检查登陆地的时间
+	loginMutex     sync.Mutex
+	tunnels        *SyncList
+	pause          *bool
+	bytes          int64
+	speed          int64 // KB/s
+	speedLimit     int64 // KB/s
+	lastCheckSpeed time.Time
 }
 
+// ParseEagleUser 通过格式化的字符串构造新的EagleUser，需要输入请求方地址，以防止重复登录
 func ParseEagleUser(userStr string, addr net.Addr) (*EagleUser, error) {
 	var user EagleUser
 	var err error
 	items := strings.Split(userStr, ":")
 	if len(items) >= 2 {
-		user = EagleUser{Id: items[0], Password: items[1], lastAddr: addr, lastTime: time.Now()}
+		user = EagleUser{
+			ID:             items[0],
+			Password:       items[1],
+			lastAddr:       addr,
+			lastTime:       time.Now(),
+			tunnels:        NewSyncList(),
+			lastCheckSpeed: time.Now()}
+		var pause bool
+		user.pause = &pause
+		if len(items) >= 3 {
+			user.speedLimit, err = strconv.ParseInt(items[2], 10, 64)
+		}
 	} else {
 		err = errors.New("invalid user")
 	}
@@ -29,9 +51,10 @@ func ParseEagleUser(userStr string, addr net.Addr) (*EagleUser, error) {
 }
 
 func (user *EagleUser) toString() string {
-	return user.Id + ":" + user.Password
+	return user.ID + ":" + user.Password
 }
 
+// Check 会检查请求EagleUser的密码是否正确，并通过校对登录地址与上次登录时间，以防止重复登录
 func (user *EagleUser) Check(user2Check *EagleUser) error {
 	valid := user.Password == user2Check.Password
 	if !valid {
@@ -59,4 +82,80 @@ func (user *EagleUser) Check(user2Check *EagleUser) error {
 		}
 	}
 	return nil
+}
+
+func (user *EagleUser) limitSpeed() {
+	// 0表示不限速
+	if user.speedLimit <= 0 {
+		return
+	}
+
+	speedKB := user.speed / 1024
+	*user.pause = speedKB > user.speedLimit
+}
+
+func (user *EagleUser) totalBytes() int64 {
+	var totalBytes int64
+
+	// 统计所有Tunnel的总Bytes
+	var next *list.Element
+	for e := user.tunnels.raw.Front(); e != nil; e = next {
+		next = e.Next()
+		tunnel, ok := e.Value.(*Tunnel)
+		if ok {
+			bytesNew := tunnel.bytesFlowed()
+			totalBytes += bytesNew
+			if tunnel.closed {
+				user.tunnels.remove(e)
+			} else {
+				if tunnel.flowed && !tunnel.isRunning() {
+					user.tunnels.remove(e)
+				}
+			}
+		} else {
+			fmt.Println("error: invalid object found in EagleUser.tunnels!")
+		}
+	}
+
+	if totalBytes < 0 {
+		totalBytes = 0
+	}
+	return totalBytes
+}
+
+func (user *EagleUser) addTunnel(tunnel *Tunnel) {
+	tunnel.pause = user.pause
+	user.tunnels.push(tunnel)
+}
+
+func (user *EagleUser) checkSpeed() {
+	user.bytes += user.totalBytes()
+	now := time.Now()
+	duration := now.Sub(user.lastCheckSpeed)
+	seconds := int64(duration.Seconds())
+	if seconds > 0 {
+		user.speed = user.bytes / int64(seconds)
+	}
+	if duration > (time.Minute * 3) {
+		user.lastCheckSpeed = now
+		user.bytes = 0
+	}
+}
+
+func CheckSpeedOfUsers(users *map[string]*EagleUser) {
+	for {
+		for _, user := range *users {
+			user.checkSpeed()
+			user.limitSpeed()
+		}
+		time.Sleep(time.Second)
+	}
+}
+
+func CheckSpeedOfUser(user *EagleUser) {
+	for {
+		user.checkSpeed()
+		user.limitSpeed()
+		time.Sleep(time.Second)
+	}
 }

@@ -3,27 +3,31 @@ package eagletunnel
 import (
 	"net"
 	"sync"
+	"time"
 )
 
-const (
-	Left = iota
-	Right
-)
-
+// Tunnel 是一个全双工的双向隧道，内置加密解密、暂停等待的控制器
 type Tunnel struct {
-	left         *net.Conn
-	right        *net.Conn
-	encryptLeft  bool
-	encryptRight bool
-	bytesL2R     uint
-	bytesR2L     uint
-	encryptKey   byte
-	bufferL2R    chan []byte
-	bufferR2L    chan []byte
-	l2RIsRunning bool
-	mutexL2R     sync.Mutex
-	r2LIsRunning bool
-	mutexR2L     sync.Mutex
+	left            *net.Conn
+	right           *net.Conn
+	encryptLeft     bool
+	encryptRight    bool
+	bytesL2R        uint
+	bytesR2L        uint
+	encryptKey      byte
+	bufferL2R       chan []byte
+	bufferR2L       chan []byte
+	l2RIsRunning    bool
+	mutexL2R        sync.Mutex
+	r2LIsRunning    bool
+	mutexR2L        sync.Mutex
+	bytesFlowedL2R  int64
+	mutexOfBytesL2R sync.Mutex
+	bytesFlowedR2L  int64
+	mutexOfBytesR2L sync.Mutex
+	flowed          bool
+	closed          bool
+	pause           *bool
 }
 
 func (tunnel *Tunnel) encrypt(data []byte) {
@@ -99,6 +103,7 @@ func (tunnel *Tunnel) stopR2L() {
 func (tunnel *Tunnel) close() {
 	tunnel.stopL2R()
 	tunnel.stopR2L()
+	tunnel.closed = true
 }
 
 // flow from Left 2 Buffer
@@ -106,11 +111,17 @@ func (tunnel *Tunnel) flowL2B() {
 	var buffer = make([]byte, 1024)
 	var count int
 	for tunnel.l2RIsRunning {
+		if tunnel.pause != nil && *tunnel.pause {
+			time.Sleep(time.Second * 1)
+		}
 		count, _ = tunnel.readLeft(buffer)
 		if count > 0 {
 			newBuffer := make([]byte, count)
 			copy(newBuffer, buffer[:count])
 			tunnel.bufferL2R <- newBuffer
+			tunnel.mutexOfBytesL2R.Lock()
+			tunnel.bytesFlowedL2R += int64(count)
+			tunnel.mutexOfBytesL2R.Unlock()
 		} else {
 			break
 		}
@@ -147,11 +158,17 @@ func (tunnel *Tunnel) flowR2B() {
 	var buffer = make([]byte, 1024)
 	var count int
 	for tunnel.r2LIsRunning {
+		if tunnel.pause != nil && *tunnel.pause {
+			time.Sleep(time.Second * 1)
+		}
 		count, _ = tunnel.readRight(buffer)
 		if count > 0 {
 			newBuffer := make([]byte, count)
 			copy(newBuffer, buffer[:count])
 			tunnel.bufferR2L <- newBuffer
+			tunnel.mutexOfBytesR2L.Lock()
+			tunnel.bytesFlowedR2L += int64(count)
+			tunnel.mutexOfBytesR2L.Unlock()
 		} else {
 			break
 		}
@@ -197,4 +214,28 @@ func (tunnel *Tunnel) flow() {
 		go tunnel.flowR2L()
 	}
 	tunnel.mutexR2L.Unlock()
+
+	tunnel.flowed = true
+}
+
+// BytesFlowed 将返回 bytesFlowedL2R 与 bytesFlowedR2L 的和
+func (tunnel *Tunnel) bytesFlowed() int64 {
+	var l2r int64
+	var r2l int64
+
+	tunnel.mutexOfBytesL2R.Lock()
+	l2r = tunnel.bytesFlowedL2R
+	tunnel.bytesFlowedL2R = 0
+	tunnel.mutexOfBytesL2R.Unlock()
+
+	tunnel.mutexOfBytesR2L.Lock()
+	r2l = tunnel.bytesFlowedR2L
+	tunnel.bytesFlowedR2L = 0
+	tunnel.mutexOfBytesR2L.Unlock()
+
+	return l2r + r2l
+}
+
+func (tunnel *Tunnel) isRunning() bool {
+	return tunnel.l2RIsRunning || tunnel.r2LIsRunning
 }

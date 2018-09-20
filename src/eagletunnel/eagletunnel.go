@@ -118,8 +118,8 @@ func (et *EagleTunnel) resolvDnsByProxy(e *NetArg) error {
 }
 
 func (et *EagleTunnel) _resolvDnsByProxy(e *NetArg) error {
-	var tunnel Tunnel
-	tunnel, err := et.connect2Relayer()
+	tunnel := Tunnel{}
+	err := et.connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}
@@ -205,22 +205,21 @@ func (et *EagleTunnel) isWhiteDomain(host string) (isWhite bool) {
 	return white
 }
 
-func (et *EagleTunnel) connect2Relayer() (tunnelCreated Tunnel, err error) {
-	var tunnel Tunnel
+func (et *EagleTunnel) connect2Relayer(tunnel *Tunnel) error {
 	remoteIpe := RemoteAddr + ":" + RemotePort
-	var conn net.Conn
-	conn, err = net.DialTimeout("tcp", remoteIpe, 5*time.Second)
+	conn, err := net.DialTimeout("tcp", remoteIpe, 5*time.Second)
 	if err != nil {
-		return tunnel, err
+		return err
 	}
-	tunnel = Tunnel{right: &conn, encryptKey: EncryptKey}
-	err = et.checkVersionOfRelayer(&tunnel)
+	tunnel.right = &conn
+	tunnel.encryptKey = EncryptKey
+	err = et.checkVersionOfRelayer(tunnel)
 	if err != nil {
-		return tunnel, err
+		return err
 	}
 	tunnel.encryptRight = true
-	err = et.checkUserOfLocal(&tunnel)
-	return tunnel, err
+	err = et.checkUserOfLocal(tunnel)
+	return err
 }
 
 func (et *EagleTunnel) checkVersionOfRelayer(tunnel *Tunnel) error {
@@ -274,7 +273,7 @@ func (et *EagleTunnel) checkVersionOfReq(headers []string, tunnel *Tunnel) (isVa
 
 func (et *EagleTunnel) checkUserOfLocal(tunnel *Tunnel) error {
 	var err error
-	if LocalUser.Id == "" {
+	if LocalUser.ID == "" {
 		return nil // no need to check
 	}
 	user := LocalUser.toString()
@@ -290,7 +289,9 @@ func (et *EagleTunnel) checkUserOfLocal(tunnel *Tunnel) error {
 	}
 	reply := string(buffer[:count])
 	if reply != "valid" {
-		err = errors.New("invalid user")
+		err = errors.New(reply)
+	} else {
+		LocalUser.addTunnel(tunnel)
 	}
 	return err
 }
@@ -304,12 +305,15 @@ func (et *EagleTunnel) checkUserOfReq(tunnel *Tunnel) (isValid bool) {
 			userStr := string(buffer[:count])
 			user, err := ParseEagleUser(userStr, (*tunnel.left).RemoteAddr())
 			if err == nil {
-				err = Users[user.Id].Check(user)
+				err = Users[user.ID].Check(user)
 			}
 			if err == nil {
 				reply := "valid"
 				count, _ = tunnel.writeLeft([]byte(reply))
 				result = count == 5
+				if result {
+					Users[user.ID].addTunnel(tunnel)
+				}
 			} else {
 				reply := err.Error()
 				_, _ = tunnel.writeLeft([]byte(reply))
@@ -344,27 +348,22 @@ func (et *EagleTunnel) sendTcpReq(e *NetArg) error {
 }
 
 func (et *EagleTunnel) sendTcpReq2Remote(e *NetArg) error {
-	tunnel, err := et.connect2Relayer()
+	err := et.connect2Relayer(e.tunnel)
 	if err != nil {
 		return err
 	}
 	req := FormatEtType(ET_TCP) + " " + e.ip + " " + strconv.Itoa(e.port)
-	count, err := tunnel.writeRight([]byte(req))
+	count, err := e.tunnel.writeRight([]byte(req))
 	if err != nil {
 		return err
 	}
 	buffer := make([]byte, 1024)
-	count, err = tunnel.readRight(buffer)
+	count, err = e.tunnel.readRight(buffer)
 	if err != nil {
 		return err
 	}
 	reply := string(buffer[:count])
-	if reply == "ok" {
-		e.tunnel.right = tunnel.right
-		e.tunnel.encryptRight = tunnel.encryptRight
-		e.tunnel.encryptKey = tunnel.encryptKey
-	} else {
-		tunnel.close()
+	if reply != "ok" {
 		err = errors.New("failed 2 connect 2 server by relayer")
 	}
 	return err
@@ -392,7 +391,8 @@ func (et *EagleTunnel) sendLocationReq(e *NetArg) error {
 }
 
 func (conn *EagleTunnel) checkInsideByRemote(e *NetArg) error {
-	tunnel, err := conn.connect2Relayer()
+	tunnel := Tunnel{}
+	err := conn.connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}

@@ -53,6 +53,8 @@ func Init(filePath string) error {
 		err = importUsers(usersPath)
 		if err != nil {
 			fmt.Println(err)
+		} else {
+			go CheckSpeedOfUsers(&Users)
 		}
 	}
 
@@ -74,6 +76,8 @@ func Init(filePath string) error {
 		LocalUser, err = ParseEagleUser(user, nil)
 		if err != nil {
 			fmt.Println(err)
+		} else {
+			go CheckSpeedOfUser(LocalUser)
 		}
 	}
 
@@ -147,11 +151,11 @@ func SPrintConfig() string {
 	} else {
 		localUser = "null"
 	}
-	var user_check string
+	var userCheck string
 	if EnableUserCheck {
-		user_check = "on"
+		userCheck = "on"
 	} else {
-		user_check = "off"
+		userCheck = "off"
 	}
 	var http string
 	if EnableHTTP {
@@ -179,7 +183,7 @@ func SPrintConfig() string {
 	configStr += "listen=" + LocalAddr + ":" + LocalPort + "\n"
 	configStr += "data-key=" + strconv.Itoa(int(EncryptKey)) + "\n"
 	configStr += "user=" + localUser + "\n"
-	configStr += "user-check=" + user_check + "\n"
+	configStr += "user-check=" + userCheck + "\n"
 	configStr += "http=" + http + "\n"
 	configStr += "socks=" + socks + "\n"
 	configStr += "et=" + et + "\n"
@@ -220,9 +224,8 @@ func importUsers(usersPath string) error {
 		user, err = ParseEagleUser(line, nil)
 		if err != nil {
 			return err
-		} else {
-			Users[user.Id] = user
 		}
+		Users[user.ID] = user
 	}
 	return err
 }
