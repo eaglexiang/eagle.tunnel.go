@@ -305,7 +305,7 @@ func (et *EagleTunnel) checkUserOfReq(tunnel *Tunnel) (isValid bool) {
 			userStr := string(buffer[:count])
 			user, err := ParseEagleUser(userStr, (*tunnel.left).RemoteAddr())
 			if err == nil {
-				err = Users[user.ID].Check(user)
+				err = Users[user.ID].CheckAuth(user)
 			}
 			if err == nil {
 				reply := "valid"

@@ -24,7 +24,13 @@ type EagleUser struct {
 	speed          int64 // KB/s
 	speedLimit     int64 // KB/s
 	lastCheckSpeed time.Time
+	typeOfUser     int
 }
+
+const (
+	PrivateUser = iota
+	SharedUser
+)
 
 // ParseEagleUser 通过格式化的字符串构造新的EagleUser，需要输入请求方地址，以防止重复登录
 func ParseEagleUser(userStr string, addr net.Addr) (*EagleUser, error) {
@@ -44,6 +50,14 @@ func ParseEagleUser(userStr string, addr net.Addr) (*EagleUser, error) {
 		if len(items) >= 3 {
 			user.speedLimit, err = strconv.ParseInt(items[2], 10, 64)
 		}
+		if len(items) >= 4 {
+			switch items[3] {
+			case "share":
+				user.typeOfUser = SharedUser
+			default:
+				user.typeOfUser = PrivateUser
+			}
+		}
 	} else {
 		err = errors.New("invalid user")
 	}
@@ -55,30 +69,38 @@ func (user *EagleUser) toString() string {
 }
 
 // Check 会检查请求EagleUser的密码是否正确，并通过校对登录地址与上次登录时间，以防止重复登录
-func (user *EagleUser) Check(user2Check *EagleUser) error {
-	valid := user.Password == user2Check.Password
-	if !valid {
-		return errors.New("incorrent password")
-	}
-	if user.lastAddr == nil {
-		user.lastAddr = user2Check.lastAddr
-		user.lastTime = user2Check.lastTime
-	} else {
-		ip := strings.Split(user.lastAddr.String(), ":")[0]
-		ip2Check := strings.Split(user2Check.lastAddr.String(), ":")[0]
-		valid = ip == ip2Check
+func (user *EagleUser) CheckAuth(user2Check *EagleUser) error {
+	switch user.typeOfUser {
+	case PrivateUser:
+		valid := user.Password == user2Check.Password
 		if !valid {
-			user.loginMutex.Lock()
-			duration := user2Check.lastTime.Sub(user.lastTime)
-			valid = duration > 3*time.Minute
-			if valid {
-				user.lastTime = user2Check.lastTime
-				user.lastAddr = user2Check.lastAddr
-				user.loginMutex.Unlock()
-			} else {
-				user.loginMutex.Unlock()
-				return errors.New("logined")
+			return errors.New("incorrent password")
+		}
+		if user.lastAddr == nil {
+			user.lastAddr = user2Check.lastAddr
+			user.lastTime = user2Check.lastTime
+		} else {
+			ip := strings.Split(user.lastAddr.String(), ":")[0]
+			ip2Check := strings.Split(user2Check.lastAddr.String(), ":")[0]
+			valid = ip == ip2Check
+			if !valid {
+				user.loginMutex.Lock()
+				duration := user2Check.lastTime.Sub(user.lastTime)
+				valid = duration > 3*time.Minute
+				if valid {
+					user.lastTime = user2Check.lastTime
+					user.lastAddr = user2Check.lastAddr
+					user.loginMutex.Unlock()
+				} else {
+					user.loginMutex.Unlock()
+					return errors.New("logined")
+				}
 			}
+		}
+	case SharedUser:
+		valid := user.Password == user2Check.Password
+		if !valid {
+			return errors.New("incorrent password")
 		}
 	}
 	return nil
