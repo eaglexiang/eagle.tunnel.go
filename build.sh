@@ -14,7 +14,6 @@ if [ $# -gt 0 ]; then
         ;;
         *)
         source ${ScriptPath}/buildgo.sh $*
-        exit
         ;;
     esac
 else

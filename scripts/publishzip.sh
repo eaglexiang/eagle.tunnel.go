@@ -4,10 +4,6 @@ echo "start to zip publish"
 
 source ./scripts/env_build.sh
 
-if [ -d ${PublishPath}];then
-    rm -rf PublishPath
-fi
-
 ./build.sh $*
 
 tmpPath="./Eagle_Tunnel_Go"
@@ -33,10 +29,16 @@ else
     arch="amd64"
 fi
 
-bin="et.go.${os}.${arch}.zip"
+if [ os == "windows" ]; then
+    ZIP="zip -r"
+    bin="et.go.${os}.${arch}.zip"
+else
+    ZIP="tar -zcvf"
+    bin="et.go.${os}.${arch}.tar.gz"
+fi
 echo "Bin File: ${bin}"
 mkdir -p ${binPath}
-zip -r ${binPath}/${bin} ${tmpPath}
+${ZIP} ${binPath}/${bin} ${tmpPath}
 echo "compress done"
 
 echo "clear tmp files"
