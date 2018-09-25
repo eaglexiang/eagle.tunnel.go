@@ -8,5 +8,5 @@ var RemotePort string
 
 // Sender 请求发送者
 type Sender interface {
-	send(e NetArg) bool
+	Send(e NetArg) bool
 }

@@ -21,7 +21,8 @@ const (
 
 // EtASK请求的类型
 const (
-	EtASKAuth = iota
+	EtAskAUTH = iota
+	EtAskUNKNOWN
 )
 
 // 代理的状态
@@ -62,6 +63,7 @@ func (et *EagleTunnel) handle(request Request, tunnel *Tunnel) (willContinue boo
 				case EtLOCATION:
 					et.handleLocationReq(args, tunnel)
 				case EtASK:
+					et.handleAskReq(args[1:], tunnel)
 				default:
 				}
 			}
@@ -71,28 +73,55 @@ func (et *EagleTunnel) handle(request Request, tunnel *Tunnel) (willContinue boo
 }
 
 // send 发送ET请求
-func (et *EagleTunnel) send(e *NetArg) (succeed bool) {
+func (et *EagleTunnel) Send(e *NetArg) (succeed bool) {
 	var result bool
-	switch e.theType {
-	case EtDNS:
-		result = et.sendDNSReq(e)
-	case EtTCP:
-		result = et.sendTCPReq(e) == nil
-	case EtLOCATION:
-		result = et.sendLocationReq(e) == nil
-	case EtASK:
-	default:
+	if len(e.TheType) >= 1 {
+		switch e.TheType[0] {
+		case EtDNS:
+			result = et.sendDNSReq(e)
+		case EtTCP:
+			result = et.sendTCPReq(e) == nil
+		case EtLOCATION:
+			result = et.sendLocationReq(e) == nil
+		case EtASK:
+			result = et.sendAskReq(e) == nil
+		default:
+		}
 	}
 	return result
 }
 
-func (et *EagleTunnel) sendAskReq(e *NetArg) bool {
-	tunnel := Tunnel{}
-	defer tunnel.close()
-	return true
+func (et *EagleTunnel) handleAskReq(args []string, tunnel *Tunnel) {
+
 }
 
-func (et *EagleTunnel) sendDNSReq(e *NetArg) (succeed bool) {
+func (et *EagleTunnel) sendAskReq(e *NetArg) error {
+	if len(e.TheType) < 2 {
+		return errors.New("no EtAskType input")
+	}
+	switch e.TheType[1] {
+	case EtAskAUTH:
+		return sendAskAuthReq(e)
+	default:
+		e.Reply = "Unknown ET ASK Type"
+		return errors.New(e.Reply)
+	}
+}
+
+func sendAskAuthReq(e *NetArg) error {
+	// 当connect2Relayer成功，则说明鉴权成功
+	tunnel := Tunnel{}
+	defer tunnel.close()
+	err := connect2Relayer(&tunnel)
+	if err != nil {
+		e.Reply = err.Error() // 通过参数集返回具体的错误信息
+	} else {
+		e.Reply = "AUTH OK"
+	}
+	return err
+}
+
+func (et *EagleTunnel) sendDNSReq(e *NetArg) bool {
 	var result bool
 	ip, result := hostsCache[e.domain]
 	if result {
@@ -424,6 +453,30 @@ func FormatEtType(src int) string {
 	case EtASK:
 		result = "ASK"
 	default:
+	}
+	return result
+}
+
+// ParseEtAskType 将字符串转换为EtASK请求的类型
+func ParseEtAskType(src string) int {
+	var result int
+	switch src {
+	case "AUTH", "auth":
+		result = EtAskAUTH
+	default:
+		result = EtAskUNKNOWN
+	}
+	return result
+}
+
+// FormatEtAskType 得到EtASK请求类型对应的字符串
+func FormatEtAskType(src int) string {
+	var result string
+	switch src {
+	case EtAskAUTH:
+		result = "AUTH"
+	default:
+		result = "UNKNOWN"
 	}
 	return result
 }

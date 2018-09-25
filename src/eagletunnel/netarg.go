@@ -8,5 +8,6 @@ type NetArg struct {
 	tunnel  *Tunnel
 	user    *EagleUser
 	boolObj bool
-	theType int
+	TheType []int
+	Reply   string
 }

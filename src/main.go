@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -19,9 +20,14 @@ func main() {
 	}
 
 	switch firstArg {
+	case "ask":
+		err := ask(args)
+		if err != nil {
+			fmt.Println(err)
+		}
 	case "-u", "--ui":
 		var secondArg string
-		if len(args) <= 3 {
+		if len(args) < 3 {
 			secondArg = defaultPathOfConfig
 		} else {
 			secondArg = args[2]
@@ -29,6 +35,32 @@ func main() {
 		startUI(secondArg)
 	default:
 		startTunnel(firstArg)
+	}
+}
+
+func ask(args []string) error {
+	if len(args) < 3 {
+		return errors.New("no arg for et ask")
+	}
+	askType := eagletunnel.ParseEtAskType(args[2])
+	switch askType {
+	case eagletunnel.EtAskAUTH:
+		var pathOfConfig string
+		if len(args) < 4 {
+			pathOfConfig = defaultPathOfConfig
+		} else {
+			pathOfConfig = args[3]
+		}
+		err := eagletunnel.Init(pathOfConfig)
+		if err != nil {
+			return err
+		}
+		et := eagletunnel.EagleTunnel{}
+		e := eagletunnel.NetArg{TheType: []int{eagletunnel.EtASK, eagletunnel.EtAskAUTH}}
+		_ = et.Send(&e)
+		return errors.New(e.Reply)
+	default:
+		return nil
 	}
 }
 
