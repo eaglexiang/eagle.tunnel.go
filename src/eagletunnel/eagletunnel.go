@@ -3,9 +3,7 @@ package eagletunnel
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
-	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,9 +26,6 @@ const (
 
 var protocolVersion, _ = CreateVersion("1.1")
 var version, _ = CreateVersion("0.2")
-
-// WhitelistDomains 需要被智能解析的DNS域名列表
-var WhitelistDomains []string
 var insideCache = sync.Map{}
 var dnsRemoteCache = sync.Map{}
 var hostsCache = make(map[string]string)
@@ -91,7 +86,7 @@ func (et *EagleTunnel) sendDNSReq(e *NetArg) (succeed bool) {
 	} else {
 		switch PROXY_STATUS {
 		case ProxySMART:
-			white := et.isWhiteDomain(e.domain)
+			white := IsWhiteDomain(e.domain)
 			if white {
 				result = et.resolvDNSByProxy(e) == nil
 			} else {
@@ -123,7 +118,7 @@ func (et *EagleTunnel) resolvDNSByProxy(e *NetArg) error {
 
 func (et *EagleTunnel) _resolvDNSByProxy(e *NetArg) error {
 	tunnel := Tunnel{}
-	err := et.connect2Relayer(&tunnel)
+	err := connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}
@@ -145,7 +140,7 @@ func (et *EagleTunnel) _resolvDNSByProxy(e *NetArg) error {
 }
 
 func (et *EagleTunnel) resolvDNSByLocal(e *NetArg, recursive bool) error {
-	err := _resolvDNSByLocal(e)
+	err := ResolvDNSByLocal(e)
 
 	if err != nil {
 		err = et.resolvDNSByProxy(e)
@@ -166,37 +161,7 @@ func (et *EagleTunnel) resolvDNSByLocal(e *NetArg, recursive bool) error {
 	return err
 }
 
-func _resolvDNSByLocal(e *NetArg) error {
-	addrs, err := net.LookupHost(e.domain)
-	if err == nil {
-		var ok bool
-		for _, addr := range addrs {
-			ip := net.ParseIP(addr)
-			if ip.To4() != nil {
-				e.ip = addr
-				ok = true
-				break
-			}
-		}
-		if !ok {
-			err = errors.New("ipv4 not found")
-		}
-	}
-	return err
-}
-
-func (et *EagleTunnel) isWhiteDomain(host string) (isWhite bool) {
-	var white bool
-	for _, line := range WhitelistDomains {
-		if strings.HasSuffix(host, line) {
-			white = true
-			break
-		}
-	}
-	return white
-}
-
-func (et *EagleTunnel) connect2Relayer(tunnel *Tunnel) error {
+func connect2Relayer(tunnel *Tunnel) error {
 	remoteIpe := RemoteAddr + ":" + RemotePort
 	conn, err := net.DialTimeout("tcp", remoteIpe, 5*time.Second)
 	if err != nil {
@@ -339,7 +304,7 @@ func (et *EagleTunnel) sendTCPReq(e *NetArg) error {
 }
 
 func (et *EagleTunnel) sendTCPReq2Remote(e *NetArg) error {
-	err := et.connect2Relayer(e.tunnel)
+	err := connect2Relayer(e.tunnel)
 	if err != nil {
 		return err
 	}
@@ -371,7 +336,7 @@ func (et *EagleTunnel) sendLocationReq(e *NetArg) error {
 			insideCache.Store(e.ip, e.boolObj)
 		} else {
 			var inside bool
-			inside, err = et.checkInsideByLocal(e.ip)
+			inside, err = CheckInsideByLocal(e.ip)
 			if err == nil {
 				e.boolObj = inside
 				insideCache.Store(e.ip, e.boolObj)
@@ -384,7 +349,7 @@ func (et *EagleTunnel) sendLocationReq(e *NetArg) error {
 // check
 func (et *EagleTunnel) checkInsideByRemote(e *NetArg) error {
 	tunnel := Tunnel{}
-	err := et.connect2Relayer(&tunnel)
+	err := connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}
@@ -456,7 +421,7 @@ func (et *EagleTunnel) handleLocationReq(reqs []string, tunnel *Tunnel) {
 			reply = strconv.FormatBool(inside)
 		} else {
 			var err error
-			inside, err := et.checkInsideByLocal(ip)
+			inside, err := CheckInsideByLocal(ip)
 			if err != nil {
 				reply = fmt.Sprint(err)
 			} else {
@@ -466,28 +431,6 @@ func (et *EagleTunnel) handleLocationReq(reqs []string, tunnel *Tunnel) {
 		}
 		tunnel.writeLeft([]byte(reply))
 	}
-}
-
-func (et *EagleTunnel) checkInsideByLocal(ip string) (bool, error) {
-	var inside bool
-	req := "https://ip2c.org/" + ip
-	res, err := http.Get(req)
-	if err != nil {
-		return inside, err
-	}
-	defer res.Body.Close()
-	body, _ := ioutil.ReadAll(res.Body)
-	bodyStr := string(body)
-	if err == nil {
-		switch bodyStr {
-		case "0;;;WRONG INPUT":
-			err = errors.New("0;;;WRONG INPUT")
-		case "1;ZZ;ZZZ;Reserved", "1;CN;CHN;China":
-			inside = true
-		default:
-		}
-	}
-	return inside, err
 }
 
 func (et *EagleTunnel) handleDNSReq(reqs []string, tunnel *Tunnel) {
