@@ -8,6 +8,8 @@ if [ $# -gt 0 ]; then
         echo "begin to clean tmp files for build"
         if [ -d ${PublishPath} ]; then
             rm -rf ${PublishPath}
+        else
+            echo "nothing to clean"
         fi
         echo "build clean done"
         exit

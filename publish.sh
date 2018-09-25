@@ -10,6 +10,8 @@ if [ $# -gt 0 ]; then
         echo "begin to clean tmp files for publish"
         if [ -d ${binPath} ]; then
             rm -rf ${binPath}
+        else
+            echo "nothing to clean"
         fi
         echo "publish clean done"
         ;;

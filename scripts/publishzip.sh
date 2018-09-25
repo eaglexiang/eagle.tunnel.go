@@ -14,6 +14,9 @@ echo "copy publish..."
 cp -r ${PublishPath} ${tmpPath}
 cp ./install.sh ${tmpPath}
 cp ./uninstall.sh ${tmpPath}
+mkdir -p ${tmpPath}/scripts
+cp ${ScriptPath}/env_install.sh ${tmpPath}/scripts
+cp ${ScriptPath}/after-install.sh ${tmpPath}/scripts
 echo "copy done"
 
 echo "compressing..."

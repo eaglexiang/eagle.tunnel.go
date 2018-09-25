@@ -15,7 +15,13 @@ const (
 	EtTCP = iota
 	EtDNS
 	EtLOCATION
+	EtASK
 	EtUNKNOWN
+)
+
+// EtASK请求的类型
+const (
+	EtASKAuth = iota
 )
 
 // 代理的状态
@@ -55,6 +61,7 @@ func (et *EagleTunnel) handle(request Request, tunnel *Tunnel) (willContinue boo
 					result = et.handleTCPReq(args, tunnel) == nil
 				case EtLOCATION:
 					et.handleLocationReq(args, tunnel)
+				case EtASK:
 				default:
 				}
 			}
@@ -73,9 +80,16 @@ func (et *EagleTunnel) send(e *NetArg) (succeed bool) {
 		result = et.sendTCPReq(e) == nil
 	case EtLOCATION:
 		result = et.sendLocationReq(e) == nil
+	case EtASK:
 	default:
 	}
 	return result
+}
+
+func (et *EagleTunnel) sendAskReq(e *NetArg) bool {
+	tunnel := Tunnel{}
+	defer tunnel.close()
+	return true
 }
 
 func (et *EagleTunnel) sendDNSReq(e *NetArg) (succeed bool) {
@@ -118,11 +132,11 @@ func (et *EagleTunnel) resolvDNSByProxy(e *NetArg) error {
 
 func (et *EagleTunnel) _resolvDNSByProxy(e *NetArg) error {
 	tunnel := Tunnel{}
+	defer tunnel.close()
 	err := connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}
-	defer tunnel.close()
 	req := FormatEtType(EtDNS) + " " + e.domain
 	count, err := tunnel.writeRight([]byte(req))
 	if err != nil {
@@ -346,14 +360,13 @@ func (et *EagleTunnel) sendLocationReq(e *NetArg) error {
 	return err
 }
 
-// check
 func (et *EagleTunnel) checkInsideByRemote(e *NetArg) error {
 	tunnel := Tunnel{}
+	defer tunnel.close()
 	err := connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}
-	defer tunnel.close()
 	req := FormatEtType(EtLOCATION) + " " + e.ip
 	var count int
 	count, err = tunnel.writeRight([]byte(req))
@@ -390,6 +403,8 @@ func ParseEtType(src string) int {
 		result = EtTCP
 	case "LOCATION":
 		result = EtLOCATION
+	case "ASK":
+		result = EtASK
 	default:
 		result = EtUNKNOWN
 	}
@@ -406,6 +421,8 @@ func FormatEtType(src int) string {
 		result = "TCP"
 	case EtLOCATION:
 		result = "LOCATION"
+	case EtASK:
+		result = "ASK"
 	default:
 	}
 	return result
