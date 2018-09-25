@@ -14,14 +14,14 @@ fi
 
 case ${os} in
     "linux")
-    bin="et.go.${arch}.linux"
+    bin="et.go.linux"
     ;;
     "mac")
-    bin="et.go.${arch}.mac"
+    bin="et.go.mac"
     os="darwin"
     ;;
     "windows")
-    bin="et.go.${arch}.exe"
+    bin="et.go.exe"
     ;;
     *)
     bin="et.go"
