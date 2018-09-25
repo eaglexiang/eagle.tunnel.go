@@ -5,12 +5,14 @@ import (
 	"sync"
 )
 
+// SyncList 线程/协程 安全的同步链表
 type SyncList struct {
 	raw  *list.List
 	lock sync.Mutex
 }
 
-func NewSyncList() *SyncList {
+// CreateSyncList 创建新的SyncList
+func CreateSyncList() *SyncList {
 	result := SyncList{
 		raw: list.New()}
 	return &result

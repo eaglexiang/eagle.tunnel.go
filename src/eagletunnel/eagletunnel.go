@@ -27,7 +27,7 @@ const (
 )
 
 var protocolVersion, _ = CreateVersion("1.1")
-var version, _ = CreateVersion("0.1")
+var version, _ = CreateVersion("0.2")
 
 // WhitelistDomains 需要被智能解析的DNS域名列表
 var WhitelistDomains []string
@@ -45,7 +45,7 @@ func (et *EagleTunnel) handle(request Request, tunnel *Tunnel) (willContinue boo
 	isVersionOk := et.checkVersionOfReq(args, tunnel)
 	if isVersionOk {
 		tunnel.encryptLeft = true
-		isUserOk := et.checkUserOfReq(tunnel)
+		isUserOk := checkUserOfReq(tunnel)
 		if isUserOk {
 			buffer := make([]byte, 1024)
 			count, _ := tunnel.readLeft(buffer)
@@ -69,15 +69,15 @@ func (et *EagleTunnel) handle(request Request, tunnel *Tunnel) (willContinue boo
 }
 
 // send 发送ET请求
-func (conn *EagleTunnel) send(e *NetArg) (succeed bool) {
+func (et *EagleTunnel) send(e *NetArg) (succeed bool) {
 	var result bool
 	switch e.theType {
 	case EtDNS:
-		result = conn.sendDNSReq(e)
+		result = et.sendDNSReq(e)
 	case EtTCP:
-		result = conn.sendTCPReq(e) == nil
+		result = et.sendTCPReq(e) == nil
 	case EtLOCATION:
-		result = conn.sendLocationReq(e) == nil
+		result = et.sendLocationReq(e) == nil
 	default:
 	}
 	return result
@@ -93,37 +93,37 @@ func (et *EagleTunnel) sendDNSReq(e *NetArg) (succeed bool) {
 		case ProxySMART:
 			white := et.isWhiteDomain(e.domain)
 			if white {
-				result = resolvDNSByProxy(e) == nil
+				result = et.resolvDNSByProxy(e) == nil
 			} else {
 				result = et.resolvDNSByLocal(e, true) == nil
 			}
 		case ProxyENABLE:
-			result = resolvDNSByProxy(e) == nil
+			result = et.resolvDNSByProxy(e) == nil
 		default:
 		}
 	}
 	return result
 }
 
-func resolvDNSByProxy(e *NetArg) error {
+func (et *EagleTunnel) resolvDNSByProxy(e *NetArg) error {
 	var err error
 	_cache, ok := dnsRemoteCache.Load(e.domain)
 	if ok { // found cache
 		cache := _cache.(*DNSCache)
-		if cache.Check() { // cache is valid
+		if !cache.OverTTL() {
 			e.ip = cache.ip
 		} else { // cache's timed out
-			err = _resolvDNSByProxy(e)
+			err = et._resolvDNSByProxy(e)
 		}
 	} else { // not found
-		err = _resolvDNSByProxy(e)
+		err = et._resolvDNSByProxy(e)
 	}
 	return err
 }
 
-func _resolvDNSByProxy(e *NetArg) error {
+func (et *EagleTunnel) _resolvDNSByProxy(e *NetArg) error {
 	tunnel := Tunnel{}
-	err := connect2Relayer(&tunnel)
+	err := et.connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}
@@ -148,14 +148,14 @@ func (et *EagleTunnel) resolvDNSByLocal(e *NetArg, recursive bool) error {
 	err := _resolvDNSByLocal(e)
 
 	if err != nil {
-		err = resolvDNSByProxy(e)
+		err = et.resolvDNSByProxy(e)
 	} else {
 		if recursive {
 			err1 := et.sendLocationReq(e)
 			if err1 == nil {
 				if !e.boolObj {
 					ne := NetArg{domain: e.domain}
-					err1 = resolvDNSByProxy(&ne)
+					err1 = et.resolvDNSByProxy(&ne)
 					if err1 == nil {
 						e.ip = ne.ip
 					}
@@ -196,7 +196,7 @@ func (et *EagleTunnel) isWhiteDomain(host string) (isWhite bool) {
 	return white
 }
 
-func connect2Relayer(tunnel *Tunnel) error {
+func (et *EagleTunnel) connect2Relayer(tunnel *Tunnel) error {
 	remoteIpe := RemoteAddr + ":" + RemotePort
 	conn, err := net.DialTimeout("tcp", remoteIpe, 5*time.Second)
 	if err != nil {
@@ -264,7 +264,7 @@ func (et *EagleTunnel) checkVersionOfReq(headers []string, tunnel *Tunnel) (isVa
 
 func checkUserOfLocal(tunnel *Tunnel) error {
 	var err error
-	if LocalUser.ID == "" {
+	if LocalUser == nil {
 		return nil // no need to check
 	}
 	user := LocalUser.toString()
@@ -287,7 +287,7 @@ func checkUserOfLocal(tunnel *Tunnel) error {
 	return err
 }
 
-func (et *EagleTunnel) checkUserOfReq(tunnel *Tunnel) (isValid bool) {
+func checkUserOfReq(tunnel *Tunnel) (isValid bool) {
 	var result bool
 	if EnableUserCheck {
 		buffer := make([]byte, 1024)
@@ -339,7 +339,7 @@ func (et *EagleTunnel) sendTCPReq(e *NetArg) error {
 }
 
 func (et *EagleTunnel) sendTCPReq2Remote(e *NetArg) error {
-	err := connect2Relayer(e.tunnel)
+	err := et.connect2Relayer(e.tunnel)
 	if err != nil {
 		return err
 	}
@@ -366,7 +366,7 @@ func (et *EagleTunnel) sendLocationReq(e *NetArg) error {
 	if ok {
 		e.boolObj, _ = _inside.(bool)
 	} else {
-		err = checkInsideByRemote(e)
+		err = et.checkInsideByRemote(e)
 		if err == nil {
 			insideCache.Store(e.ip, e.boolObj)
 		} else {
@@ -382,9 +382,9 @@ func (et *EagleTunnel) sendLocationReq(e *NetArg) error {
 }
 
 // check
-func checkInsideByRemote(e *NetArg) error {
+func (et *EagleTunnel) checkInsideByRemote(e *NetArg) error {
 	tunnel := Tunnel{}
-	err := connect2Relayer(&tunnel)
+	err := et.connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}

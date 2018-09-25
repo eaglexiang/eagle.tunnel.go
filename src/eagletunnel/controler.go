@@ -15,7 +15,6 @@ var ConfigDir string
 var ConfigKeyValues map[string]string
 
 var EncryptKey byte
-var Users map[string]*EagleUser
 var EnableUserCheck bool
 
 var EnableSOCKS5 bool
@@ -53,10 +52,19 @@ func Init(filePath string) error {
 		err = importUsers(usersPath)
 		if err != nil {
 			fmt.Println(err)
-		} else {
-			go CheckSpeedOfUsers(&Users)
 		}
 	}
+
+	var user string
+	user, ok = ConfigKeyValues["user"]
+	if ok {
+		LocalUser, err = ParseEagleUser(user, nil)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	go CheckSpeedOfUsers()
 
 	EncryptKey = 0x22
 	var encryptKey string
@@ -68,17 +76,6 @@ func Init(filePath string) error {
 			return err
 		}
 		EncryptKey = byte(uint8(_encryptKey))
-	}
-
-	var user string
-	user, ok = ConfigKeyValues["user"]
-	if ok {
-		LocalUser, err = ParseEagleUser(user, nil)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			go CheckSpeedOfUser(LocalUser)
-		}
 	}
 
 	var localIpe string
@@ -134,61 +131,6 @@ func Init(filePath string) error {
 	readHosts(ConfigDir)
 
 	return err
-}
-
-func SPrintConfig() string {
-	var status string
-	switch PROXY_STATUS {
-	case ProxySMART:
-		status = "smart"
-	case ProxyENABLE:
-		status = "enable"
-	default:
-	}
-	var localUser string
-	if LocalUser != nil {
-		localUser = LocalUser.toString()
-	} else {
-		localUser = "null"
-	}
-	var userCheck string
-	if EnableUserCheck {
-		userCheck = "on"
-	} else {
-		userCheck = "off"
-	}
-	var http string
-	if EnableHTTP {
-		http = "on"
-	} else {
-		http = "off"
-	}
-	var socks string
-	if EnableSOCKS5 {
-		socks = "on"
-	} else {
-		socks = "off"
-	}
-	var et string
-	if EnableET {
-		et = "on"
-	} else {
-		et = "off"
-	}
-
-	var configStr string
-	configStr += "config-path=" + ConfigPath + "\n"
-	configStr += "config-dir=" + ConfigDir + "\n"
-	configStr += "relayer=" + RemoteAddr + ":" + RemotePort + "\n"
-	configStr += "listen=" + LocalAddr + ":" + LocalPort + "\n"
-	configStr += "data-key=" + strconv.Itoa(int(EncryptKey)) + "\n"
-	configStr += "user=" + localUser + "\n"
-	configStr += "user-check=" + userCheck + "\n"
-	configStr += "http=" + http + "\n"
-	configStr += "socks=" + socks + "\n"
-	configStr += "et=" + et + "\n"
-	configStr += "proxy-status=" + status + "\n"
-	return configStr
 }
 
 func readLines(filePath string) ([]string, error) {

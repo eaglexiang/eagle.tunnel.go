@@ -6,27 +6,30 @@ import (
 	"strings"
 )
 
+// 比较结果的三种基本状态
 const (
 	Bigger = iota
 	Smaller
 	Equal
 )
 
+// Version 版本，包含版本号字符串与其对应的int数组
 type Version struct {
 	nodes []uint
 	raw   string
 }
 
+// CreateVersion 根据格式由字符串创建Version
 func CreateVersion(src string) (Version, error) {
 	result := Version{raw: src}
 	items := strings.Split(result.raw, ".")
 	result.nodes = make([]uint, len(items))
 	for index, item := range items {
-		item_int, err := strconv.ParseUint(item, 10, 32)
+		itemInt, err := strconv.ParseUint(item, 10, 32)
 		if err != nil {
 			return result, errors.New("invalid version string")
 		}
-		result.nodes[index] = uint(item_int)
+		result.nodes[index] = uint(itemInt)
 	}
 	return result, nil
 }
@@ -39,6 +42,7 @@ func (src *Version) isSmallerThan(des *Version) bool {
 	return src.compareWith(des) == Smaller
 }
 
+// Equals src与des相等
 func (src *Version) Equals(des *Version) bool {
 	return src.compareWith(des) == Equal
 }

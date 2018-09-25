@@ -36,7 +36,7 @@ func handlePost(w *http.ResponseWriter, r *http.Request) {
 	}
 	config := SPrintConfig()
 	writeConfig(config)
-	reply, _ := readHttp("saved.html")
+	reply, _ := readHTTP("saved.html")
 	(*w).Write(reply)
 }
 
@@ -98,7 +98,7 @@ func handleGet(w *http.ResponseWriter, r *http.Request) {
 	// 	reply = _reply.([]byte)
 	// } else {
 	// var err error
-	reply, _ = readHttp(path)
+	reply, _ = readHTTP(path)
 	// 	if err == nil && len(reply) > 0 {
 	// 		files.Store(path, reply)
 	// 	}
@@ -106,7 +106,7 @@ func handleGet(w *http.ResponseWriter, r *http.Request) {
 	(*w).Write(reply)
 }
 
-func readHttp(path string) (reply []byte, err error) {
+func readHTTP(path string) (reply []byte, err error) {
 	bytes, err := ioutil.ReadFile(rootPath + path)
 	if err != nil {
 		return nil, err
@@ -118,6 +118,7 @@ func writeConfig(config string) {
 	ioutil.WriteFile("eagle-tunnel.conf", []byte(config), 0644)
 }
 
+// StartUI 开始UI服务
 func StartUI() error {
 	fmt.Println("start ui at: 0.0.0.0:9090")
 	http.HandleFunc("/", handleReq)

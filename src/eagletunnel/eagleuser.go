@@ -27,6 +27,7 @@ type EagleUser struct {
 	typeOfUser     int
 }
 
+// 账户类型，PrivateUser的同时登录有限制，而SharedUser则没有
 const (
 	PrivateUser = iota
 	SharedUser
@@ -43,7 +44,7 @@ func ParseEagleUser(userStr string, addr net.Addr) (*EagleUser, error) {
 			Password:       items[1],
 			lastAddr:       addr,
 			lastTime:       time.Now(),
-			tunnels:        NewSyncList(),
+			tunnels:        CreateSyncList(),
 			lastCheckSpeed: time.Now()}
 		var pause bool
 		user.pause = &pause
@@ -68,7 +69,7 @@ func (user *EagleUser) toString() string {
 	return user.ID + ":" + user.Password
 }
 
-// Check 会检查请求EagleUser的密码是否正确，并通过校对登录地址与上次登录时间，以防止重复登录
+// CheckAuth 检查请求EagleUser的密码是否正确，并通过校对登录地址与上次登录时间，以防止重复登录
 func (user *EagleUser) CheckAuth(user2Check *EagleUser) error {
 	switch user.typeOfUser {
 	case PrivateUser:
@@ -161,23 +162,5 @@ func (user *EagleUser) checkSpeed() {
 	if duration > (time.Minute * 3) {
 		user.lastCheckSpeed = now
 		user.bytes = 0
-	}
-}
-
-func CheckSpeedOfUsers(users *map[string]*EagleUser) {
-	for {
-		for _, user := range *users {
-			user.checkSpeed()
-			user.limitSpeed()
-		}
-		time.Sleep(time.Second)
-	}
-}
-
-func CheckSpeedOfUser(user *EagleUser) {
-	for {
-		user.checkSpeed()
-		user.limitSpeed()
-		time.Sleep(time.Second)
 	}
 }

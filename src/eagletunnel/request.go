@@ -4,13 +4,15 @@ import (
 	"strings"
 )
 
+// 请求类型
 const (
-	Unknown = iota
-	SOCKS
-	HTTP_PROXY
-	EAGLE_TUNNEL
+	UnknownReq = iota
+	SOCKSReq
+	HTTPProxyReq
+	EagleTunnelReq
 )
 
+// Request 请求，包含字节数据和对应的字符串
 type Request struct {
 	requestMsg    []byte
 	RequestMsgStr string
@@ -19,18 +21,18 @@ type Request struct {
 func (request *Request) getType() int {
 	var result int
 	if request.requestMsg[0] == 5 {
-		result = SOCKS
+		result = SOCKSReq
 	} else {
 		request.RequestMsgStr = string(request.requestMsg[:])
 		args := strings.Split(request.RequestMsgStr, " ")
 		if len(args) >= 2 {
 			switch args[0] {
 			case "OPTIONS", "HEAD", "GET", "POST", "PUT", "DELETE", "TRACE", "CONNECT":
-				result = HTTP_PROXY
+				result = HTTPProxyReq
 			case "eagle_tunnel":
-				result = EAGLE_TUNNEL
+				result = EagleTunnelReq
 			default:
-				result = Unknown
+				result = UnknownReq
 			}
 		}
 	}

@@ -6,13 +6,15 @@ import (
 	"fmt"
 )
 
+// SOCKS请求的类型
 const (
-	SOCKS_ERROR = iota
-	SOCKS_CONNECT
-	SOCKS_BIND
-	SOCKS_UDP
+	SOCKSERROR = iota
+	SOCKSCONNECT
+	SOCKSBIND
+	SOCKSUDP
 )
 
+// Socks5 Socks5协议的实现
 type Socks5 struct {
 }
 
@@ -28,7 +30,7 @@ func (conn *Socks5) handle(request Request, tunnel *Tunnel) bool {
 			if count >= 2 {
 				cmdType := buffer[1]
 				switch cmdType {
-				case SOCKS_CONNECT:
+				case SOCKSCONNECT:
 					return conn.handleTCPReq(buffer[:count], tunnel)
 				default:
 				}
