@@ -114,17 +114,17 @@ func Init(filePath string) error {
 		}
 	}
 
-	PROXY_STATUS = PROXY_ENABLE
+	PROXY_STATUS = ProxyENABLE
 	var status string
 	status, ok = ConfigKeyValues["proxy-status"]
 	if ok {
 		switch status {
 		case "enable":
-			PROXY_STATUS = PROXY_ENABLE
+			PROXY_STATUS = ProxyENABLE
 		case "smart":
-			PROXY_STATUS = PROXY_SMART
+			PROXY_STATUS = ProxySMART
 		default:
-			PROXY_STATUS = PROXY_ENABLE
+			PROXY_STATUS = ProxyENABLE
 		}
 	}
 
@@ -139,9 +139,9 @@ func Init(filePath string) error {
 func SPrintConfig() string {
 	var status string
 	switch PROXY_STATUS {
-	case PROXY_SMART:
+	case ProxySMART:
 		status = "smart"
-	case PROXY_ENABLE:
+	case ProxyENABLE:
 		status = "enable"
 	default:
 	}

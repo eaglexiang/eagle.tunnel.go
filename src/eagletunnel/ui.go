@@ -45,8 +45,8 @@ func handleClientPost(values url.Values) {
 	SetRelayer(remoteIpes[0])
 	localIpes := values["listen"]
 	SetListen(localIpes[0])
-	user_check := values["user-check"][0]
-	localUser := user_check == "开启"
+	userCheck := values["user-check"][0]
+	localUser := userCheck == "开启"
 	if localUser {
 		id := values["id"][0]
 		password := values["password"][0]
@@ -55,15 +55,15 @@ func handleClientPost(values url.Values) {
 	} else {
 		LocalUser = nil
 	}
-	proxy_status := values["proxy-status"][0]
-	if proxy_status == "智能" {
-		PROXY_STATUS = PROXY_SMART
+	proxyStatus := values["proxy-status"][0]
+	if proxyStatus == "智能" {
+		PROXY_STATUS = ProxySMART
 	} else {
-		PROXY_STATUS = PROXY_ENABLE
+		PROXY_STATUS = ProxyENABLE
 	}
-	if PROXY_STATUS == PROXY_SMART {
-		whitelist_domains := values["whitelist_domains"][0]
-		WhitelistDomains = strings.Split(whitelist_domains, "\r\n")
+	if PROXY_STATUS == ProxySMART {
+		whitelistDomains := values["whitelist_domains"][0]
+		WhitelistDomains = strings.Split(whitelistDomains, "\r\n")
 	}
 	// default
 	EnableHTTP = true

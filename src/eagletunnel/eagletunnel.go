@@ -12,27 +12,30 @@ import (
 	"time"
 )
 
+// ET请求的类型
 const (
-	ET_TCP = iota
-	ET_DNS
-	ET_LOCATION
-	ET_UNKNOWN
+	EtTCP = iota
+	EtDNS
+	EtLOCATION
+	EtUNKNOWN
 )
 
+// 代理的状态
 const (
-	PROXY_ENABLE = iota
-	PROXY_SMART
+	ProxyENABLE = iota
+	ProxySMART
 )
 
 var protocolVersion, _ = CreateVersion("1.1")
 var version, _ = CreateVersion("0.1")
 
+// WhitelistDomains 需要被智能解析的DNS域名列表
 var WhitelistDomains []string
 var insideCache = sync.Map{}
 var dnsRemoteCache = sync.Map{}
-var dnsLocalCache = sync.Map{}
 var hostsCache = make(map[string]string)
 
+// EagleTunnel 遵循ET协议的数据隧道
 type EagleTunnel struct {
 }
 
@@ -51,11 +54,11 @@ func (et *EagleTunnel) handle(request Request, tunnel *Tunnel) (willContinue boo
 				args := strings.Split(req, " ")
 				reqType := ParseEtType(args[0])
 				switch reqType {
-				case ET_DNS:
-					et.handleDnsReq(args, tunnel)
-				case ET_TCP:
-					result = et.handleTcpReq(args, tunnel) == nil
-				case ET_LOCATION:
+				case EtDNS:
+					et.handleDNSReq(args, tunnel)
+				case EtTCP:
+					result = et.handleTCPReq(args, tunnel) == nil
+				case EtLOCATION:
 					et.handleLocationReq(args, tunnel)
 				default:
 				}
@@ -65,66 +68,67 @@ func (et *EagleTunnel) handle(request Request, tunnel *Tunnel) (willContinue boo
 	return result
 }
 
+// send 发送ET请求
 func (conn *EagleTunnel) send(e *NetArg) (succeed bool) {
 	var result bool
 	switch e.theType {
-	case ET_DNS:
-		result = conn.sendDnsReq(e)
-	case ET_TCP:
-		result = conn.sendTcpReq(e) == nil
-	case ET_LOCATION:
+	case EtDNS:
+		result = conn.sendDNSReq(e)
+	case EtTCP:
+		result = conn.sendTCPReq(e) == nil
+	case EtLOCATION:
 		result = conn.sendLocationReq(e) == nil
 	default:
 	}
 	return result
 }
 
-func (et *EagleTunnel) sendDnsReq(e *NetArg) (succeed bool) {
+func (et *EagleTunnel) sendDNSReq(e *NetArg) (succeed bool) {
 	var result bool
 	ip, result := hostsCache[e.domain]
 	if result {
 		e.ip = ip
 	} else {
 		switch PROXY_STATUS {
-		case PROXY_SMART:
+		case ProxySMART:
 			white := et.isWhiteDomain(e.domain)
 			if white {
-				result = et.resolvDnsByProxy(e) == nil
+				result = resolvDNSByProxy(e) == nil
 			} else {
-				result = et.resolvDnsByLocal(e, true) == nil
+				result = et.resolvDNSByLocal(e, true) == nil
 			}
-		case PROXY_ENABLE:
-			result = et.resolvDnsByProxy(e) == nil
+		case ProxyENABLE:
+			result = resolvDNSByProxy(e) == nil
 		default:
 		}
 	}
 	return result
 }
 
-func (et *EagleTunnel) resolvDnsByProxy(e *NetArg) error {
+func resolvDNSByProxy(e *NetArg) error {
 	var err error
 	_cache, ok := dnsRemoteCache.Load(e.domain)
 	if ok { // found cache
-		cache := _cache.(*DnsCache)
+		cache := _cache.(*DNSCache)
 		if cache.Check() { // cache is valid
 			e.ip = cache.ip
 		} else { // cache's timed out
-			err = et._resolvDnsByProxy(e)
+			err = _resolvDNSByProxy(e)
 		}
 	} else { // not found
-		err = et._resolvDnsByProxy(e)
+		err = _resolvDNSByProxy(e)
 	}
 	return err
 }
 
-func (et *EagleTunnel) _resolvDnsByProxy(e *NetArg) error {
+func _resolvDNSByProxy(e *NetArg) error {
 	tunnel := Tunnel{}
-	err := et.connect2Relayer(&tunnel)
+	err := connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}
 	defer tunnel.close()
-	req := FormatEtType(ET_DNS) + " " + e.domain
+	req := FormatEtType(EtDNS) + " " + e.domain
 	count, err := tunnel.writeRight([]byte(req))
 	if err != nil {
 		return err
@@ -135,34 +139,23 @@ func (et *EagleTunnel) _resolvDnsByProxy(e *NetArg) error {
 		return err
 	}
 	e.ip = string(buffer[:count])
-	cache := CreateDnsCache(e.domain, e.ip)
+	cache := CreateDNSCache(e.domain, e.ip)
 	dnsRemoteCache.Store(cache.domain, cache)
 	return err
 }
 
-func (et *EagleTunnel) resolvDnsByLocal(e *NetArg, recursive bool) error {
-	var err error
-	_cache, ok := dnsLocalCache.Load(e.domain)
-	if ok {
-		cache := _cache.(*DnsCache)
-		if cache.Check() {
-			e.ip = cache.ip
-		} else {
-			err = et._resolvDnsByLocal(e)
-		}
-	} else {
-		err = et._resolvDnsByLocal(e)
-	}
+func (et *EagleTunnel) resolvDNSByLocal(e *NetArg, recursive bool) error {
+	err := _resolvDNSByLocal(e)
 
 	if err != nil {
-		err = et.resolvDnsByProxy(e)
+		err = resolvDNSByProxy(e)
 	} else {
 		if recursive {
 			err1 := et.sendLocationReq(e)
 			if err1 == nil {
 				if !e.boolObj {
 					ne := NetArg{domain: e.domain}
-					err1 = et.resolvDnsByProxy(&ne)
+					err1 = resolvDNSByProxy(&ne)
 					if err1 == nil {
 						e.ip = ne.ip
 					}
@@ -173,7 +166,7 @@ func (et *EagleTunnel) resolvDnsByLocal(e *NetArg, recursive bool) error {
 	return err
 }
 
-func (et *EagleTunnel) _resolvDnsByLocal(e *NetArg) error {
+func _resolvDNSByLocal(e *NetArg) error {
 	addrs, err := net.LookupHost(e.domain)
 	if err == nil {
 		var ok bool
@@ -181,8 +174,6 @@ func (et *EagleTunnel) _resolvDnsByLocal(e *NetArg) error {
 			ip := net.ParseIP(addr)
 			if ip.To4() != nil {
 				e.ip = addr
-				cache := CreateDnsCache(e.domain, e.ip)
-				dnsLocalCache.Store(cache.domain, cache)
 				ok = true
 				break
 			}
@@ -205,7 +196,7 @@ func (et *EagleTunnel) isWhiteDomain(host string) (isWhite bool) {
 	return white
 }
 
-func (et *EagleTunnel) connect2Relayer(tunnel *Tunnel) error {
+func connect2Relayer(tunnel *Tunnel) error {
 	remoteIpe := RemoteAddr + ":" + RemotePort
 	conn, err := net.DialTimeout("tcp", remoteIpe, 5*time.Second)
 	if err != nil {
@@ -213,16 +204,16 @@ func (et *EagleTunnel) connect2Relayer(tunnel *Tunnel) error {
 	}
 	tunnel.right = &conn
 	tunnel.encryptKey = EncryptKey
-	err = et.checkVersionOfRelayer(tunnel)
+	err = checkVersionOfRelayer(tunnel)
 	if err != nil {
 		return err
 	}
 	tunnel.encryptRight = true
-	err = et.checkUserOfLocal(tunnel)
+	err = checkUserOfLocal(tunnel)
 	return err
 }
 
-func (et *EagleTunnel) checkVersionOfRelayer(tunnel *Tunnel) error {
+func checkVersionOfRelayer(tunnel *Tunnel) error {
 	req := "eagle_tunnel " + protocolVersion.raw + " simple"
 	count, err := tunnel.writeRight([]byte(req))
 	if err != nil {
@@ -271,7 +262,7 @@ func (et *EagleTunnel) checkVersionOfReq(headers []string, tunnel *Tunnel) (isVa
 	return result
 }
 
-func (et *EagleTunnel) checkUserOfLocal(tunnel *Tunnel) error {
+func checkUserOfLocal(tunnel *Tunnel) error {
 	var err error
 	if LocalUser.ID == "" {
 		return nil // no need to check
@@ -325,10 +316,10 @@ func (et *EagleTunnel) checkUserOfReq(tunnel *Tunnel) (isValid bool) {
 	return result
 }
 
-func (et *EagleTunnel) sendTcpReq(e *NetArg) error {
+func (et *EagleTunnel) sendTCPReq(e *NetArg) error {
 	var err error
 	switch PROXY_STATUS {
-	case PROXY_SMART:
+	case ProxySMART:
 		var inside bool
 		err = et.sendLocationReq(e)
 		if err == nil {
@@ -337,22 +328,22 @@ func (et *EagleTunnel) sendTcpReq(e *NetArg) error {
 			inside = false
 		}
 		if inside {
-			err = et.sendTcpReq2Server(e)
+			err = et.sendTCPReq2Server(e)
 		} else {
-			err = et.sendTcpReq2Remote(e)
+			err = et.sendTCPReq2Remote(e)
 		}
-	case PROXY_ENABLE:
-		err = et.sendTcpReq2Remote(e)
+	case ProxyENABLE:
+		err = et.sendTCPReq2Remote(e)
 	}
 	return err
 }
 
-func (et *EagleTunnel) sendTcpReq2Remote(e *NetArg) error {
-	err := et.connect2Relayer(e.tunnel)
+func (et *EagleTunnel) sendTCPReq2Remote(e *NetArg) error {
+	err := connect2Relayer(e.tunnel)
 	if err != nil {
 		return err
 	}
-	req := FormatEtType(ET_TCP) + " " + e.ip + " " + strconv.Itoa(e.port)
+	req := FormatEtType(EtTCP) + " " + e.ip + " " + strconv.Itoa(e.port)
 	count, err := e.tunnel.writeRight([]byte(req))
 	if err != nil {
 		return err
@@ -375,7 +366,7 @@ func (et *EagleTunnel) sendLocationReq(e *NetArg) error {
 	if ok {
 		e.boolObj, _ = _inside.(bool)
 	} else {
-		err = et.checkInsideByRemote(e)
+		err = checkInsideByRemote(e)
 		if err == nil {
 			insideCache.Store(e.ip, e.boolObj)
 		} else {
@@ -390,14 +381,15 @@ func (et *EagleTunnel) sendLocationReq(e *NetArg) error {
 	return err
 }
 
-func (conn *EagleTunnel) checkInsideByRemote(e *NetArg) error {
+// check
+func checkInsideByRemote(e *NetArg) error {
 	tunnel := Tunnel{}
-	err := conn.connect2Relayer(&tunnel)
+	err := connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}
 	defer tunnel.close()
-	req := FormatEtType(ET_LOCATION) + " " + e.ip
+	req := FormatEtType(EtLOCATION) + " " + e.ip
 	var count int
 	count, err = tunnel.writeRight([]byte(req))
 	if err != nil {
@@ -412,7 +404,7 @@ func (conn *EagleTunnel) checkInsideByRemote(e *NetArg) error {
 	return err
 }
 
-func (et *EagleTunnel) sendTcpReq2Server(e *NetArg) error {
+func (et *EagleTunnel) sendTCPReq2Server(e *NetArg) error {
 	ipe := e.ip + ":" + strconv.Itoa(e.port)
 	conn, err := net.DialTimeout("tcp", ipe, 5*time.Second)
 	if err != nil {
@@ -423,29 +415,31 @@ func (et *EagleTunnel) sendTcpReq2Server(e *NetArg) error {
 	return err
 }
 
+// ParseEtType 得到字符串对应的ET请求类型
 func ParseEtType(src string) int {
 	var result int
 	switch src {
 	case "DNS":
-		result = ET_DNS
+		result = EtDNS
 	case "TCP":
-		result = ET_TCP
+		result = EtTCP
 	case "LOCATION":
-		result = ET_LOCATION
+		result = EtLOCATION
 	default:
-		result = ET_UNKNOWN
+		result = EtUNKNOWN
 	}
 	return result
 }
 
+// FormatEtType 得到ET请求类型对应的字符串
 func FormatEtType(src int) string {
 	var result string
 	switch src {
-	case ET_DNS:
+	case EtDNS:
 		result = "DNS"
-	case ET_TCP:
+	case EtTCP:
 		result = "TCP"
-	case ET_LOCATION:
+	case EtLOCATION:
 		result = "LOCATION"
 	default:
 	}
@@ -496,18 +490,18 @@ func (et *EagleTunnel) checkInsideByLocal(ip string) (bool, error) {
 	return inside, err
 }
 
-func (et *EagleTunnel) handleDnsReq(reqs []string, tunnel *Tunnel) {
+func (et *EagleTunnel) handleDNSReq(reqs []string, tunnel *Tunnel) {
 	if len(reqs) >= 2 {
 		domain := reqs[1]
 		e := NetArg{domain: domain}
-		err := et.resolvDnsByLocal(&e, false)
+		err := et.resolvDNSByLocal(&e, false)
 		if err == nil {
 			tunnel.writeLeft([]byte(e.ip))
 		}
 	}
 }
 
-func (et *EagleTunnel) handleTcpReq(reqs []string, tunnel *Tunnel) error {
+func (et *EagleTunnel) handleTCPReq(reqs []string, tunnel *Tunnel) error {
 	if len(reqs) < 3 {
 		return errors.New("invalid reqs")
 	}
@@ -518,7 +512,7 @@ func (et *EagleTunnel) handleTcpReq(reqs []string, tunnel *Tunnel) error {
 		return err
 	}
 	e := NetArg{ip: ip, port: int(port), tunnel: tunnel}
-	err = et.sendTcpReq2Server(&e)
+	err = et.sendTCPReq2Server(&e)
 	if err == nil {
 		tunnel.writeLeft([]byte("ok"))
 	} else {

@@ -44,7 +44,7 @@ func (conn *Socks5) handleTCPReq(req []byte, tunnel *Tunnel) bool {
 	port := conn.getPort(req)
 	if ip != "" && port > 0 {
 		var reply string
-		var e = NetArg{ip: ip, port: port, tunnel: tunnel, theType: ET_TCP}
+		var e = NetArg{ip: ip, port: port, tunnel: tunnel, theType: EtTCP}
 		conn := EagleTunnel{}
 		if conn.send(&e) {
 			reply = "\u0005\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000"
@@ -68,7 +68,7 @@ func (conn *Socks5) getIP(request []byte) string {
 		len := request[4]
 		domain := string(request[5 : 5+len])
 		newConn := EagleTunnel{}
-		e := NetArg{domain: domain, theType: ET_DNS}
+		e := NetArg{domain: domain, theType: EtDNS}
 		if newConn.send(&e) {
 			ip = e.ip
 		}

@@ -28,12 +28,12 @@ func (conn *HttpProxy) handle(request Request, tunnel *Tunnel) bool {
 			e := NetArg{domain: host, port: _port, tunnel: tunnel}
 			ip := net.ParseIP(host)
 			if ip == nil {
-				e.theType = ET_DNS
+				e.theType = EtDNS
 				sender.send(&e)
 			} else {
 				e.ip = e.domain
 			}
-			e.theType = ET_TCP
+			e.theType = EtTCP
 			ok := sender.send(&e)
 			if ok {
 				if reqType == HTTP_CONNECT {
@@ -81,7 +81,7 @@ func (conn *HttpProxy) dismantle(request string) (int, string, string) {
 			}
 			addr := net.ParseIP(host)
 			if addr == nil {
-				e := NetArg{domain: host, theType: ET_DNS}
+				e := NetArg{domain: host, theType: EtDNS}
 				conn := EagleTunnel{}
 				if conn.send(&e) {
 					host = e.ip
