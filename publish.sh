@@ -1,37 +1,31 @@
 #!/bin/bash
 
-echo "start to zip publish"
-
-./build.sh $*
-
-tmpPath="./Eagle_Tunnel_Go"
+RootPath=$(pwd)
+ScriptPath="${RootPath}/scripts"
 binPath="./zip"
 
-mkdir -p ${tmpPath}
-
-echo "copy publish..."
-cp -r ./publish ${tmpPath}
-cp ./install.sh ${tmpPath}
-cp ./uninstall.sh ${tmpPath}
-
-echo "compressing..."
 if [ $# -gt 0 ]; then
-    os=$1
+    case $1 in
+        "clean")
+        echo "begin to clean tmp files for publish"
+        if [ -d ${binPath} ]; then
+            rm -rf ${binPath}
+        fi
+        echo "publish clean done"
+        ;;
+        "all")
+        source ${ScriptPath}/publishzip.sh linux amd64
+        source ${ScriptPath}/publishzip.sh linux 386
+        source ${ScriptPath}/publishzip.sh linux arm
+        source ${ScriptPath}/publishzip.sh mac amd64
+        source ${ScriptPath}/publishzip.sh mac 386
+        source ${ScriptPath}/publishzip.sh windows amd64
+        source ${ScriptPath}/publishzip.sh windows 386
+        ;;
+        *)
+        source ${ScriptPath}/publishzip.sh $*
+        ;;
+    esac
 else
-    os="linux"
+    source ${ScriptPath}/publishzip.sh $*
 fi
-
-if [ $# -gt 1 ];then
-    arch=$2
-else
-    arch="amd64"
-fi
-
-bin="et.go.${os}.${arch}.zip"
-zip -r ${binPath}/${bin} ${tmpPath}
-
-echo "clear tmp files"
-rm -rf ${tmpPath}
-./build.sh clean
-
-echo "done"

@@ -5,7 +5,11 @@ mkdir -p ${PublishPath}
 if [ $# -gt 0 ]; then
     case $1 in
         "clean")
-        rm -rf ${PublishPath}
+        echo "begin to clean tmp files for build"
+        if [ -d ${PublishPath} ]; then
+            rm -rf ${PublishPath}
+        fi
+        echo "build clean done"
         exit
         ;;
         *)
