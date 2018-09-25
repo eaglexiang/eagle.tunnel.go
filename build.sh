@@ -1,32 +1,21 @@
 source ./scripts/env_build.sh
 
-if [ $# -gt 0 ]; then
-    des=$1
-else
-    des="linux"
-fi
-echo "des: ${des}"
-
 mkdir -p ${PublishPath}
 
-case ${des} in
-    "linux")
-    source ${ScriptPath}/build4Linux.sh
-    ;;
-    "windows")
-    source ${ScriptPath}/build4Windows.sh
-    ;;
-    "mac")
-    source ${ScriptPath}/build4Mac.sh
-    ;;
-    "clean")
-    rm -rf ${PublishPath}
-    exit
-    ;;
-    *)
-    exit
-    ;;
-esac
+if [ $# -gt 0 ]; then
+    case $1 in
+        "clean")
+        rm -rf ${PublishPath}
+        exit
+        ;;
+        *)
+        source ${ScriptPath}/buildgo.sh $*
+        exit
+        ;;
+    esac
+else
+    source ${ScriptPath}/buildgo.sh $*
+fi
 
 source ${ScriptPath}/copy-http.sh
 source ${ScriptPath}/copy-whitelist.sh
