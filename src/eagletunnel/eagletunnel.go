@@ -32,7 +32,7 @@ const (
 )
 
 // protocolVersion 作为Sender使用的协议版本号
-var protocolVersion, _ = CreateVersion("1.1")
+var protocolVersion, _ = CreateVersion("1.2")
 
 // protocolCompatibleVersion 作为Relayer可兼容的最低版本号
 var protocolCompatibleVersion, _ = CreateVersion("1.1")
@@ -40,6 +40,9 @@ var version, _ = CreateVersion("0.2")
 var insideCache = sync.Map{}
 var dnsRemoteCache = sync.Map{}
 var hostsCache = make(map[string]string)
+
+// EncryptKey 所有Tunnel使用的Key
+var EncryptKey byte
 
 // EagleTunnel 遵循ET协议的数据隧道
 type EagleTunnel struct {
@@ -131,7 +134,7 @@ func (et *EagleTunnel) sendDNSReq(e *NetArg) bool {
 	if result {
 		e.ip = ip
 	} else {
-		switch PROXY_STATUS {
+		switch ProxyStatus {
 		case ProxySMART:
 			white := IsWhiteDomain(e.domain)
 			if white {
@@ -340,7 +343,7 @@ func checkUserOfReq(tunnel *Tunnel) (isValid bool) {
 
 func (et *EagleTunnel) sendTCPReq(e *NetArg) error {
 	var err error
-	switch PROXY_STATUS {
+	switch ProxyStatus {
 	case ProxySMART:
 		var inside bool
 		err = et.sendLocationReq(e)

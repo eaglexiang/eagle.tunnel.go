@@ -57,11 +57,11 @@ func handleClientPost(values url.Values) {
 	}
 	proxyStatus := values["proxy-status"][0]
 	if proxyStatus == "智能" {
-		PROXY_STATUS = ProxySMART
+		ProxyStatus = ProxySMART
 	} else {
-		PROXY_STATUS = ProxyENABLE
+		ProxyStatus = ProxyENABLE
 	}
-	if PROXY_STATUS == ProxySMART {
+	if ProxyStatus == ProxySMART {
 		whitelistDomains := values["whitelist_domains"][0]
 		WhitelistDomains = strings.Split(whitelistDomains, "\r\n")
 	}

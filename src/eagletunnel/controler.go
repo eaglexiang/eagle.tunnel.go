@@ -10,19 +10,31 @@ import (
 	"strings"
 )
 
+// ConfigPath 主配置文件的路径
 var ConfigPath string
+
+// ConfigDir 次要配置文件所在的文件夹
 var ConfigDir string
+
+// ConfigKeyValues 主配置文件的所有键值对参数
 var ConfigKeyValues map[string]string
 
-var EncryptKey byte
+// EnableUserCheck 启用用户检查特性
 var EnableUserCheck bool
 
+// EnableSOCKS5 启用relayer对SOCKS5协议的接收
 var EnableSOCKS5 bool
+
+// EnableHTTP 启用relayer对HTTP代理协议的接收
 var EnableHTTP bool
+
+// EnableET 启用relayer对ET协议的接收
 var EnableET bool
 
-var PROXY_STATUS int
+// ProxyStatus 代理的状态（全局/智能）
+var ProxyStatus int
 
+// Init 根据给定的配置文件初始化参数
 func Init(filePath string) error {
 	ConfigPath = filePath
 	allConfLines, err := readLines(ConfigPath)
@@ -111,17 +123,17 @@ func Init(filePath string) error {
 		}
 	}
 
-	PROXY_STATUS = ProxyENABLE
+	ProxyStatus = ProxyENABLE
 	var status string
 	status, ok = ConfigKeyValues["proxy-status"]
 	if ok {
 		switch status {
 		case "enable":
-			PROXY_STATUS = ProxyENABLE
+			ProxyStatus = ProxyENABLE
 		case "smart":
-			PROXY_STATUS = ProxySMART
+			ProxyStatus = ProxySMART
 		default:
-			PROXY_STATUS = ProxyENABLE
+			ProxyStatus = ProxyENABLE
 		}
 	}
 
@@ -199,6 +211,7 @@ func exportKeyValues(keyValues *map[string]string, keys []string) string {
 	return result
 }
 
+// SetRelayer 设置relayer地址
 func SetRelayer(remoteIpe string) {
 	items := strings.Split(remoteIpe, ":")
 	RemoteAddr = strings.TrimSpace(items[0])
@@ -209,6 +222,7 @@ func SetRelayer(remoteIpe string) {
 	}
 }
 
+// SetListen 设定本地监听地址
 func SetListen(localIpe string) {
 	if localIpe == "" {
 		localIpe = "0.0.0.0:8080"
@@ -251,14 +265,13 @@ func getHostsList(hostsDir string) []string {
 	files, err := ioutil.ReadDir(hostsDir)
 	if err != nil {
 		return nil
-	} else {
-		var hosts []string
-		for _, file := range files {
-			if !file.IsDir() {
-				filename := file.Name()
-				hosts = append(hosts, filename)
-			}
-		}
-		return hosts
 	}
+	var hosts []string
+	for _, file := range files {
+		if !file.IsDir() {
+			filename := file.Name()
+			hosts = append(hosts, filename)
+		}
+	}
+	return hosts
 }

@@ -97,7 +97,7 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 // SPrintConfig 将所有配置按格式输出为字符串
 func SPrintConfig() string {
 	var status string
-	switch PROXY_STATUS {
+	switch ProxyStatus {
 	case ProxySMART:
 		status = "smart"
 	case ProxyENABLE:
