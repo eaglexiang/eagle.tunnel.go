@@ -1,0 +1,1 @@
+https://github.com/eaglexiang/eagle.tunnel.go/releases/download/v0.2/et.go.linux.amd64.tar.gz
