@@ -5,7 +5,8 @@ source ./scripts/env_install.sh
 echo "installing libs"
 mkdir -p ${LibDesPath}
 cp -f ${PublishPath}/et.go.linux ${LibDesPath}
-ln -sf ${LibDesPath}/et.go.linux /usr/bin/et
+cp -f ${PublishPath}/run.sh ${LibDesPath}
+ln -sf ${LibDesPath}/run.sh /usr/bin/et
 
 echo "installing systemd units"
 mkdir -p ${ServiceDesPath}

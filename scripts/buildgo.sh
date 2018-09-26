@@ -34,4 +34,8 @@ echo "BinFile: ${bin}"
 
 CGO_ENABLED=0 GOOS=${os} GOARCH=${arch} go build -o ${PublishPath}/${bin} ${SrcPath}/main.go
 
+if [ ${os} == "linux" ]; then
+    cp -f ${SrcPath}/scripts/runOnLinux.sh ${PublishPath}/run.sh
+fi
+
 echo "done"
