@@ -52,6 +52,11 @@ func (src *Version) isBThanOrE2(des *Version) bool {
 	return relation == Bigger || relation == Equal
 }
 
+func (src *Version) isSThanOrE2(des *Version) bool {
+	relation := src.compareWith(des)
+	return relation == Smaller || relation == Equal
+}
+
 func (src *Version) compareWith(des *Version) int {
 	ind := 0
 	for ; ind < len(src.nodes) && ind < len(des.nodes); ind++ {

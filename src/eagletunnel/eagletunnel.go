@@ -31,7 +31,11 @@ const (
 	ProxySMART
 )
 
+// protocolVersion 作为Sender使用的协议版本号
 var protocolVersion, _ = CreateVersion("1.1")
+
+// protocolCompatibleVersion 作为Relayer可兼容的最低版本号
+var protocolCompatibleVersion, _ = CreateVersion("1.1")
 var version, _ = CreateVersion("0.2")
 var insideCache = sync.Map{}
 var dnsRemoteCache = sync.Map{}
@@ -234,6 +238,11 @@ func checkVersionOfRelayer(tunnel *Tunnel) error {
 	}
 	reply := string(buffer[0:count])
 	if reply != "valid valid valid" {
+		replys := strings.Split(reply, " ")
+		reply = ""
+		for _, item := range replys {
+			reply += " \"" + item + "\""
+		}
 		return errors.New(reply)
 	}
 	return err
@@ -250,10 +259,10 @@ func (et *EagleTunnel) checkVersionOfReq(headers []string, tunnel *Tunnel) (isVa
 		}
 		versionOfReq, err := CreateVersion(headers[1])
 		if err == nil {
-			if protocolVersion.isBThanOrE2(&versionOfReq) {
+			if protocolCompatibleVersion.isSThanOrE2(&versionOfReq) {
 				replys[1] = "valid"
 			} else {
-				replys[1] = "server is elder"
+				replys[1] = "incompatible et protocol version"
 			}
 		} else {
 			replys[1] = err.Error()
