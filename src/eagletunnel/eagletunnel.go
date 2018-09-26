@@ -72,7 +72,7 @@ func (et *EagleTunnel) handle(request Request, tunnel *Tunnel) (willContinue boo
 	return result
 }
 
-// send 发送ET请求
+// Send 发送ET请求
 func (et *EagleTunnel) Send(e *NetArg) (succeed bool) {
 	var result bool
 	if len(e.TheType) >= 1 {
@@ -302,20 +302,25 @@ func checkUserOfReq(tunnel *Tunnel) (isValid bool) {
 		count, _ := tunnel.readLeft(buffer)
 		if count > 0 {
 			userStr := string(buffer[:count])
-			user, err := ParseEagleUser(userStr, (*tunnel.left).RemoteAddr())
+			user2Check, err := ParseEagleUser(userStr, (*tunnel.left).RemoteAddr())
 			if err == nil {
-				err = Users[user.ID].CheckAuth(user)
-			}
-			if err == nil {
-				reply := "valid"
-				count, _ = tunnel.writeLeft([]byte(reply))
-				result = count == 5
-				if result {
-					Users[user.ID].addTunnel(tunnel)
+				validUser, ok := Users[user2Check.ID]
+				if ok {
+					err = validUser.CheckAuth(user2Check)
+					if err == nil {
+						reply := "valid"
+						count, _ = tunnel.writeLeft([]byte(reply))
+						result = count == 5
+						if result {
+							validUser.addTunnel(tunnel)
+						}
+					} else {
+						reply := err.Error()
+						_, _ = tunnel.writeLeft([]byte(reply))
+					}
+				} else {
+					err = errors.New("incorrent username or password")
 				}
-			} else {
-				reply := err.Error()
-				_, _ = tunnel.writeLeft([]byte(reply))
 			}
 		}
 	} else {

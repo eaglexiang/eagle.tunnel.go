@@ -75,7 +75,7 @@ func (user *EagleUser) CheckAuth(user2Check *EagleUser) error {
 	case PrivateUser:
 		valid := user.Password == user2Check.Password
 		if !valid {
-			return errors.New("incorrent password")
+			return errors.New("incorrent username or password")
 		}
 		if user.lastAddr == nil {
 			user.lastAddr = user2Check.lastAddr
@@ -101,7 +101,7 @@ func (user *EagleUser) CheckAuth(user2Check *EagleUser) error {
 	case SharedUser:
 		valid := user.Password == user2Check.Password
 		if !valid {
-			return errors.New("incorrent password")
+			return errors.New("incorrent username or password")
 		}
 	}
 	return nil
