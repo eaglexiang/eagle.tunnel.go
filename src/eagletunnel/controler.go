@@ -70,10 +70,12 @@ func Init(filePath string) error {
 	var user string
 	user, ok = ConfigKeyValues["user"]
 	if ok {
-		LocalUser, err = ParseEagleUser(user, nil)
+		LocalUser, err = ParseEagleUser(user, "")
 		if err != nil {
 			fmt.Println(err)
 		}
+	} else {
+		LocalUser, _ = ParseEagleUser("root:root", "")
 	}
 
 	go CheckSpeedOfUsers()
@@ -175,7 +177,7 @@ func importUsers(usersPath string) error {
 	}
 	var user *EagleUser
 	for _, line := range userLines {
-		user, err = ParseEagleUser(line, nil)
+		user, err = ParseEagleUser(line, "")
 		if err != nil {
 			return err
 		}

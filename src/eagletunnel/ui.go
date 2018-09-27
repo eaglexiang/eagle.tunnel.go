@@ -51,9 +51,9 @@ func handleClientPost(values url.Values) {
 		id := values["id"][0]
 		password := values["password"][0]
 		userStr := id + ":" + password
-		LocalUser, _ = ParseEagleUser(userStr, nil)
+		LocalUser, _ = ParseEagleUser(userStr, "")
 	} else {
-		LocalUser = nil
+		LocalUser, _ = ParseEagleUser("root", "")
 	}
 	proxyStatus := values["proxy-status"][0]
 	if proxyStatus == "智能" {

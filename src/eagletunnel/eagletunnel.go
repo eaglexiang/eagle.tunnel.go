@@ -284,7 +284,7 @@ func (et *EagleTunnel) checkVersionOfReq(headers []string, tunnel *Tunnel) (isVa
 
 func checkUserOfLocal(tunnel *Tunnel) error {
 	var err error
-	if LocalUser == nil {
+	if LocalUser.ID == "root" {
 		return nil // no need to check
 	}
 	user := LocalUser.toString()
@@ -314,24 +314,30 @@ func checkUserOfReq(tunnel *Tunnel) (isValid bool) {
 		count, _ := tunnel.readLeft(buffer)
 		if count > 0 {
 			userStr := string(buffer[:count])
-			user2Check, err := ParseEagleUser(userStr, (*tunnel.left).RemoteAddr())
+			addr := (*tunnel.left).RemoteAddr()
+			ip := strings.Split(addr.String(), ":")[0]
+			user2Check, err := ParseEagleUser(userStr, ip)
 			if err == nil {
-				validUser, ok := Users[user2Check.ID]
-				if ok {
-					err = validUser.CheckAuth(user2Check)
-					if err == nil {
-						reply := "valid"
-						count, _ = tunnel.writeLeft([]byte(reply))
-						result = count == 5
-						if result {
-							validUser.addTunnel(tunnel)
+				if user2Check.ID == "root" {
+					tunnel.writeLeft([]byte("id shouldn't be 'root'"))
+				} else {
+					validUser, ok := Users[user2Check.ID]
+					if ok {
+						err = validUser.CheckAuth(user2Check)
+						if err == nil {
+							reply := "valid"
+							count, _ = tunnel.writeLeft([]byte(reply))
+							result = count == 5
+							if result {
+								validUser.addTunnel(tunnel)
+							}
+						} else {
+							reply := err.Error()
+							_, _ = tunnel.writeLeft([]byte(reply))
 						}
 					} else {
-						reply := err.Error()
-						_, _ = tunnel.writeLeft([]byte(reply))
+						tunnel.writeLeft([]byte("incorrent username or password"))
 					}
-				} else {
-					err = errors.New("incorrent username or password")
 				}
 			}
 		}

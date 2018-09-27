@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"net"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,8 +14,8 @@ import (
 type EagleUser struct {
 	ID             string
 	Password       string
-	lastAddr       net.Addr  // 上次登陆地
-	lastTime       time.Time // 上次检查登陆地的时间
+	lastIP         string    // 上次登陆IP
+	lastTime       time.Time // 上次检查登陆IP的时间
 	loginMutex     sync.Mutex
 	tunnels        *SyncList
 	pause          *bool
@@ -34,7 +33,7 @@ const (
 )
 
 // ParseEagleUser 通过格式化的字符串构造新的EagleUser，需要输入请求方地址，以防止重复登录
-func ParseEagleUser(userStr string, addr net.Addr) (*EagleUser, error) {
+func ParseEagleUser(userStr string, ip string) (*EagleUser, error) {
 	var user EagleUser
 	var err error
 	items := strings.Split(userStr, ":")
@@ -42,7 +41,7 @@ func ParseEagleUser(userStr string, addr net.Addr) (*EagleUser, error) {
 		user = EagleUser{
 			ID:             items[0],
 			Password:       items[1],
-			lastAddr:       addr,
+			lastIP:         ip,
 			lastTime:       time.Now(),
 			tunnels:        CreateSyncList(),
 			lastCheckSpeed: time.Now()}
@@ -77,20 +76,18 @@ func (user *EagleUser) CheckAuth(user2Check *EagleUser) error {
 		if !valid {
 			return errors.New("incorrent username or password")
 		}
-		if user.lastAddr == nil {
-			user.lastAddr = user2Check.lastAddr
+		if user.lastIP == "" {
+			user.lastIP = user2Check.lastIP
 			user.lastTime = user2Check.lastTime
 		} else {
-			ip := strings.Split(user.lastAddr.String(), ":")[0]
-			ip2Check := strings.Split(user2Check.lastAddr.String(), ":")[0]
-			valid = ip == ip2Check
+			valid = user.lastIP == user2Check.lastIP
 			if !valid {
 				user.loginMutex.Lock()
 				duration := user2Check.lastTime.Sub(user.lastTime)
 				valid = duration > 3*time.Minute
 				if valid {
 					user.lastTime = user2Check.lastTime
-					user.lastAddr = user2Check.lastAddr
+					user.lastIP = user2Check.lastIP
 					user.loginMutex.Unlock()
 				} else {
 					user.loginMutex.Unlock()

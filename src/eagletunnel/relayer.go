@@ -152,19 +152,15 @@ func SPrintConfig() string {
 
 // CheckSpeedOfUsers 轮询所有用户的速度，并根据配置选择是否进行限速
 func CheckSpeedOfUsers() {
-	if LocalUser == nil && len(Users) == 0 {
-		// 不需要检查速度，因为没有用户
-		return
-	}
 	for {
 		for _, user := range Users {
 			user.checkSpeed()
 			user.limitSpeed()
 		}
-		if LocalUser != nil {
-			LocalUser.checkSpeed()
-			LocalUser.limitSpeed()
-		}
+
+		LocalUser.checkSpeed()
+		LocalUser.limitSpeed()
+
 		time.Sleep(time.Second)
 	}
 }
