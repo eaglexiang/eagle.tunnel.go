@@ -68,19 +68,23 @@ Mac
 Linux
 
 ```shell
-./et.go.linux
+./et.go.linux ./config/client.conf
 ```
 
 Windows
 
 ```powershell
-.\et.go.exe
+.\et.go.exe .\config/client.conf
 ```
 
 Mac
 
 ```shell
-./et.go.mac
+./et.go.mac ./config/client.conf
 ```
 
 **注意** ：服务端必须打开TCP-8080端口的防火墙，系统或浏览器的代理地址设置为`127.0.0.1:8080`即可使用。
+
+## 详细使用说明
+
+参照[使用指南](./docs/guide.md)一文。
