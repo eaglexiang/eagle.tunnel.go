@@ -101,18 +101,24 @@ func startTunnel(pathOfConfig string) {
 
 func printHelp(args []string) {
 	if len(args) < 3 {
-		fmt.Println(
-			"Usage: et [options...] <config file>\n" +
-				"\t-h,\t--help\tThis help text\n" +
-				"\tclient\tuse default client config file --> " + defaultClientConfig() + "\n" +
-				"\tserver\tuse default server config file --> " + defaultServerConfig() + "\n" +
-				"\task\tplease run \"et -h ask\" or \"et --help ask\"\n")
+		printHelpMain()
 		return
 	}
 	switch args[2] {
 	case "ask":
 		printHelpAsk()
+	default:
+		printHelpMain()
 	}
+}
+
+func printHelpMain() {
+	fmt.Println(
+		"Usage: et [options...] <config file>\n" +
+			"\t-h,\t--help\tThis help text\n" +
+			"\tclient\tuse default client config file --> " + defaultClientConfig() + "\n" +
+			"\tserver\tuse default server config file --> " + defaultServerConfig() + "\n" +
+			"\task\tplease run \"et -h ask\" or \"et --help ask\"\n")
 }
 
 func printHelpAsk() {
