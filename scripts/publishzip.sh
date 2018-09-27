@@ -32,7 +32,7 @@ else
     arch="amd64"
 fi
 
-if [ os == "windows" ]; then
+if [ "${os}x" == "windowsx" ]; then
     ZIP="zip -r"
     bin="et.go.${os}.${arch}.zip"
 else
