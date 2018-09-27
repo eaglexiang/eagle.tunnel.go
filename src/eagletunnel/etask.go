@@ -65,11 +65,11 @@ func sendAskAuthReq(e *NetArg) bool {
 		e.Reply = err.Error() // 通过参数集返回具体的错误信息
 		return false
 	}
-	e.Reply = "AUTH OK"
+
 	if LocalUser.ID == "root" {
-		e.Reply += " with no local user"
+		e.Reply = "no local user"
 	} else {
-		e.Reply += " with local user: " + LocalUser.ID
+		e.Reply = "AUTH OK with local user: " + LocalUser.ID
 	}
 	return true
 }
