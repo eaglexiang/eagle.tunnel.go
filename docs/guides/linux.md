@@ -59,14 +59,6 @@ cd ./et.go.linux.amd64 # 进入程序目录
 sudo ./install.sh # 安装
 ```
 
-### 配置
-
-由于客户端并不知道服务端所在的IP，所以我们至少要配置服务端IP这一个参数（relayer）。
-
-```shell
-sudo nano /etc/eagle-tunnel.d/client.conf
-```
-
 ### 查看服务端的IP
 
 我们现在需要查询服务端的IP，如果是VPS，通常可以在网页端的控制面板里找到它。如果不能，则可在服务端所在系统中执行以下两条指令的其中之一：
@@ -102,7 +94,7 @@ wlp8s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
 
 ### 配置客户端
 
-由于客户端并不知道你的服务端运行在哪里，所以你一定要配置这一点。
+由于客户端并不知道你的服务端运行在哪里，所以你至少要为客户端配置一个参数（`relayer`)告诉它这一点。
 
 ```shell
 # 使用任何你喜欢或习惯的文本编辑器打开/etc/eagle-tunnel.d/client.conf文件
