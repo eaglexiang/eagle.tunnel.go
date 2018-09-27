@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"../eaglelib"
 )
 
 // EagleUser 提供基本和轻量的账户系统
@@ -17,7 +19,7 @@ type EagleUser struct {
 	lastIP         string    // 上次登陆IP
 	lastTime       time.Time // 上次检查登陆IP的时间
 	loginMutex     sync.Mutex
-	tunnels        *SyncList
+	tunnels        *eaglelib.SyncList
 	pause          *bool
 	bytes          int64
 	speed          int64 // KB/s
@@ -43,7 +45,7 @@ func ParseEagleUser(userStr string, ip string) (*EagleUser, error) {
 			Password:       items[1],
 			lastIP:         ip,
 			lastTime:       time.Now(),
-			tunnels:        CreateSyncList(),
+			tunnels:        eaglelib.CreateSyncList(),
 			lastCheckSpeed: time.Now()}
 		var pause bool
 		user.pause = &pause
@@ -119,17 +121,17 @@ func (user *EagleUser) totalBytes() int64 {
 
 	// 统计所有Tunnel的总Bytes
 	var next *list.Element
-	for e := user.tunnels.raw.Front(); e != nil; e = next {
+	for e := user.tunnels.Front(); e != nil; e = next {
 		next = e.Next()
-		tunnel, ok := e.Value.(*Tunnel)
+		tunnel, ok := e.Value.(*eaglelib.Tunnel)
 		if ok {
-			bytesNew := tunnel.bytesFlowed()
+			bytesNew := tunnel.BytesFlowed()
 			totalBytes += bytesNew
-			if tunnel.closed {
-				user.tunnels.remove(e)
+			if tunnel.Closed {
+				user.tunnels.Remove(e)
 			} else {
-				if tunnel.flowed && !tunnel.isRunning() {
-					user.tunnels.remove(e)
+				if tunnel.Flowed && !tunnel.IsRunning() {
+					user.tunnels.Remove(e)
 				}
 			}
 		} else {
@@ -143,9 +145,9 @@ func (user *EagleUser) totalBytes() int64 {
 	return totalBytes
 }
 
-func (user *EagleUser) addTunnel(tunnel *Tunnel) {
-	tunnel.pause = user.pause
-	user.tunnels.push(tunnel)
+func (user *EagleUser) addTunnel(tunnel *eaglelib.Tunnel) {
+	tunnel.Pause = user.pause
+	user.tunnels.Push(tunnel)
 }
 
 func (user *EagleUser) checkSpeed() {

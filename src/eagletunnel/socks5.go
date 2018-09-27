@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+
+	"../eaglelib"
 )
 
 // SOCKS请求的类型
@@ -18,15 +20,15 @@ const (
 type Socks5 struct {
 }
 
-func (conn *Socks5) handle(request Request, tunnel *Tunnel) bool {
+func (conn *Socks5) handle(request Request, tunnel *eaglelib.Tunnel) bool {
 	var result bool
 	version := request.requestMsg[0]
 	if version == '\u0005' {
 		reply := "\u0005\u0000"
-		count, _ := tunnel.writeLeft([]byte(reply))
+		count, _ := tunnel.WriteLeft([]byte(reply))
 		if count > 0 {
 			var buffer = make([]byte, 1024)
-			count, _ = tunnel.readLeft(buffer)
+			count, _ = tunnel.ReadLeft(buffer)
 			if count >= 2 {
 				cmdType := buffer[1]
 				switch cmdType {
@@ -40,21 +42,21 @@ func (conn *Socks5) handle(request Request, tunnel *Tunnel) bool {
 	return result
 }
 
-func (conn *Socks5) handleTCPReq(req []byte, tunnel *Tunnel) bool {
+func (conn *Socks5) handleTCPReq(req []byte, tunnel *eaglelib.Tunnel) bool {
 	var result bool
 	ip := conn.getIP(req)
 	port := conn.getPort(req)
 	if ip != "" && port > 0 {
 		var reply string
-		var e = NetArg{ip: ip, port: port, tunnel: tunnel, TheType: []int{EtTCP}}
+		var e = NetArg{ip: ip, port: port, tunnel: tunnel, TheType: EtTCP}
 		conn := EagleTunnel{}
 		if conn.Send(&e) {
 			reply = "\u0005\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000"
-			_, err := tunnel.writeLeft([]byte(reply))
+			_, err := tunnel.WriteLeft([]byte(reply))
 			result = err == nil
 		} else {
 			reply = "\u0005\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000"
-			tunnel.writeLeft([]byte(reply))
+			tunnel.WriteLeft([]byte(reply))
 		}
 	}
 	return result
@@ -70,7 +72,7 @@ func (conn *Socks5) getIP(request []byte) string {
 		len := request[4]
 		domain := string(request[5 : 5+len])
 		newConn := EagleTunnel{}
-		e := NetArg{domain: domain, TheType: []int{EtDNS}}
+		e := NetArg{domain: domain, TheType: EtDNS}
 		if newConn.Send(&e) {
 			ip = e.ip
 		}

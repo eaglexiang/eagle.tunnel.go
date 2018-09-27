@@ -1,4 +1,4 @@
-package eagletunnel
+package eaglelib
 
 import (
 	"errors"
@@ -16,13 +16,13 @@ const (
 // Version 版本，包含版本号字符串与其对应的int数组
 type Version struct {
 	nodes []uint
-	raw   string
+	Raw   string
 }
 
 // CreateVersion 根据格式由字符串创建Version
 func CreateVersion(src string) (Version, error) {
-	result := Version{raw: src}
-	items := strings.Split(result.raw, ".")
+	result := Version{Raw: src}
+	items := strings.Split(result.Raw, ".")
 	result.nodes = make([]uint, len(items))
 	for index, item := range items {
 		itemInt, err := strconv.ParseUint(item, 10, 32)
@@ -34,11 +34,13 @@ func CreateVersion(src string) (Version, error) {
 	return result, nil
 }
 
-func (src *Version) isBiggerThan(des *Version) bool {
+// IsBiggerThan src >= des
+func (src *Version) IsBiggerThan(des *Version) bool {
 	return src.compareWith(des) == Bigger
 }
 
-func (src *Version) isSmallerThan(des *Version) bool {
+// IsSmallerThan src <= des
+func (src *Version) IsSmallerThan(des *Version) bool {
 	return src.compareWith(des) == Smaller
 }
 
@@ -47,12 +49,14 @@ func (src *Version) Equals(des *Version) bool {
 	return src.compareWith(des) == Equal
 }
 
-func (src *Version) isBThanOrE2(des *Version) bool {
+// IsBTOrE2 sr >= des
+func (src *Version) IsBTOrE2(des *Version) bool {
 	relation := src.compareWith(des)
 	return relation == Bigger || relation == Equal
 }
 
-func (src *Version) isSThanOrE2(des *Version) bool {
+// IsSTOrE2 sr <= des
+func (src *Version) IsSTOrE2(des *Version) bool {
 	relation := src.compareWith(des)
 	return relation == Smaller || relation == Equal
 }

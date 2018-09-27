@@ -1,4 +1,4 @@
-package eagletunnel
+package eaglelib
 
 import (
 	"container/list"
@@ -18,14 +18,21 @@ func CreateSyncList() *SyncList {
 	return &result
 }
 
-func (l *SyncList) push(v interface{}) {
+// Push 在链表尾部增加节点
+func (l *SyncList) Push(v interface{}) {
 	l.lock.Lock()
 	l.raw.PushBack(v)
 	l.lock.Unlock()
 }
 
-func (l *SyncList) remove(e *list.Element) {
+// Remove 删除指定节点
+func (l *SyncList) Remove(e *list.Element) {
 	l.lock.Lock()
 	l.raw.Remove(e)
 	l.lock.Unlock()
+}
+
+// Front 返回链表的头节点
+func (l *SyncList) Front() *list.Element {
+	return l.raw.Front()
 }

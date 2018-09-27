@@ -1,4 +1,4 @@
-package eagletunnel
+package eaglelib
 
 import (
 	"net"
@@ -8,13 +8,13 @@ import (
 
 // Tunnel 是一个全双工的双向隧道，内置加密解密、暂停等待的控制器
 type Tunnel struct {
-	left            *net.Conn
-	right           *net.Conn
-	encryptLeft     bool
-	encryptRight    bool
+	Left            *net.Conn
+	Right           *net.Conn
+	EncryptLeft     bool
+	EncryptRight    bool
 	bytesL2R        uint
 	bytesR2L        uint
-	encryptKey      byte
+	EncryptKey      byte
 	bufferL2R       chan []byte
 	bufferR2L       chan []byte
 	l2RIsRunning    bool
@@ -25,53 +25,57 @@ type Tunnel struct {
 	mutexOfBytesL2R sync.Mutex
 	bytesFlowedR2L  int64
 	mutexOfBytesR2L sync.Mutex
-	flowed          bool
-	closed          bool
-	pause           *bool
+	Flowed          bool
+	Closed          bool
+	Pause           *bool
 }
 
 func (tunnel *Tunnel) encrypt(data []byte) {
 	for i, value := range data {
-		data[i] = value ^ tunnel.encryptKey
+		data[i] = value ^ tunnel.EncryptKey
 	}
 }
 
 func (tunnel *Tunnel) decrypt(data []byte) {
 	for i, value := range data {
-		data[i] = value ^ tunnel.encryptKey
+		data[i] = value ^ tunnel.EncryptKey
 	}
 }
 
-func (tunnel *Tunnel) writeLeft(data []byte) (int, error) {
-	if tunnel.encryptLeft {
+// WriteLeft 向左边写数据
+func (tunnel *Tunnel) WriteLeft(data []byte) (int, error) {
+	if tunnel.EncryptLeft {
 		tunnel.encrypt(data)
 	}
-	count, err := (*tunnel.left).Write(data)
+	count, err := (*tunnel.Left).Write(data)
 	return count, err
 }
 
-func (tunnel *Tunnel) writeRight(data []byte) (int, error) {
-	if tunnel.encryptRight {
+// WriteRight 向右边写数据
+func (tunnel *Tunnel) WriteRight(data []byte) (int, error) {
+	if tunnel.EncryptRight {
 		tunnel.encrypt(data)
 	}
-	count, err := (*tunnel.right).Write(data)
+	count, err := (*tunnel.Right).Write(data)
 	return count, err
 }
 
-func (tunnel *Tunnel) readLeft(data []byte) (int, error) {
-	count, err := (*tunnel.left).Read(data)
+// ReadLeft 从左边读取数据
+func (tunnel *Tunnel) ReadLeft(data []byte) (int, error) {
+	count, err := (*tunnel.Left).Read(data)
 	if err == nil {
-		if tunnel.encryptLeft {
+		if tunnel.EncryptLeft {
 			tunnel.decrypt(data)
 		}
 	}
 	return count, err
 }
 
-func (tunnel *Tunnel) readRight(data []byte) (int, error) {
-	count, err := (*tunnel.right).Read(data)
+// ReadRight 从右边读取数据
+func (tunnel *Tunnel) ReadRight(data []byte) (int, error) {
+	count, err := (*tunnel.Right).Read(data)
 	if err == nil {
-		if tunnel.encryptRight {
+		if tunnel.EncryptRight {
 			tunnel.decrypt(data)
 		}
 	}
@@ -82,8 +86,8 @@ func (tunnel *Tunnel) stopL2R() {
 	tunnel.mutexL2R.Lock()
 	if tunnel.l2RIsRunning {
 		tunnel.l2RIsRunning = false
-		if tunnel.right != nil {
-			(*tunnel.right).Close()
+		if tunnel.Right != nil {
+			(*tunnel.Right).Close()
 		}
 	}
 	tunnel.mutexL2R.Unlock()
@@ -93,17 +97,18 @@ func (tunnel *Tunnel) stopR2L() {
 	tunnel.mutexR2L.Lock()
 	if tunnel.r2LIsRunning {
 		tunnel.r2LIsRunning = false
-		if tunnel.left != nil {
-			(*tunnel.left).Close()
+		if tunnel.Left != nil {
+			(*tunnel.Left).Close()
 		}
 	}
 	tunnel.mutexR2L.Unlock()
 }
 
-func (tunnel *Tunnel) close() {
+// Close 关闭Tunnel，关闭前会停止其双向的流动
+func (tunnel *Tunnel) Close() {
 	tunnel.stopL2R()
 	tunnel.stopR2L()
-	tunnel.closed = true
+	tunnel.Closed = true
 }
 
 // flow from Left 2 Buffer
@@ -111,10 +116,10 @@ func (tunnel *Tunnel) flowL2B() {
 	var buffer = make([]byte, 1024)
 	var count int
 	for tunnel.l2RIsRunning {
-		if tunnel.pause != nil && *tunnel.pause {
+		if tunnel.Pause != nil && *tunnel.Pause {
 			time.Sleep(time.Second * 1)
 		}
-		count, _ = tunnel.readLeft(buffer)
+		count, _ = tunnel.ReadLeft(buffer)
 		if count > 0 {
 			newBuffer := make([]byte, count)
 			copy(newBuffer, buffer[:count])
@@ -137,7 +142,7 @@ func (tunnel *Tunnel) flowB2R() {
 	for {
 		buffer, ok = <-tunnel.bufferL2R
 		if ok {
-			count, _ = tunnel.writeRight(buffer)
+			count, _ = tunnel.WriteRight(buffer)
 			if count <= 0 {
 				break
 			}
@@ -158,10 +163,10 @@ func (tunnel *Tunnel) flowR2B() {
 	var buffer = make([]byte, 1024)
 	var count int
 	for tunnel.r2LIsRunning {
-		if tunnel.pause != nil && *tunnel.pause {
+		if tunnel.Pause != nil && *tunnel.Pause {
 			time.Sleep(time.Second * 1)
 		}
-		count, _ = tunnel.readRight(buffer)
+		count, _ = tunnel.ReadRight(buffer)
 		if count > 0 {
 			newBuffer := make([]byte, count)
 			copy(newBuffer, buffer[:count])
@@ -183,7 +188,7 @@ func (tunnel *Tunnel) flowB2L() {
 	for {
 		buffer, ok = <-tunnel.bufferR2L
 		if ok {
-			count, _ = tunnel.writeLeft(buffer)
+			count, _ = tunnel.WriteLeft(buffer)
 			if count <= 0 {
 				break
 			}
@@ -200,7 +205,8 @@ func (tunnel *Tunnel) flowR2L() {
 	go tunnel.flowB2L()
 }
 
-func (tunnel *Tunnel) flow() {
+// Flow 开始双向流动
+func (tunnel *Tunnel) Flow() {
 	tunnel.mutexL2R.Lock()
 	if !tunnel.l2RIsRunning {
 		tunnel.l2RIsRunning = true
@@ -215,11 +221,11 @@ func (tunnel *Tunnel) flow() {
 	}
 	tunnel.mutexR2L.Unlock()
 
-	tunnel.flowed = true
+	tunnel.Flowed = true
 }
 
 // BytesFlowed 将返回 bytesFlowedL2R 与 bytesFlowedR2L 的和
-func (tunnel *Tunnel) bytesFlowed() int64 {
+func (tunnel *Tunnel) BytesFlowed() int64 {
 	var l2r int64
 	var r2l int64
 
@@ -236,6 +242,7 @@ func (tunnel *Tunnel) bytesFlowed() int64 {
 	return l2r + r2l
 }
 
-func (tunnel *Tunnel) isRunning() bool {
+// IsRunning 至少有一个方向正在流动
+func (tunnel *Tunnel) IsRunning() bool {
 	return tunnel.l2RIsRunning || tunnel.r2LIsRunning
 }

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"../eaglelib"
 )
 
 // ET请求的类型
@@ -19,12 +21,6 @@ const (
 	EtUNKNOWN
 )
 
-// EtASK请求的类型
-const (
-	EtAskAUTH = iota
-	EtAskUNKNOWN
-)
-
 // 代理的状态
 const (
 	ProxyENABLE = iota
@@ -32,11 +28,11 @@ const (
 )
 
 // protocolVersion 作为Sender使用的协议版本号
-var protocolVersion, _ = CreateVersion("1.2")
+var protocolVersion, _ = eaglelib.CreateVersion("1.2")
 
 // protocolCompatibleVersion 作为Relayer可兼容的最低版本号
-var protocolCompatibleVersion, _ = CreateVersion("1.1")
-var version, _ = CreateVersion("0.2")
+var protocolCompatibleVersion, _ = eaglelib.CreateVersion("1.1")
+var version, _ = eaglelib.CreateVersion("0.2")
 var insideCache = sync.Map{}
 var dnsRemoteCache = sync.Map{}
 var hostsCache = make(map[string]string)
@@ -48,16 +44,16 @@ var EncryptKey byte
 type EagleTunnel struct {
 }
 
-func (et *EagleTunnel) handle(request Request, tunnel *Tunnel) (willContinue bool) {
+func (et *EagleTunnel) handle(request Request, tunnel *eaglelib.Tunnel) (willContinue bool) {
 	var result bool
 	args := strings.Split(request.RequestMsgStr, " ")
 	isVersionOk := et.checkVersionOfReq(args, tunnel)
 	if isVersionOk {
-		tunnel.encryptLeft = true
+		tunnel.EncryptLeft = true
 		isUserOk := checkUserOfReq(tunnel)
 		if isUserOk {
 			buffer := make([]byte, 1024)
-			count, _ := tunnel.readLeft(buffer)
+			count, _ := tunnel.ReadLeft(buffer)
 			if count > 0 {
 				req := string(buffer[:count])
 				args := strings.Split(req, " ")
@@ -70,7 +66,7 @@ func (et *EagleTunnel) handle(request Request, tunnel *Tunnel) (willContinue boo
 				case EtLOCATION:
 					et.handleLocationReq(args, tunnel)
 				case EtASK:
-					et.handleAskReq(args[1:], tunnel)
+
 				default:
 				}
 			}
@@ -82,50 +78,19 @@ func (et *EagleTunnel) handle(request Request, tunnel *Tunnel) (willContinue boo
 // Send 发送ET请求
 func (et *EagleTunnel) Send(e *NetArg) (succeed bool) {
 	var result bool
-	if len(e.TheType) >= 1 {
-		switch e.TheType[0] {
-		case EtDNS:
-			result = et.sendDNSReq(e)
-		case EtTCP:
-			result = et.sendTCPReq(e) == nil
-		case EtLOCATION:
-			result = et.sendLocationReq(e) == nil
-		case EtASK:
-			result = et.sendAskReq(e) == nil
-		default:
-		}
+	switch e.TheType {
+	case EtDNS:
+		result = et.sendDNSReq(e)
+	case EtTCP:
+		result = et.sendTCPReq(e) == nil
+	case EtLOCATION:
+		result = et.sendLocationReq(e) == nil
+	case EtASK:
+		et := ETAsk{}
+		result = et.Send(e)
+	default:
 	}
 	return result
-}
-
-func (et *EagleTunnel) handleAskReq(args []string, tunnel *Tunnel) {
-
-}
-
-func (et *EagleTunnel) sendAskReq(e *NetArg) error {
-	if len(e.TheType) < 2 {
-		return errors.New("no EtAskType input")
-	}
-	switch e.TheType[1] {
-	case EtAskAUTH:
-		return sendAskAuthReq(e)
-	default:
-		e.Reply = "Unknown ET ASK Type"
-		return errors.New(e.Reply)
-	}
-}
-
-func sendAskAuthReq(e *NetArg) error {
-	// 当connect2Relayer成功，则说明鉴权成功
-	tunnel := Tunnel{}
-	defer tunnel.close()
-	err := connect2Relayer(&tunnel)
-	if err != nil {
-		e.Reply = err.Error() // 通过参数集返回具体的错误信息
-	} else {
-		e.Reply = "AUTH OK"
-	}
-	return err
 }
 
 func (et *EagleTunnel) sendDNSReq(e *NetArg) bool {
@@ -154,9 +119,9 @@ func (et *EagleTunnel) resolvDNSByProxy(e *NetArg) error {
 	var err error
 	_cache, ok := dnsRemoteCache.Load(e.domain)
 	if ok { // found cache
-		cache := _cache.(*DNSCache)
+		cache := _cache.(*eaglelib.DNSCache)
 		if !cache.OverTTL() {
-			e.ip = cache.ip
+			e.ip = cache.IP
 		} else { // cache's timed out
 			err = et._resolvDNSByProxy(e)
 		}
@@ -167,25 +132,25 @@ func (et *EagleTunnel) resolvDNSByProxy(e *NetArg) error {
 }
 
 func (et *EagleTunnel) _resolvDNSByProxy(e *NetArg) error {
-	tunnel := Tunnel{}
-	defer tunnel.close()
+	tunnel := eaglelib.Tunnel{}
+	defer tunnel.Close()
 	err := connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}
 	req := FormatEtType(EtDNS) + " " + e.domain
-	count, err := tunnel.writeRight([]byte(req))
+	count, err := tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err
 	}
 	buffer := make([]byte, 1024)
-	count, err = tunnel.readRight(buffer)
+	count, err = tunnel.ReadRight(buffer)
 	if err != nil {
 		return err
 	}
 	e.ip = string(buffer[:count])
-	cache := CreateDNSCache(e.domain, e.ip)
-	dnsRemoteCache.Store(cache.domain, cache)
+	cache := eaglelib.CreateDNSCache(e.domain, e.ip)
+	dnsRemoteCache.Store(cache.Domain, cache)
 	return err
 }
 
@@ -211,31 +176,31 @@ func (et *EagleTunnel) resolvDNSByLocal(e *NetArg, recursive bool) error {
 	return err
 }
 
-func connect2Relayer(tunnel *Tunnel) error {
+func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 	remoteIpe := RemoteAddr + ":" + RemotePort
 	conn, err := net.DialTimeout("tcp", remoteIpe, 5*time.Second)
 	if err != nil {
 		return err
 	}
-	tunnel.right = &conn
-	tunnel.encryptKey = EncryptKey
+	tunnel.Right = &conn
+	tunnel.EncryptKey = EncryptKey
 	err = checkVersionOfRelayer(tunnel)
 	if err != nil {
 		return err
 	}
-	tunnel.encryptRight = true
+	tunnel.EncryptRight = true
 	err = checkUserOfLocal(tunnel)
 	return err
 }
 
-func checkVersionOfRelayer(tunnel *Tunnel) error {
-	req := "eagle_tunnel " + protocolVersion.raw + " simple"
-	count, err := tunnel.writeRight([]byte(req))
+func checkVersionOfRelayer(tunnel *eaglelib.Tunnel) error {
+	req := "eagle_tunnel " + protocolVersion.Raw + " simple"
+	count, err := tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err
 	}
 	var buffer = make([]byte, 1024)
-	count, err = tunnel.readRight(buffer)
+	count, err = tunnel.ReadRight(buffer)
 	if err != nil {
 		return err
 	}
@@ -251,7 +216,9 @@ func checkVersionOfRelayer(tunnel *Tunnel) error {
 	return err
 }
 
-func (et *EagleTunnel) checkVersionOfReq(headers []string, tunnel *Tunnel) (isValid bool) {
+func (et *EagleTunnel) checkVersionOfReq(
+	headers []string,
+	tunnel *eaglelib.Tunnel) (isValid bool) {
 	var result bool
 	if len(headers) >= 3 {
 		replys := make([]string, 3)
@@ -260,9 +227,9 @@ func (et *EagleTunnel) checkVersionOfReq(headers []string, tunnel *Tunnel) (isVa
 		} else {
 			replys[0] = "invalid"
 		}
-		versionOfReq, err := CreateVersion(headers[1])
+		versionOfReq, err := eaglelib.CreateVersion(headers[1])
 		if err == nil {
-			if protocolCompatibleVersion.isSThanOrE2(&versionOfReq) {
+			if protocolCompatibleVersion.IsSTOrE2(&versionOfReq) {
 				replys[1] = "valid"
 			} else {
 				replys[1] = "incompatible et protocol version"
@@ -276,25 +243,25 @@ func (et *EagleTunnel) checkVersionOfReq(headers []string, tunnel *Tunnel) (isVa
 			replys[2] = "invalid"
 		}
 		reply := replys[0] + " " + replys[1] + " " + replys[2]
-		count, _ := tunnel.writeLeft([]byte(reply))
+		count, _ := tunnel.WriteLeft([]byte(reply))
 		result = count == 17 // length of "valid valid valid"
 	}
 	return result
 }
 
-func checkUserOfLocal(tunnel *Tunnel) error {
+func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
 	var err error
 	if LocalUser.ID == "root" {
 		return nil // no need to check
 	}
 	user := LocalUser.toString()
 	var count int
-	count, err = tunnel.writeRight([]byte(user))
+	count, err = tunnel.WriteRight([]byte(user))
 	if err != nil {
 		return err
 	}
 	buffer := make([]byte, 1024)
-	count, err = tunnel.readRight(buffer)
+	count, err = tunnel.ReadRight(buffer)
 	if err != nil {
 		return err
 	}
@@ -307,36 +274,36 @@ func checkUserOfLocal(tunnel *Tunnel) error {
 	return err
 }
 
-func checkUserOfReq(tunnel *Tunnel) (isValid bool) {
+func checkUserOfReq(tunnel *eaglelib.Tunnel) (isValid bool) {
 	var result bool
 	if EnableUserCheck {
 		buffer := make([]byte, 1024)
-		count, _ := tunnel.readLeft(buffer)
+		count, _ := tunnel.ReadLeft(buffer)
 		if count > 0 {
 			userStr := string(buffer[:count])
-			addr := (*tunnel.left).RemoteAddr()
+			addr := (*tunnel.Left).RemoteAddr()
 			ip := strings.Split(addr.String(), ":")[0]
 			user2Check, err := ParseEagleUser(userStr, ip)
 			if err == nil {
 				if user2Check.ID == "root" {
-					tunnel.writeLeft([]byte("id shouldn't be 'root'"))
+					tunnel.WriteLeft([]byte("id shouldn't be 'root'"))
 				} else {
 					validUser, ok := Users[user2Check.ID]
 					if ok {
 						err = validUser.CheckAuth(user2Check)
 						if err == nil {
 							reply := "valid"
-							count, _ = tunnel.writeLeft([]byte(reply))
+							count, _ = tunnel.WriteLeft([]byte(reply))
 							result = count == 5
 							if result {
 								validUser.addTunnel(tunnel)
 							}
 						} else {
 							reply := err.Error()
-							_, _ = tunnel.writeLeft([]byte(reply))
+							_, _ = tunnel.WriteLeft([]byte(reply))
 						}
 					} else {
-						tunnel.writeLeft([]byte("incorrent username or password"))
+						tunnel.WriteLeft([]byte("incorrent username or password"))
 					}
 				}
 			}
@@ -375,12 +342,12 @@ func (et *EagleTunnel) sendTCPReq2Remote(e *NetArg) error {
 		return err
 	}
 	req := FormatEtType(EtTCP) + " " + e.ip + " " + strconv.Itoa(e.port)
-	count, err := e.tunnel.writeRight([]byte(req))
+	count, err := e.tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err
 	}
 	buffer := make([]byte, 1024)
-	count, err = e.tunnel.readRight(buffer)
+	count, err = e.tunnel.ReadRight(buffer)
 	if err != nil {
 		return err
 	}
@@ -413,20 +380,20 @@ func (et *EagleTunnel) sendLocationReq(e *NetArg) error {
 }
 
 func (et *EagleTunnel) checkInsideByRemote(e *NetArg) error {
-	tunnel := Tunnel{}
-	defer tunnel.close()
+	tunnel := eaglelib.Tunnel{}
+	defer tunnel.Close()
 	err := connect2Relayer(&tunnel)
 	if err != nil {
 		return err
 	}
 	req := FormatEtType(EtLOCATION) + " " + e.ip
 	var count int
-	count, err = tunnel.writeRight([]byte(req))
+	count, err = tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err
 	}
 	buffer := make([]byte, 1024)
-	count, err = tunnel.readRight(buffer)
+	count, err = tunnel.ReadRight(buffer)
 	if err != nil {
 		return err
 	}
@@ -440,8 +407,8 @@ func (et *EagleTunnel) sendTCPReq2Server(e *NetArg) error {
 	if err != nil {
 		return err
 	}
-	e.tunnel.right = &conn
-	e.tunnel.encryptRight = false
+	e.tunnel.Right = &conn
+	e.tunnel.EncryptRight = false
 	return err
 }
 
@@ -480,31 +447,7 @@ func FormatEtType(src int) string {
 	return result
 }
 
-// ParseEtAskType 将字符串转换为EtASK请求的类型
-func ParseEtAskType(src string) int {
-	var result int
-	switch src {
-	case "AUTH", "auth":
-		result = EtAskAUTH
-	default:
-		result = EtAskUNKNOWN
-	}
-	return result
-}
-
-// FormatEtAskType 得到EtASK请求类型对应的字符串
-func FormatEtAskType(src int) string {
-	var result string
-	switch src {
-	case EtAskAUTH:
-		result = "AUTH"
-	default:
-		result = "UNKNOWN"
-	}
-	return result
-}
-
-func (et *EagleTunnel) handleLocationReq(reqs []string, tunnel *Tunnel) {
+func (et *EagleTunnel) handleLocationReq(reqs []string, tunnel *eaglelib.Tunnel) {
 	if len(reqs) >= 2 {
 		var reply string
 		ip := reqs[1]
@@ -522,22 +465,22 @@ func (et *EagleTunnel) handleLocationReq(reqs []string, tunnel *Tunnel) {
 				insideCache.Store(ip, inside)
 			}
 		}
-		tunnel.writeLeft([]byte(reply))
+		tunnel.WriteLeft([]byte(reply))
 	}
 }
 
-func (et *EagleTunnel) handleDNSReq(reqs []string, tunnel *Tunnel) {
+func (et *EagleTunnel) handleDNSReq(reqs []string, tunnel *eaglelib.Tunnel) {
 	if len(reqs) >= 2 {
 		domain := reqs[1]
 		e := NetArg{domain: domain}
 		err := et.resolvDNSByLocal(&e, false)
 		if err == nil {
-			tunnel.writeLeft([]byte(e.ip))
+			tunnel.WriteLeft([]byte(e.ip))
 		}
 	}
 }
 
-func (et *EagleTunnel) handleTCPReq(reqs []string, tunnel *Tunnel) error {
+func (et *EagleTunnel) handleTCPReq(reqs []string, tunnel *eaglelib.Tunnel) error {
 	if len(reqs) < 3 {
 		return errors.New("invalid reqs")
 	}
@@ -550,9 +493,9 @@ func (et *EagleTunnel) handleTCPReq(reqs []string, tunnel *Tunnel) error {
 	e := NetArg{ip: ip, port: int(port), tunnel: tunnel}
 	err = et.sendTCPReq2Server(&e)
 	if err == nil {
-		tunnel.writeLeft([]byte("ok"))
+		tunnel.WriteLeft([]byte("ok"))
 	} else {
-		tunnel.writeLeft([]byte("nok"))
+		tunnel.WriteLeft([]byte("nok"))
 	}
 	return err
 }

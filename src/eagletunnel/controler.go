@@ -8,7 +8,18 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"../eaglelib"
 )
+
+var defaultPathsOfClientConfig = []string{
+	"./config/client.conf",
+	"/etc/eagle-tunnel.d/client.conf",
+	"."}
+var defaultPathsOfServerConfig = []string{
+	"./config/server.conf",
+	"/etc/eagle-tunnel.d/server.conf",
+	"."}
 
 // ConfigPath 主配置文件的路径
 var ConfigPath string
@@ -276,4 +287,24 @@ func getHostsList(hostsDir string) []string {
 		}
 	}
 	return hosts
+}
+
+// DefaultClientConfig 返回最匹配的client.conf问津
+func DefaultClientConfig() string {
+	for _, path := range defaultPathsOfClientConfig {
+		if eaglelib.FileExsits(path) {
+			return path
+		}
+	}
+	return ""
+}
+
+// DefaultServerConfig 返回最匹配的server.conf文件
+func DefaultServerConfig() string {
+	for _, path := range defaultPathsOfServerConfig {
+		if eaglelib.FileExsits(path) {
+			return path
+		}
+	}
+	return ""
 }

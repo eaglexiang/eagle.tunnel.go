@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"../eaglelib"
 )
 
 // LocalAddr 本地监听地址
@@ -64,7 +66,7 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 		return
 	}
 	request := Request{requestMsg: buffer[:count]}
-	tunnel := Tunnel{left: &conn, encryptKey: EncryptKey}
+	tunnel := eaglelib.Tunnel{Left: &conn, EncryptKey: EncryptKey}
 	var handler Handler
 	switch request.getType() {
 	case EagleTunnelReq:
@@ -85,12 +87,12 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 	if handler != nil {
 		result := handler.handle(request, &tunnel)
 		if result {
-			tunnel.flow()
+			tunnel.Flow()
 		} else {
-			tunnel.close()
+			tunnel.Close()
 		}
 	} else {
-		tunnel.close()
+		tunnel.Close()
 	}
 }
 

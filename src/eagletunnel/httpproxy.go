@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"../eaglelib"
 )
 
 // HTTP请求的类型
@@ -19,7 +21,7 @@ const (
 type HTTPProxy struct {
 }
 
-func (conn *HTTPProxy) handle(request Request, tunnel *Tunnel) bool {
+func (conn *HTTPProxy) handle(request Request, tunnel *eaglelib.Tunnel) bool {
 	var result bool
 	reqStr := request.RequestMsgStr
 	reqType, host, port := dismantle(reqStr)
@@ -30,20 +32,20 @@ func (conn *HTTPProxy) handle(request Request, tunnel *Tunnel) bool {
 			e := NetArg{domain: host, port: _port, tunnel: tunnel}
 			ip := net.ParseIP(host)
 			if ip == nil {
-				e.TheType = []int{EtDNS}
+				e.TheType = EtDNS
 				sender.Send(&e)
 			} else {
 				e.ip = e.domain
 			}
-			e.TheType = []int{EtTCP}
+			e.TheType = EtTCP
 			ok := sender.Send(&e)
 			if ok {
 				if reqType == HTTPCONNECT {
 					re443 := "HTTP/1.1 200 Connection Established\r\n\r\n"
-					_, err = tunnel.writeLeft([]byte(re443))
+					_, err = tunnel.WriteLeft([]byte(re443))
 				} else {
 					newReq := createNewRequest(reqStr)
-					_, err = tunnel.writeRight([]byte(newReq))
+					_, err = tunnel.WriteRight([]byte(newReq))
 				}
 				result = err == nil
 			}
@@ -83,7 +85,7 @@ func dismantle(request string) (int, string, string) {
 			}
 			addr := net.ParseIP(host)
 			if addr == nil {
-				e := NetArg{domain: host, TheType: []int{EtDNS}}
+				e := NetArg{domain: host, TheType: EtDNS}
 				conn := EagleTunnel{}
 				if conn.Send(&e) {
 					host = e.ip

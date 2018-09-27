@@ -14,7 +14,7 @@
             "host": "127.0.0.1",
             "program": "${fileDirname}",
             "env": {},
-            "args": ["../tmp/t.conf"],
+            "args": ["ask","local","auth","../tmp/t.conf"],
             "showLog": false
         }
     ]
