@@ -15,11 +15,13 @@ import (
 var defaultPathsOfClientConfig = []string{
 	"./config/client.conf",
 	"/etc/eagle-tunnel.d/client.conf",
-	"."}
+	"./client.conf",
+	"eagle-tunnel.conf"}
 var defaultPathsOfServerConfig = []string{
 	"./config/server.conf",
 	"/etc/eagle-tunnel.d/server.conf",
-	"."}
+	"./server.conf",
+	"eagle-tunnel.conf"}
 
 // ConfigPath 主配置文件的路径
 var ConfigPath string
@@ -289,7 +291,7 @@ func getHostsList(hostsDir string) []string {
 	return hosts
 }
 
-// DefaultClientConfig 返回最匹配的client.conf问津
+// DefaultClientConfig 返回最匹配的client.conf文件
 func DefaultClientConfig() string {
 	for _, path := range defaultPathsOfClientConfig {
 		if eaglelib.FileExsits(path) {
