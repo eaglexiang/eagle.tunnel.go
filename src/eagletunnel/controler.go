@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"../eaglelib"
+	"github.com/eaglexiang/eagle.lib.go/src"
 )
 
 var defaultPathsOfClientConfig = []string{

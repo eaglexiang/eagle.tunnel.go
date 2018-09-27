@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"../eaglelib"
+	"github.com/eaglexiang/eagle.lib.go/src"
 )
 
 // SOCKS请求的类型

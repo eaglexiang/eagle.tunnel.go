@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"../eaglelib"
+	"github.com/eaglexiang/eagle.lib.go/src"
 )
 
 // ETTCP ET-TCP子协议的实现

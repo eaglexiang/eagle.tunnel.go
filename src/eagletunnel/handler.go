@@ -1,6 +1,8 @@
 package eagletunnel
 
-import "../eaglelib"
+import (
+	"github.com/eaglexiang/eagle.lib.go/src"
+)
 
 // Handler 请求处理者
 type Handler interface {

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"../eaglelib"
+	"github.com/eaglexiang/eagle.lib.go/src"
 )
 
 // ET请求的类型

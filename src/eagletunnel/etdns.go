@@ -3,7 +3,7 @@ package eagletunnel
 import (
 	"strings"
 
-	"../eaglelib"
+	"github.com/eaglexiang/eagle.lib.go/src"
 )
 
 // ETDNS ET-DNS子协议的实现
