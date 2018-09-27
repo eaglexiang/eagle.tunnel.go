@@ -20,7 +20,8 @@ const (
 type Socks5 struct {
 }
 
-func (conn *Socks5) handle(request Request, tunnel *eaglelib.Tunnel) bool {
+// Handle 处理SOCKS5请求
+func (conn *Socks5) Handle(request Request, tunnel *eaglelib.Tunnel) bool {
 	var result bool
 	version := request.requestMsg[0]
 	if version == '\u0005' {

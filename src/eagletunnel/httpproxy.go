@@ -21,7 +21,8 @@ const (
 type HTTPProxy struct {
 }
 
-func (conn *HTTPProxy) handle(request Request, tunnel *eaglelib.Tunnel) bool {
+// Handle 处理HTTPProxy请求
+func (conn *HTTPProxy) Handle(request Request, tunnel *eaglelib.Tunnel) bool {
 	var result bool
 	reqStr := request.RequestMsgStr
 	reqType, host, port := dismantle(reqStr)

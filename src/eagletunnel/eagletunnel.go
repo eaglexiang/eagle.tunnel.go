@@ -2,9 +2,7 @@ package eagletunnel
 
 import (
 	"errors"
-	"fmt"
 	"net"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -44,7 +42,8 @@ var EncryptKey byte
 type EagleTunnel struct {
 }
 
-func (et *EagleTunnel) handle(request Request, tunnel *eaglelib.Tunnel) (willContinue bool) {
+// Handle 处理ET请求
+func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (willContinue bool) {
 	var result bool
 	args := strings.Split(request.RequestMsgStr, " ")
 	isVersionOk := et.checkVersionOfReq(args, tunnel)
@@ -60,13 +59,15 @@ func (et *EagleTunnel) handle(request Request, tunnel *eaglelib.Tunnel) (willCon
 				reqType := ParseEtType(args[0])
 				switch reqType {
 				case EtDNS:
-					et.handleDNSReq(args, tunnel)
+					ed := ETDNS{}
+					ed.Handle(request, tunnel)
 				case EtTCP:
-					result = et.handleTCPReq(args, tunnel) == nil
+					ett := ETTCP{}
+					result = ett.Handle(request, tunnel)
 				case EtLOCATION:
-					et.handleLocationReq(args, tunnel)
+					el := ETLocation{}
+					el.Handle(request, tunnel)
 				case EtASK:
-
 				default:
 				}
 			}
@@ -80,100 +81,20 @@ func (et *EagleTunnel) Send(e *NetArg) (succeed bool) {
 	var result bool
 	switch e.TheType {
 	case EtDNS:
-		result = et.sendDNSReq(e)
+		ed := ETDNS{}
+		result = ed.Send(e)
 	case EtTCP:
-		result = et.sendTCPReq(e) == nil
+		ett := ETTCP{}
+		result = ett.Send(e)
 	case EtLOCATION:
-		result = et.sendLocationReq(e) == nil
+		el := ETLocation{}
+		result = el.Send(e)
 	case EtASK:
 		et := ETAsk{}
 		result = et.Send(e)
 	default:
 	}
 	return result
-}
-
-func (et *EagleTunnel) sendDNSReq(e *NetArg) bool {
-	var result bool
-	ip, result := hostsCache[e.domain]
-	if result {
-		e.ip = ip
-	} else {
-		switch ProxyStatus {
-		case ProxySMART:
-			white := IsWhiteDomain(e.domain)
-			if white {
-				result = et.resolvDNSByProxy(e) == nil
-			} else {
-				result = et.resolvDNSByLocal(e, true) == nil
-			}
-		case ProxyENABLE:
-			result = et.resolvDNSByProxy(e) == nil
-		default:
-		}
-	}
-	return result
-}
-
-func (et *EagleTunnel) resolvDNSByProxy(e *NetArg) error {
-	var err error
-	_cache, ok := dnsRemoteCache.Load(e.domain)
-	if ok { // found cache
-		cache := _cache.(*eaglelib.DNSCache)
-		if !cache.OverTTL() {
-			e.ip = cache.IP
-		} else { // cache's timed out
-			err = et._resolvDNSByProxy(e)
-		}
-	} else { // not found
-		err = et._resolvDNSByProxy(e)
-	}
-	return err
-}
-
-func (et *EagleTunnel) _resolvDNSByProxy(e *NetArg) error {
-	tunnel := eaglelib.Tunnel{}
-	defer tunnel.Close()
-	err := connect2Relayer(&tunnel)
-	if err != nil {
-		return err
-	}
-	req := FormatEtType(EtDNS) + " " + e.domain
-	count, err := tunnel.WriteRight([]byte(req))
-	if err != nil {
-		return err
-	}
-	buffer := make([]byte, 1024)
-	count, err = tunnel.ReadRight(buffer)
-	if err != nil {
-		return err
-	}
-	e.ip = string(buffer[:count])
-	cache := eaglelib.CreateDNSCache(e.domain, e.ip)
-	dnsRemoteCache.Store(cache.Domain, cache)
-	return err
-}
-
-func (et *EagleTunnel) resolvDNSByLocal(e *NetArg, recursive bool) error {
-	err := ResolvDNSByLocal(e)
-
-	if err != nil {
-		err = et.resolvDNSByProxy(e)
-	} else {
-		if recursive {
-			err1 := et.sendLocationReq(e)
-			if err1 == nil {
-				if !e.boolObj {
-					ne := NetArg{domain: e.domain}
-					err1 = et.resolvDNSByProxy(&ne)
-					if err1 == nil {
-						e.ip = ne.ip
-					}
-				}
-			}
-		}
-	}
-	return err
 }
 
 func connect2Relayer(tunnel *eaglelib.Tunnel) error {
@@ -314,104 +235,6 @@ func checkUserOfReq(tunnel *eaglelib.Tunnel) (isValid bool) {
 	return result
 }
 
-func (et *EagleTunnel) sendTCPReq(e *NetArg) error {
-	var err error
-	switch ProxyStatus {
-	case ProxySMART:
-		var inside bool
-		err = et.sendLocationReq(e)
-		if err == nil {
-			inside = e.boolObj
-		} else {
-			inside = false
-		}
-		if inside {
-			err = et.sendTCPReq2Server(e)
-		} else {
-			err = et.sendTCPReq2Remote(e)
-		}
-	case ProxyENABLE:
-		err = et.sendTCPReq2Remote(e)
-	}
-	return err
-}
-
-func (et *EagleTunnel) sendTCPReq2Remote(e *NetArg) error {
-	err := connect2Relayer(e.tunnel)
-	if err != nil {
-		return err
-	}
-	req := FormatEtType(EtTCP) + " " + e.ip + " " + strconv.Itoa(e.port)
-	count, err := e.tunnel.WriteRight([]byte(req))
-	if err != nil {
-		return err
-	}
-	buffer := make([]byte, 1024)
-	count, err = e.tunnel.ReadRight(buffer)
-	if err != nil {
-		return err
-	}
-	reply := string(buffer[:count])
-	if reply != "ok" {
-		err = errors.New("failed 2 connect 2 server by relayer")
-	}
-	return err
-}
-
-func (et *EagleTunnel) sendLocationReq(e *NetArg) error {
-	var err error
-	_inside, ok := insideCache.Load(e.ip)
-	if ok {
-		e.boolObj, _ = _inside.(bool)
-	} else {
-		err = et.checkInsideByRemote(e)
-		if err == nil {
-			insideCache.Store(e.ip, e.boolObj)
-		} else {
-			var inside bool
-			inside, err = CheckInsideByLocal(e.ip)
-			if err == nil {
-				e.boolObj = inside
-				insideCache.Store(e.ip, e.boolObj)
-			}
-		}
-	}
-	return err
-}
-
-func (et *EagleTunnel) checkInsideByRemote(e *NetArg) error {
-	tunnel := eaglelib.Tunnel{}
-	defer tunnel.Close()
-	err := connect2Relayer(&tunnel)
-	if err != nil {
-		return err
-	}
-	req := FormatEtType(EtLOCATION) + " " + e.ip
-	var count int
-	count, err = tunnel.WriteRight([]byte(req))
-	if err != nil {
-		return err
-	}
-	buffer := make([]byte, 1024)
-	count, err = tunnel.ReadRight(buffer)
-	if err != nil {
-		return err
-	}
-	e.boolObj, err = strconv.ParseBool(string(buffer[0:count]))
-	return err
-}
-
-func (et *EagleTunnel) sendTCPReq2Server(e *NetArg) error {
-	ipe := e.ip + ":" + strconv.Itoa(e.port)
-	conn, err := net.DialTimeout("tcp", ipe, 5*time.Second)
-	if err != nil {
-		return err
-	}
-	e.tunnel.Right = &conn
-	e.tunnel.EncryptRight = false
-	return err
-}
-
 // ParseEtType 得到字符串对应的ET请求类型
 func ParseEtType(src string) int {
 	var result int
@@ -445,57 +268,4 @@ func FormatEtType(src int) string {
 	default:
 	}
 	return result
-}
-
-func (et *EagleTunnel) handleLocationReq(reqs []string, tunnel *eaglelib.Tunnel) {
-	if len(reqs) >= 2 {
-		var reply string
-		ip := reqs[1]
-		_inside, ok := insideCache.Load(ip)
-		if ok {
-			inside := _inside.(bool)
-			reply = strconv.FormatBool(inside)
-		} else {
-			var err error
-			inside, err := CheckInsideByLocal(ip)
-			if err != nil {
-				reply = fmt.Sprint(err)
-			} else {
-				reply = strconv.FormatBool(inside)
-				insideCache.Store(ip, inside)
-			}
-		}
-		tunnel.WriteLeft([]byte(reply))
-	}
-}
-
-func (et *EagleTunnel) handleDNSReq(reqs []string, tunnel *eaglelib.Tunnel) {
-	if len(reqs) >= 2 {
-		domain := reqs[1]
-		e := NetArg{domain: domain}
-		err := et.resolvDNSByLocal(&e, false)
-		if err == nil {
-			tunnel.WriteLeft([]byte(e.ip))
-		}
-	}
-}
-
-func (et *EagleTunnel) handleTCPReq(reqs []string, tunnel *eaglelib.Tunnel) error {
-	if len(reqs) < 3 {
-		return errors.New("invalid reqs")
-	}
-	ip := reqs[1]
-	_port := reqs[2]
-	port, err := strconv.ParseInt(_port, 10, 32)
-	if err != nil {
-		return err
-	}
-	e := NetArg{ip: ip, port: int(port), tunnel: tunnel}
-	err = et.sendTCPReq2Server(&e)
-	if err == nil {
-		tunnel.WriteLeft([]byte("ok"))
-	} else {
-		tunnel.WriteLeft([]byte("nok"))
-	}
-	return err
 }

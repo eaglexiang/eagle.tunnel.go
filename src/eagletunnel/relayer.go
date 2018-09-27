@@ -85,7 +85,7 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 		handler = nil
 	}
 	if handler != nil {
-		result := handler.handle(request, &tunnel)
+		result := handler.Handle(request, &tunnel)
 		if result {
 			tunnel.Flow()
 		} else {
