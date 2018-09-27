@@ -14,6 +14,11 @@ const (
 type ETAsk struct {
 }
 
+// Handle 处理ET-ASK请求
+func (ea *ETAsk) Handle(req Request, tunnel *eaglelib.Tunnel) bool {
+	return false
+}
+
 // Send 发送ET-ASK请求
 func (ea *ETAsk) Send(e *NetArg) bool {
 	if len(e.Args) < 1 {

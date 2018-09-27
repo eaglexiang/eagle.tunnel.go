@@ -57,17 +57,20 @@ func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (willCon
 				req := string(buffer[:count])
 				args := strings.Split(req, " ")
 				reqType := ParseEtType(args[0])
+				etReq := Request{RequestMsgStr: req}
 				switch reqType {
 				case EtDNS:
 					ed := ETDNS{}
-					ed.Handle(request, tunnel)
+					ed.Handle(etReq, tunnel)
 				case EtTCP:
 					ett := ETTCP{}
-					result = ett.Handle(request, tunnel)
+					result = ett.Handle(etReq, tunnel)
 				case EtLOCATION:
 					el := ETLocation{}
-					el.Handle(request, tunnel)
+					el.Handle(etReq, tunnel)
 				case EtASK:
+					ea := ETAsk{}
+					ea.Handle(etReq, tunnel)
 				default:
 				}
 			}
@@ -266,6 +269,7 @@ func FormatEtType(src int) string {
 	case EtASK:
 		result = "ASK"
 	default:
+		result = "UNKNOWN"
 	}
 	return result
 }
