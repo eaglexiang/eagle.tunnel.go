@@ -10,10 +10,12 @@ import (
 
 var defaultPathsOfClientConfig = []string{
 	"./config/client.conf",
-	"/etc/eagle-tunnel.d/client.conf"}
+	"/etc/eagle-tunnel.d/client.conf",
+	"."}
 var defaultPathsOfServerConfig = []string{
 	"./config/server.conf",
-	"/etc/eagle-tunnel.d/server.conf"}
+	"/etc/eagle-tunnel.d/server.conf",
+	"."}
 
 func main() {
 	args := os.Args
@@ -130,11 +132,7 @@ func defaultClientConfig() string {
 			return path
 		}
 	}
-	path, err := GetCurrentPath()
-	if err != nil {
-		return ""
-	}
-	return path
+	return ""
 }
 
 func defaultServerConfig() string {
@@ -143,9 +141,5 @@ func defaultServerConfig() string {
 			return path
 		}
 	}
-	path, err := GetCurrentPath()
-	if err != nil {
-		return ""
-	}
-	return path
+	return ""
 }

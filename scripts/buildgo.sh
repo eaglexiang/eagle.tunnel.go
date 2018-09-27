@@ -32,7 +32,7 @@ echo "OS: ${os}"
 echo "Arch: ${arch}"
 echo "BinFile: ${bin}"
 
-CGO_ENABLED=0 GOOS=${os} GOARCH=${arch} go build -o ${PublishPath}/${bin} ${SrcPath}/main.go
+CGO_ENABLED=0 GOOS=${os} GOARCH=${arch} go build -o ${PublishPath}/${bin} ${SrcPath}/*.go
 
 if [ ${os} == "linux" ]; then
     cp -f ${SrcPath}/scripts/runOnLinux.sh ${PublishPath}/run.sh
