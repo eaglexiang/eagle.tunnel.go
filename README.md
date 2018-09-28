@@ -37,7 +37,7 @@
 Linux
 
 ```shell
-./et.go.linux ./config/server.conf
+./et.go.linux server
 ```
 
 Windows
@@ -49,7 +49,7 @@ Windows
 Mac
 
 ```shell
-./et.go.mac ./config/server.conf
+./et.go.mac server
 ```
 
 ### 客户端
@@ -68,7 +68,7 @@ Mac
 Linux
 
 ```shell
-./et.go.linux ./config/client.conf
+./et.go.linux client
 ```
 
 Windows
@@ -80,7 +80,7 @@ Windows
 Mac
 
 ```shell
-./et.go.mac ./config/client.conf
+./et.go.mac client
 ```
 
 **注意** ：服务端必须打开TCP-8080端口的防火墙，系统或浏览器的代理地址设置为`127.0.0.1:8080`即可使用。
