@@ -17,6 +17,7 @@ cp ./uninstall.sh ${tmpPath}
 mkdir -p ${tmpPath}/scripts
 cp ${ScriptPath}/env_install.sh ${tmpPath}/scripts
 cp ${ScriptPath}/after-install.sh ${tmpPath}/scripts
+cp ${ScriptPath}/after-uninstall.sh ${tmpPath}/scripts
 echo "copy done"
 
 echo "compressing..."
