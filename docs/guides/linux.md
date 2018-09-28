@@ -55,7 +55,7 @@ curl https://raw.githubusercontent.com/eaglexiang/eagle.tunnel.go/master/docs/la
 ```shell
 # 具体的文件名和目录名根据你实际下载的文件进行替换
 tar zcvf ./et.go.linux.amd64.tar.gz # 解压
-cd ./et.go.linux.amd64 # 进入程序目录
+cd ./Eagle_Tunnel_Go # 进入解压出的程序目录
 sudo ./install.sh # 安装
 ```
 
