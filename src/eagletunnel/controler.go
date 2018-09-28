@@ -16,12 +16,12 @@ var defaultPathsOfClientConfig = []string{
 	"./config/client.conf",
 	"/etc/eagle-tunnel.d/client.conf",
 	"./client.conf",
-	"eagle-tunnel.conf"}
+	"./eagle-tunnel.conf"}
 var defaultPathsOfServerConfig = []string{
 	"./config/server.conf",
 	"/etc/eagle-tunnel.d/server.conf",
 	"./server.conf",
-	"eagle-tunnel.conf"}
+	"./eagle-tunnel.conf"}
 
 // ConfigPath 主配置文件的路径
 var ConfigPath string
