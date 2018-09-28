@@ -132,6 +132,20 @@ sudo systemctl start eagle-tunnel-client
 sudo systemctl status eagle-tunnel-client
 ```
 
+## 验证
+
+配置完成后也许有验证服务是否正在运行的需求，可在客户端处执行以下指令：
+
+```shell
+et ask local ping
+```
+
+如果服务正常，应该会返回类似以下结果：
+
+> ping to x.x.x.x:8080 time=99ms
+
+`time`指的是你的客户端到服务端的时延
+
 ## 更多参数
 
 ET支持很多参数，帮助你实现更高级的体验，请参照[ET 配置](/docs/config.md)一文。
