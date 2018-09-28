@@ -30,7 +30,7 @@ var protocolVersion, _ = eaglelib.CreateVersion("1.2")
 
 // protocolCompatibleVersion 作为Relayer可兼容的最低版本号
 var protocolCompatibleVersion, _ = eaglelib.CreateVersion("1.1")
-var version, _ = eaglelib.CreateVersion("0.2")
+var version, _ = eaglelib.CreateVersion("0.3")
 var insideCache = sync.Map{}
 var dnsRemoteCache = sync.Map{}
 var hostsCache = make(map[string]string)
