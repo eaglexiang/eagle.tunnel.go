@@ -74,7 +74,7 @@ Linux
 Windows
 
 ```powershell
-.\et.go.exe .\config/client.conf
+.\et.go.exe .\config\client.conf
 ```
 
 Mac
