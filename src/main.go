@@ -5,7 +5,11 @@ import (
 	"os"
 
 	"./eagletunnel"
+	"github.com/eaglexiang/eagle.lib.go/src"
 )
+
+// version 程序版本
+var version, _ = eaglelib.CreateVersion("0.3")
 
 func main() {
 	args := os.Args
@@ -28,6 +32,8 @@ func main() {
 		fmt.Println(result)
 	case "-h", "--help":
 		printHelp(args)
+	case "-v", "--version":
+		printVersion()
 	case "-u", "--ui":
 		var secondArg string
 		if len(args) < 3 {
@@ -84,15 +90,27 @@ func printHelp(args []string) {
 
 func printHelpMain() {
 	fmt.Println(
-		"Usage: et [options...] <config file>\n" +
-			"\t-h,\t--help\tThis help text\n" +
-			"\tclient\tuse default client config file --> " + eagletunnel.DefaultClientConfig() + "\n" +
-			"\tserver\tuse default server config file --> " + eagletunnel.DefaultServerConfig() + "\n" +
-			"\task\tplease run \"et -h ask\" or \"et --help ask\"\n")
+		"Usage: et [options...] <config file>\n",
+		"\t-h,\t--help\tthis help text\n",
+		"\t-v,\t--version\tprint version",
+		"\tclient\tuse default client config file --> "+eagletunnel.DefaultClientConfig()+"\n",
+		"\tserver\tuse default server config file --> "+eagletunnel.DefaultServerConfig()+"\n",
+		"\task\tplease run \"et -h ask\" or \"et --help ask\"",
+	)
 }
 
 func printHelpAsk() {
 	fmt.Println(
-		"Usage: et ask [options] <config file>\n" +
-			"\tauth\tcheck you local user")
+		"Usage: et ask [options] <config file>\n",
+		"\tauth\tcheck you local user",
+		"\tping\tcheck your ping to remote relayer",
+	)
+}
+
+func printVersion() {
+	fmt.Println(
+		"et version:\t", version.Raw, "\n",
+		"protocol version:\t", eagletunnel.ProtocolVersion.Raw, "\n",
+		"protocol compatible version:\t", eagletunnel.ProtocolCompatibleVersion.Raw,
+	)
 }

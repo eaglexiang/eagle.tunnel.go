@@ -25,12 +25,12 @@ const (
 	ProxySMART
 )
 
-// protocolVersion 作为Sender使用的协议版本号
-var protocolVersion, _ = eaglelib.CreateVersion("1.2")
+// ProtocolVersion 作为Sender使用的协议版本号
+var ProtocolVersion, _ = eaglelib.CreateVersion("1.2")
 
-// protocolCompatibleVersion 作为Relayer可兼容的最低版本号
-var protocolCompatibleVersion, _ = eaglelib.CreateVersion("1.1")
-var version, _ = eaglelib.CreateVersion("0.3")
+// ProtocolCompatibleVersion 作为Relayer可兼容的最低版本号
+var ProtocolCompatibleVersion, _ = eaglelib.CreateVersion("1.1")
+
 var insideCache = sync.Map{}
 var dnsRemoteCache = sync.Map{}
 var hostsCache = make(map[string]string)
@@ -118,7 +118,7 @@ func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 }
 
 func checkVersionOfRelayer(tunnel *eaglelib.Tunnel) error {
-	req := "eagle_tunnel " + protocolVersion.Raw + " simple"
+	req := "eagle_tunnel " + ProtocolVersion.Raw + " simple"
 	count, err := tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err
@@ -153,7 +153,7 @@ func (et *EagleTunnel) checkVersionOfReq(
 		}
 		versionOfReq, err := eaglelib.CreateVersion(headers[1])
 		if err == nil {
-			if protocolCompatibleVersion.IsSTOrE2(&versionOfReq) {
+			if ProtocolCompatibleVersion.IsSTOrE2(&versionOfReq) {
 				replys[1] = "valid"
 			} else {
 				replys[1] = "incompatible et protocol version"
