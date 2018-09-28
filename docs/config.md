@@ -47,6 +47,10 @@ et client
 3. ./eagle-tunnel.conf
 4. /etc/eagle-tunnel.d/server.conf
 
+### 主配置文件的省略
+
+当执行过安装脚本`install.sh`之后，主配置文件参数是可以被省略的。当它被省略后，默认会加载文件`/etc/eagle-tunnel.d/client.conf`。
+
 ## 用户认证
 
 ET提供简单轻量的用户认证，它分为服务端和客户端两个部分。
@@ -104,6 +108,18 @@ user=wang:aaa
 ### 备注
 
 `root`作为保留账户名，被禁止使用（使用时会被忽略）
+
+### 验证
+
+可在客户端处执行以下指令证明用户认证是否成功配置：
+
+```shell
+et ask local auth
+```
+
+成功的返回应该类似下面的示例：
+
+> AUTH OK with local user: [客户端使用的用户名]
 
 ## 代理模式
 
