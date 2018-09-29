@@ -28,7 +28,7 @@ const (
 // ProtocolVersion 作为Sender使用的协议版本号
 var ProtocolVersion, _ = eaglelib.CreateVersion("1.2")
 
-// ProtocolCompatibleVersion 作为Relayer可兼容的最低版本号
+// ProtocolCompatibleVersion 作为Handler可兼容的最低协议版本号
 var ProtocolCompatibleVersion, _ = eaglelib.CreateVersion("1.1")
 
 var insideCache = sync.Map{}
@@ -100,6 +100,7 @@ func (et *EagleTunnel) Send(e *NetArg) (succeed bool) {
 	return result
 }
 
+// connect2Relayer 连接到下一个Relayer，完成版本校验和用户校验两个步骤
 func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 	remoteIpe := RemoteAddr + ":" + RemotePort
 	conn, err := net.DialTimeout("tcp", remoteIpe, 5*time.Second)
@@ -199,43 +200,48 @@ func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
 }
 
 func checkUserOfReq(tunnel *eaglelib.Tunnel) (isValid bool) {
-	var result bool
-	if EnableUserCheck {
-		buffer := make([]byte, 1024)
-		count, _ := tunnel.ReadLeft(buffer)
-		if count > 0 {
-			userStr := string(buffer[:count])
-			addr := (*tunnel.Left).RemoteAddr()
-			ip := strings.Split(addr.String(), ":")[0]
-			user2Check, err := ParseEagleUser(userStr, ip)
-			if err == nil {
-				if user2Check.ID == "root" {
-					tunnel.WriteLeft([]byte("id shouldn't be 'root'"))
-				} else {
-					validUser, ok := Users[user2Check.ID]
-					if ok {
-						err = validUser.CheckAuth(user2Check)
-						if err == nil {
-							reply := "valid"
-							count, _ = tunnel.WriteLeft([]byte(reply))
-							result = count == 5
-							if result {
-								validUser.addTunnel(tunnel)
-							}
-						} else {
-							reply := err.Error()
-							_, _ = tunnel.WriteLeft([]byte(reply))
-						}
-					} else {
-						tunnel.WriteLeft([]byte("incorrent username or password"))
-					}
-				}
-			}
-		}
-	} else {
-		result = true
+	if !EnableUserCheck {
+		return true
 	}
-	return result
+	// 接收用户信息
+	buffer := make([]byte, 1024)
+	count, err := tunnel.ReadLeft(buffer)
+	if err != nil {
+		return false
+	}
+	userStr := string(buffer[:count])
+	addr := (*tunnel.Left).RemoteAddr()
+	ip := strings.Split(addr.String(), ":")[0]
+	user2Check, err := ParseEagleUser(userStr, ip)
+	if err != nil {
+		tunnel.WriteLeft([]byte(err.Error()))
+		return false
+	}
+	if user2Check.ID == "root" {
+		tunnel.WriteLeft([]byte("username shouldn't be 'root'"))
+		return false
+	}
+	validUser, ok := Users[user2Check.ID]
+	if !ok {
+		// 找不到该用户
+		tunnel.WriteLeft([]byte("incorrent username or password"))
+		return false
+	}
+	err = validUser.CheckAuth(user2Check)
+	if err != nil {
+		reply := err.Error()
+		tunnel.WriteLeft([]byte(reply))
+		return false
+	}
+	reply := "valid"
+	count, _ = tunnel.WriteLeft([]byte(reply))
+	ok = count == 5
+	if !ok {
+		// 发送响应失败
+		return false
+	}
+	validUser.addTunnel(tunnel)
+	return true
 }
 
 // ParseEtType 得到字符串对应的ET请求类型

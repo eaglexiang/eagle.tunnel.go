@@ -36,37 +36,42 @@ const (
 
 // ParseEagleUser 通过格式化的字符串构造新的EagleUser，需要输入请求方地址，以防止重复登录
 func ParseEagleUser(userStr string, ip string) (*EagleUser, error) {
-	var user EagleUser
-	var err error
 	items := strings.Split(userStr, ":")
-	if len(items) >= 2 {
-		user = EagleUser{
-			ID:             items[0],
-			Password:       items[1],
-			lastIP:         ip,
-			lastTime:       time.Now(),
-			tunnels:        eaglelib.CreateSyncList(),
-			lastCheckSpeed: time.Now()}
-		var pause bool
-		user.pause = &pause
-		if len(items) >= 3 {
-			speedLimitStr := items[2]
-			if speedLimitStr != "" {
-				user.speedLimit, err = strconv.ParseInt(items[2], 10, 64)
-			}
-		}
-		if len(items) >= 4 {
-			switch items[3] {
-			case "share":
-				user.typeOfUser = SharedUser
-			default:
-				user.typeOfUser = PrivateUser
-			}
-		}
-	} else {
-		err = errors.New("invalid user")
+	if len(items) < 2 {
+		return nil, errors.New("invalid user text")
 	}
-	return &user, err
+	now := time.Now()
+	user := EagleUser{
+		ID:             items[0],
+		Password:       items[1],
+		lastIP:         ip,
+		lastTime:       now,
+		tunnels:        eaglelib.CreateSyncList(),
+		lastCheckSpeed: now,
+	}
+	var pause bool
+	user.pause = &pause
+	if len(items) < 3 {
+		return &user, nil
+	}
+	if items[2] != "" {
+		var err error
+		user.speedLimit, err = strconv.ParseInt(items[2], 10, 64)
+		if err != nil {
+			return nil, errors.New("when parse EagleUser: " + err.Error())
+		}
+	}
+	if len(items) < 4 {
+		return &user, nil
+	}
+	if items[3] != "" {
+		var err error
+		user.typeOfUser, err = parseUserType(items[3])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &user, nil
 }
 
 func (user *EagleUser) toString() string {
@@ -77,46 +82,60 @@ func (user *EagleUser) toString() string {
 func (user *EagleUser) CheckAuth(user2Check *EagleUser) error {
 	switch user.typeOfUser {
 	case PrivateUser:
-		valid := user.Password == user2Check.Password
-		if !valid {
-			return errors.New("incorrent username or password")
-		}
-		if user.lastIP == "" {
-			user.lastIP = user2Check.lastIP
-			user.lastTime = user2Check.lastTime
-		} else {
-			valid = user.lastIP == user2Check.lastIP
-			if !valid {
-				user.loginMutex.Lock()
-				duration := user2Check.lastTime.Sub(user.lastTime)
-				valid = duration > 3*time.Minute
-				if valid {
-					user.lastTime = user2Check.lastTime
-					user.lastIP = user2Check.lastIP
-					user.loginMutex.Unlock()
-				} else {
-					user.loginMutex.Unlock()
-					return errors.New("logined")
-				}
-			}
-		}
+		return user.checkPrivateUser(user2Check)
 	case SharedUser:
-		valid := user.Password == user2Check.Password
-		if !valid {
-			return errors.New("incorrent username or password")
-		}
+		return user.checkSharedUser(user2Check)
+	default:
+		return errors.New("invalid user type")
+	}
+}
+
+func (user *EagleUser) checkPrivateUser(user2Check *EagleUser) error {
+	valid := user.Password == user2Check.Password
+	if !valid {
+		return errors.New("incorrent username or password")
+	}
+	if user.lastIP == "" {
+		// 初次登录
+		user.lastIP = user2Check.lastIP
+		user.lastTime = user2Check.lastTime
+		return nil
+	}
+	// 检查IP是否与上次一样
+	valid = user.lastIP == user2Check.lastIP
+	if valid {
+		// IP相同
+		return nil
+	}
+	user.loginMutex.Lock()
+	duration := user2Check.lastTime.Sub(user.lastTime)
+	valid = duration > 3*time.Minute
+	if valid {
+		// 3分钟内未登录过
+		user.lastTime = user2Check.lastTime
+		user.lastIP = user2Check.lastIP
+		user.loginMutex.Unlock()
+		return nil
+	}
+	user.loginMutex.Unlock()
+	return errors.New("logined")
+}
+
+func (user *EagleUser) checkSharedUser(user2Check *EagleUser) error {
+	valid := user.Password == user2Check.Password
+	if !valid {
+		return errors.New("incorrent username or password")
 	}
 	return nil
 }
 
 func (user *EagleUser) limitSpeed() {
 	// 0表示不限速
-	if user.speedLimit <= 0 {
+	if user.speedLimit == 0 {
 		return
 	}
 
-	speedKB := user.speed / 1024
-	*user.pause = speedKB > user.speedLimit
+	*user.pause = user.speed > user.speedLimit
 }
 
 func (user *EagleUser) totalBytes() int64 {
@@ -154,15 +173,31 @@ func (user *EagleUser) addTunnel(tunnel *eaglelib.Tunnel) {
 }
 
 func (user *EagleUser) checkSpeed() {
-	user.bytes += user.totalBytes()
 	now := time.Now()
 	duration := now.Sub(user.lastCheckSpeed)
-	seconds := int64(duration.Seconds())
-	if seconds > 0 {
-		user.speed = user.bytes / int64(seconds)
-	}
+	// 每三分钟重置一次计数
 	if duration > (time.Minute * 3) {
 		user.lastCheckSpeed = now
 		user.bytes = 0
 	}
+	user.bytes += user.totalBytes()
+	seconds := int64(duration.Seconds())
+	if seconds > 0 {
+		user.speed = user.bytes / seconds / 1024 // EagleTunnel.speed 单位为KB/s
+	}
+
+}
+
+func parseUserType(typeStr string) (int, error) {
+	var err error
+	var theType int
+	switch typeStr {
+	case "share":
+		theType = SharedUser
+	case "private":
+		theType = PrivateUser
+	default:
+		err = errors.New("unknown user type")
+	}
+	return theType, err
 }
