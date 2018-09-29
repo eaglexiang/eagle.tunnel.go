@@ -1,0 +1,29 @@
+digraph{
+    rankdir=LR
+
+    src[label="请求发起者" shape="box" style="dotted"]
+    des[label="真正想请求的服务器" shape="box" style="dotted"]
+
+    relayerA[label="Relayer" shape="circle"]
+    relayerB[label="上一个Relayer" shape="circle" style="dotted"]
+    relayerC[label="下一个Relayer" shape="circle" style="dotted"]
+
+    httpHandler[label="HTTP Handler" shape="box"]
+    socksHandler[label="SOCKS Handler" shape="box"]
+    etHandler[label="ET Handler" shape="box"]
+
+    etSender[label="ET Sender" shape="box"]
+
+    src->relayerA[label="HTTP/SOCKS" color="orange"]
+    relayerB->relayerA[label="ET" color="blue"]
+
+    relayerA->httpHandler:w[label="HTTP" color="red"]
+    relayerA->socksHandler:w[label="SOCKS" color="yellow"]
+    relayerA->etHandler:w[label="ET" color="blue"]
+
+    httpHandler:e->etSender[label="连接信息" color="gray"]
+    socksHandler:e->etSender[label="连接信息" color="gray"]
+    etHandler->des[label="TCP请求"]
+
+    etSender->relayerC[label="ET" color="blue"]
+}
