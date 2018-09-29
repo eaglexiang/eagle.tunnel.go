@@ -9,7 +9,7 @@ import (
 )
 
 // version 程序版本
-var version, _ = eaglelib.CreateVersion("0.3")
+var version, _ = eaglelib.CreateVersion("0.4")
 
 func main() {
 	args := os.Args

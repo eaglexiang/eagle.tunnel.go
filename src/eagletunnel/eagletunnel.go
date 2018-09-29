@@ -43,40 +43,42 @@ type EagleTunnel struct {
 }
 
 // Handle 处理ET请求
-func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (willContinue bool) {
-	var result bool
+func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (keepAlive bool) {
 	args := strings.Split(request.RequestMsgStr, " ")
 	isVersionOk := et.checkVersionOfReq(args, tunnel)
-	if isVersionOk {
-		tunnel.EncryptLeft = true
-		isUserOk := checkUserOfReq(tunnel)
-		if isUserOk {
-			buffer := make([]byte, 1024)
-			count, _ := tunnel.ReadLeft(buffer)
-			if count > 0 {
-				req := string(buffer[:count])
-				args := strings.Split(req, " ")
-				reqType := ParseEtType(args[0])
-				etReq := Request{RequestMsgStr: req}
-				switch reqType {
-				case EtDNS:
-					ed := ETDNS{}
-					ed.Handle(etReq, tunnel)
-				case EtTCP:
-					ett := ETTCP{}
-					result = ett.Handle(etReq, tunnel)
-				case EtLOCATION:
-					el := ETLocation{}
-					el.Handle(etReq, tunnel)
-				case EtASK:
-					ea := ETAsk{}
-					ea.Handle(etReq, tunnel)
-				default:
-				}
-			}
-		}
+	if !isVersionOk {
+		return false
 	}
-	return result
+	tunnel.EncryptLeft = true
+	isUserOk := checkUserOfReq(tunnel)
+	if !isUserOk {
+		return false
+	}
+	buffer := make([]byte, 1024)
+	count, err := tunnel.ReadLeft(buffer)
+	if err != nil {
+		return false
+	}
+	req := string(buffer[:count])
+	args = strings.Split(req, " ")
+	reqType := ParseEtType(args[0])
+	etReq := Request{RequestMsgStr: req}
+	switch reqType {
+	case EtDNS:
+		ed := ETDNS{}
+		ed.Handle(etReq, tunnel)
+	case EtTCP:
+		ett := ETTCP{}
+		return ett.Handle(etReq, tunnel) // 只有TCP请求有可能需要保持连接
+	case EtLOCATION:
+		el := ETLocation{}
+		el.Handle(etReq, tunnel)
+	case EtASK:
+		ea := ETAsk{}
+		ea.Handle(etReq, tunnel)
+	default:
+	}
+	return false
 }
 
 // Send 发送ET请求
@@ -144,34 +146,33 @@ func checkVersionOfRelayer(tunnel *eaglelib.Tunnel) error {
 func (et *EagleTunnel) checkVersionOfReq(
 	headers []string,
 	tunnel *eaglelib.Tunnel) (isValid bool) {
-	var result bool
-	if len(headers) >= 3 {
-		replys := make([]string, 3)
-		if headers[0] == "eagle_tunnel" {
-			replys[0] = "valid"
-		} else {
-			replys[0] = "invalid"
-		}
-		versionOfReq, err := eaglelib.CreateVersion(headers[1])
-		if err == nil {
-			if ProtocolCompatibleVersion.IsSTOrE2(&versionOfReq) {
-				replys[1] = "valid"
-			} else {
-				replys[1] = "incompatible et protocol version"
-			}
-		} else {
-			replys[1] = err.Error()
-		}
-		if headers[2] == "simple" {
-			replys[2] = "valid"
-		} else {
-			replys[2] = "invalid"
-		}
-		reply := replys[0] + " " + replys[1] + " " + replys[2]
-		count, _ := tunnel.WriteLeft([]byte(reply))
-		result = count == 17 // length of "valid valid valid"
+	if len(headers) < 3 {
+		return false
 	}
-	return result
+	replys := make([]string, 3)
+	if headers[0] == "eagle_tunnel" {
+		replys[0] = "valid"
+	} else {
+		replys[0] = "invalid"
+	}
+	versionOfReq, err := eaglelib.CreateVersion(headers[1])
+	if err == nil {
+		if ProtocolCompatibleVersion.IsSTOrE2(&versionOfReq) {
+			replys[1] = "valid"
+		} else {
+			replys[1] = "incompatible et protocol version"
+		}
+	} else {
+		replys[1] = err.Error()
+	}
+	if headers[2] == "simple" {
+		replys[2] = "valid"
+	} else {
+		replys[2] = "invalid"
+	}
+	reply := replys[0] + " " + replys[1] + " " + replys[2]
+	count, _ := tunnel.WriteLeft([]byte(reply))
+	return count == 17 // length of "valid valid valid"
 }
 
 func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
