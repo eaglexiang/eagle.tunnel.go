@@ -10,4 +10,4 @@
 
 ## 开发者
 
-- [编译和打包](./publish.md)
+- [编译和打包](./development/publish.md)
