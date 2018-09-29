@@ -40,6 +40,12 @@ func ParseEagleUser(userStr string, ip string) (*EagleUser, error) {
 	if len(items) < 2 {
 		return nil, errors.New("invalid user text")
 	}
+	if items[0] == "" {
+		return nil, errors.New("null username")
+	}
+	if items[1] == "" {
+		return nil, errors.New("null password")
+	}
 	now := time.Now()
 	user := EagleUser{
 		ID:             items[0],
@@ -59,6 +65,10 @@ func ParseEagleUser(userStr string, ip string) (*EagleUser, error) {
 		user.speedLimit, err = strconv.ParseInt(items[2], 10, 64)
 		if err != nil {
 			return nil, errors.New("when parse EagleUser: " + err.Error())
+		} else {
+			if user.speedLimit < 0 {
+				return nil, errors.New("speed limit must be bigger than or equal to 0")
+			}
 		}
 	}
 	if len(items) < 4 {
