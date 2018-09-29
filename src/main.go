@@ -92,7 +92,7 @@ func printHelpMain() {
 	fmt.Println(
 		"Usage: et [options...] <config file>\n",
 		"\t-h,\t--help\tthis help text\n",
-		"\t-v,\t--version\tprint version",
+		"\t-v,\t--version\tprint version\n",
 		"\tclient\tuse default client config file --> "+eagletunnel.DefaultClientConfig()+"\n",
 		"\tserver\tuse default server config file --> "+eagletunnel.DefaultServerConfig()+"\n",
 		"\task\tplease run \"et -h ask\" or \"et --help ask\"",
@@ -102,7 +102,7 @@ func printHelpMain() {
 func printHelpAsk() {
 	fmt.Println(
 		"Usage: et ask [options] <config file>\n",
-		"\tauth\tcheck you local user",
+		"\tauth\tcheck you local user\n",
 		"\tping\tcheck your ping to remote relayer",
 	)
 }
