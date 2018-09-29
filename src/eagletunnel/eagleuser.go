@@ -50,7 +50,10 @@ func ParseEagleUser(userStr string, ip string) (*EagleUser, error) {
 		var pause bool
 		user.pause = &pause
 		if len(items) >= 3 {
-			user.speedLimit, err = strconv.ParseInt(items[2], 10, 64)
+			speedLimitStr := items[2]
+			if speedLimitStr != "" {
+				user.speedLimit, err = strconv.ParseInt(items[2], 10, 64)
+			}
 		}
 		if len(items) >= 4 {
 			switch items[3] {

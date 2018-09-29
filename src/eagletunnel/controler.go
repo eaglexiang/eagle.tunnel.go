@@ -67,7 +67,6 @@ func Init(filePath string) error {
 		fmt.Println("default config-dir -> ", ConfigDir)
 	}
 
-	EnableUserCheck = false
 	var enableUsercheck string
 	enableUsercheck, ok = ConfigKeyValues["user-check"]
 	if ok {
