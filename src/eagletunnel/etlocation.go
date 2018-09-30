@@ -2,7 +2,6 @@ package eagletunnel
 
 import (
 	"fmt"
-	"net"
 	"strconv"
 	"strings"
 
@@ -20,8 +19,7 @@ func (el *ETLocation) Send(e *NetArg) bool {
 		e.boolObj, _ = _inside.(bool)
 		return true
 	}
-	ip := net.ParseIP(e.IP)
-	if !ip.IsGlobalUnicast() {
+	if CheckPrivateIPv4(e.IP) {
 		// 保留地址适合直连
 		e.boolObj = true
 		insideCache.Store(e.IP, true)
@@ -70,25 +68,24 @@ func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) {
 	reqs := strings.Split(req.RequestMsgStr, " ")
 	if len(reqs) >= 2 {
 		var reply string
-		_ip := reqs[1]
-		_inside, ok := insideCache.Load(_ip)
+		ip := reqs[1]
+		_inside, ok := insideCache.Load(ip)
 		if ok {
 			inside := _inside.(bool)
 			reply = strconv.FormatBool(inside)
 		} else {
-			ip := net.ParseIP(_ip)
-			if ip.IsGlobalUnicast() {
+			if CheckPrivateIPv4(ip) {
+				reply = strconv.FormatBool(true)
+				insideCache.Store(ip, true)
+			} else {
 				var err error
-				inside, err := CheckInsideByLocal(_ip)
+				inside, err := CheckInsideByLocal(ip)
 				if err != nil {
 					reply = fmt.Sprint(err)
 				} else {
 					reply = strconv.FormatBool(inside)
-					insideCache.Store(_ip, inside)
+					insideCache.Store(ip, inside)
 				}
-			} else {
-				reply = strconv.FormatBool(true)
-				insideCache.Store(_ip, true)
 			}
 		}
 		tunnel.WriteLeft([]byte(reply))
