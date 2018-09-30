@@ -2,6 +2,7 @@ package eagletunnel
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 
@@ -12,26 +13,34 @@ import (
 type ETLocation struct {
 }
 
-// Send 发送请求
+// Send 发送ET-LOCATION请求 解析IP是否适合直连。返回值表示是否成功解析，解析结果保存在e.boolObj
 func (el *ETLocation) Send(e *NetArg) bool {
-	var err error
 	_inside, ok := insideCache.Load(e.IP)
 	if ok {
 		e.boolObj, _ = _inside.(bool)
-	} else {
-		err = el.checkInsideByRemote(e)
-		if err == nil {
-			insideCache.Store(e.IP, e.boolObj)
-		} else {
-			var inside bool
-			inside, err = CheckInsideByLocal(e.IP)
-			if err == nil {
-				e.boolObj = inside
-				insideCache.Store(e.IP, e.boolObj)
-			}
-		}
+		return true
 	}
-	return err == nil
+	ip := net.ParseIP(e.IP)
+	if !ip.IsGlobalUnicast() {
+		// 保留地址适合直连
+		e.boolObj = true
+		insideCache.Store(e.IP, true)
+		return true
+	}
+	err := el.checkInsideByRemote(e)
+	if err != nil {
+		// 远端不响应，不得已本地解析。尽量使用远端解析可减少外部API的负载
+		var inside bool
+		inside, err = CheckInsideByLocal(e.IP)
+		if err != nil {
+			return false
+		}
+		e.boolObj = inside
+		insideCache.Store(e.IP, e.boolObj)
+		return true
+	}
+	insideCache.Store(e.IP, e.boolObj)
+	return true
 }
 
 func (el *ETLocation) checkInsideByRemote(e *NetArg) error {
@@ -61,19 +70,25 @@ func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) {
 	reqs := strings.Split(req.RequestMsgStr, " ")
 	if len(reqs) >= 2 {
 		var reply string
-		ip := reqs[1]
-		_inside, ok := insideCache.Load(ip)
+		_ip := reqs[1]
+		_inside, ok := insideCache.Load(_ip)
 		if ok {
 			inside := _inside.(bool)
 			reply = strconv.FormatBool(inside)
 		} else {
-			var err error
-			inside, err := CheckInsideByLocal(ip)
-			if err != nil {
-				reply = fmt.Sprint(err)
+			ip := net.ParseIP(_ip)
+			if ip.IsGlobalUnicast() {
+				var err error
+				inside, err := CheckInsideByLocal(_ip)
+				if err != nil {
+					reply = fmt.Sprint(err)
+				} else {
+					reply = strconv.FormatBool(inside)
+					insideCache.Store(_ip, inside)
+				}
 			} else {
-				reply = strconv.FormatBool(inside)
-				insideCache.Store(ip, inside)
+				reply = strconv.FormatBool(true)
+				insideCache.Store(_ip, true)
 			}
 		}
 		tunnel.WriteLeft([]byte(reply))
