@@ -278,8 +278,8 @@ func readHosts(configDir string) {
 
 		items := strings.Split(host, " ")
 		if len(items) >= 2 {
-			domain := strings.TrimSpace(items[0])
-			ip := strings.TrimSpace(items[1])
+			ip := strings.TrimSpace(items[0])
+			domain := strings.TrimSpace(items[1])
 			if domain != "" && ip != "" {
 				hostsCache[domain] = ip
 			}
