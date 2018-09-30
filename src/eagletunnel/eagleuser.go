@@ -201,9 +201,9 @@ func parseUserType(typeStr string) (int, error) {
 	var err error
 	var theType int
 	switch typeStr {
-	case "share":
+	case "share", "SHARE", "shared", "SHARED":
 		theType = SharedUser
-	case "private":
+	case "private", "PRIVATE":
 		theType = PrivateUser
 	default:
 		err = errors.New("unknown user type")

@@ -113,9 +113,24 @@ func Test_EagleUser_Check(t *testing.T) {
 	if err == nil {
 		t.Error("未识别已改变的IP")
 	}
-	validUser.typeOfUser = SharedUser
+	validUser, _ = ParseEagleUser("abc:jsl*::share", "")
 	err = validUser.CheckAuth(user2Check)
 	if err != nil {
-		t.Error("share账户不应该限制多地同时登录")
+		t.Error("不该有的报错：", err.Error())
+	}
+	user2Check.lastIP = "192.168.0.5"
+	err = validUser.CheckAuth(user2Check)
+	if err != nil {
+		t.Error("shared账户不应该限制多地同时登录")
+	}
+	validUser, _ = ParseEagleUser("abc:jsl*::shared", "")
+	err = validUser.CheckAuth(user2Check)
+	if err != nil {
+		t.Error("不该有的报错：", err.Error())
+	}
+	user2Check.lastIP = "192.168.0.6"
+	err = validUser.CheckAuth(user2Check)
+	if err != nil {
+		t.Error("shared账户不应该限制多地同时登录")
 	}
 }
