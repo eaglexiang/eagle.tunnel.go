@@ -90,18 +90,32 @@ func Test_EagleUser_Check(t *testing.T) {
 	user2Check.lastIP = "192.168.0.1"
 	err = validUser.CheckAuth(user2Check)
 	if err == nil {
-		t.Error("未识别到改变后的IP")
+		t.Error("未识别已改变的IP")
 	}
 	user2Check.lastIP = "192.168.0.2"
 	user2Check.lastTime = user2Check.lastTime.Add(4 * time.Minute)
 	err = validUser.CheckAuth(user2Check)
 	if err != nil {
-		t.Error("未识别到已过3分钟")
+		t.Error("未识别已过3分钟")
 	}
 	user2Check.lastIP = "192.168.0.3"
 	user2Check.lastTime = user2Check.lastTime.Add(2 * time.Minute)
 	err = validUser.CheckAuth(user2Check)
 	if err == nil {
 		t.Error("时间只过了2分钟")
+	}
+	user2Check.lastIP = "192.168.0.4"
+	err = validUser.CheckAuth(user2Check)
+	if err == nil {
+		t.Error("未识别已改变的IP")
+	}
+	err = validUser.CheckAuth(user2Check)
+	if err == nil {
+		t.Error("未识别已改变的IP")
+	}
+	validUser.typeOfUser = SharedUser
+	err = validUser.CheckAuth(user2Check)
+	if err != nil {
+		t.Error("share账户不应该限制多地同时登录")
 	}
 }
