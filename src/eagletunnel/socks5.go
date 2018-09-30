@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"net"
+	"strings"
 
 	"github.com/eaglexiang/eagle.lib.go/src"
 )
@@ -22,6 +24,13 @@ type Socks5 struct {
 
 // Handle 处理SOCKS5请求
 func (conn *Socks5) Handle(request Request, tunnel *eaglelib.Tunnel) bool {
+	_ipOfReq := strings.Split((*tunnel.Left).RemoteAddr().String(), ":")[0]
+	ipOfReq := net.ParseIP(_ipOfReq)
+	if ipOfReq.IsGlobalUnicast() {
+		// 不接受来自公网IP的SOCKS5请求
+		return false
+	}
+
 	var result bool
 	version := request.requestMsg[0]
 	if version == '\u0005' {

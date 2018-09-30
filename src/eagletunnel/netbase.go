@@ -31,7 +31,7 @@ func ResolvDNSByLocal(e *NetArg) error {
 	return err
 }
 
-// CheckInsideByLocal 本地解析IP所在地
+// CheckInsideByLocal 本地解析IP是否适合直连
 func CheckInsideByLocal(ip string) (bool, error) {
 	var inside bool
 	req := "https://ip2c.org/" + ip
