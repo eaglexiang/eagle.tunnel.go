@@ -44,7 +44,7 @@ func (et *ETTCP) sendTCPReq2Remote(e *NetArg) error {
 	if err != nil {
 		return err
 	}
-	req := FormatEtType(EtTCP) + " " + e.ip + " " + strconv.Itoa(e.port)
+	req := FormatEtType(EtTCP) + " " + e.IP + " " + strconv.Itoa(e.Port)
 	count, err := e.tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (et *ETTCP) sendTCPReq2Remote(e *NetArg) error {
 }
 
 func (et *ETTCP) sendTCPReq2Server(e *NetArg) error {
-	ipe := e.ip + ":" + strconv.Itoa(e.port)
+	ipe := e.IP + ":" + strconv.Itoa(e.Port)
 	conn, err := net.DialTimeout("tcp", ipe, 5*time.Second)
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func (et *ETTCP) Handle(req Request, tunnel *eaglelib.Tunnel) bool {
 	if err != nil {
 		return false
 	}
-	e := NetArg{ip: ip, port: int(port), tunnel: tunnel}
+	e := NetArg{IP: ip, Port: int(port), tunnel: tunnel}
 	err = et.sendTCPReq2Server(&e)
 	if err != nil {
 		tunnel.WriteLeft([]byte("nok"))

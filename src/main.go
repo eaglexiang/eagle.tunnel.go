@@ -28,8 +28,7 @@ func main() {
 
 	switch firstArg {
 	case "ask":
-		result := ask(args[2:]) // 过滤掉 'et ask'
-		fmt.Println(result)
+		ask(args[2:]) // 过滤掉 'et ask'
 	case "-h", "--help":
 		printHelp(args)
 	case "-v", "--version":
@@ -47,13 +46,23 @@ func main() {
 	}
 }
 
-func ask(args []string) string {
+func ask(args []string) {
 	et := eagletunnel.EagleTunnel{}
 	e := eagletunnel.NetArg{}
 	e.TheType = eagletunnel.EtASK
 	e.Args = args
-	et.Send(&e)
-	return e.Reply
+	var oks int
+	times := 10
+	for i := 0; i < times; i++ {
+		eTmp := e.Clone()
+		result := et.Send(eTmp)
+		if result {
+			oks++
+		}
+		fmt.Println("ping to ", eTmp.IP, ":", eTmp.Port, " time=", eTmp.Reply, "ms")
+	}
+	fmt.Println("--------------- ET ASK PING ---------------")
+	fmt.Println(times, " packets transmitted, ", oks, " received, ", (times-oks)*20, "% packet loss")
 }
 
 func startUI(pathOfConfig string) {

@@ -19,7 +19,7 @@ func ResolvDNSByLocal(e *NetArg) error {
 		for _, addr := range addrs {
 			ip := net.ParseIP(addr)
 			if ip.To4() != nil {
-				e.ip = addr
+				e.IP = addr
 				ok = true
 				break
 			}

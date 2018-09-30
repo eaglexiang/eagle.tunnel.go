@@ -18,7 +18,7 @@ func (ed *ETDNS) Handle(req Request, tunnel *eaglelib.Tunnel) {
 		e := NetArg{domain: domain}
 		err := resolvDNSByLocal(&e, false)
 		if err == nil {
-			tunnel.WriteLeft([]byte(e.ip))
+			tunnel.WriteLeft([]byte(e.IP))
 		}
 	}
 }
@@ -28,7 +28,7 @@ func (ed *ETDNS) Send(e *NetArg) bool {
 	var result bool
 	ip, result := hostsCache[e.domain]
 	if result {
-		e.ip = ip
+		e.IP = ip
 	} else {
 		switch ProxyStatus {
 		case ProxySMART:
@@ -52,7 +52,7 @@ func resolvDNSByProxy(e *NetArg) error {
 	if ok { // found cache
 		cache := _cache.(*eaglelib.DNSCache)
 		if !cache.OverTTL() {
-			e.ip = cache.IP
+			e.IP = cache.IP
 		} else { // cache's timed out
 			err = _resolvDNSByProxy(e)
 		}
@@ -79,8 +79,8 @@ func _resolvDNSByProxy(e *NetArg) error {
 	if err != nil {
 		return err
 	}
-	e.ip = string(buffer[:count])
-	cache := eaglelib.CreateDNSCache(e.domain, e.ip)
+	e.IP = string(buffer[:count])
+	cache := eaglelib.CreateDNSCache(e.domain, e.IP)
 	dnsRemoteCache.Store(cache.Domain, cache)
 	return err
 }
@@ -99,7 +99,7 @@ func resolvDNSByLocal(e *NetArg, recursive bool) error {
 					ne := NetArg{domain: e.domain}
 					err1 := resolvDNSByProxy(&ne)
 					if err1 == nil {
-						e.ip = ne.ip
+						e.IP = ne.IP
 					}
 				}
 			}

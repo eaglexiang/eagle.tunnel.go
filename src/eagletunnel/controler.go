@@ -64,7 +64,7 @@ func Init(filePath string) error {
 	ConfigDir, ok = ConfigKeyValues["config-dir"]
 	if !ok {
 		ConfigDir = filepath.Dir(ConfigPath)
-		fmt.Println("default config-dir -> ", ConfigDir)
+		// fmt.Println("default config-dir -> ", ConfigDir)
 	}
 
 	var enableUsercheck string

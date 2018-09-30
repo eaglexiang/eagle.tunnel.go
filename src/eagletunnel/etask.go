@@ -137,19 +137,6 @@ func sendAskAuthReq(e *NetArg) bool {
 }
 
 func sendAskPingReq(e *NetArg) bool {
-	// times := 5
-	// var result bool
-	// // 一共重复ping $times 次
-	// for i := 0; i < times; i++ {
-	// 	tmpE := e.Clone()
-	// 	result = result || sendSingleAskPingReq(tmpE)
-	// 	e.Reply += tmpE.Reply + "\n"
-	// }
-	// return result
-	return sendSingleAskPingReq(e)
-}
-
-func sendSingleAskPingReq(e *NetArg) bool {
 	if len(e.Args) < 1 {
 		e.Args = append(e.Args, DefaultClientConfig())
 	}
@@ -158,7 +145,6 @@ func sendSingleAskPingReq(e *NetArg) bool {
 		e.Reply = err.Error()
 		return false
 	}
-
 	// 连接服务器
 	tunnel := eaglelib.Tunnel{}
 	defer tunnel.Close()
@@ -167,6 +153,12 @@ func sendSingleAskPingReq(e *NetArg) bool {
 		e.Reply = err.Error()
 		return false
 	}
+
+	addr := (*tunnel.Right).RemoteAddr()
+	addrs := strings.Split(addr.String(), ":")
+	e.IP = addrs[0]
+	port, _ := strconv.ParseInt(addrs[1], 10, 32)
+	e.Port = int(port)
 
 	// 告知ASK请求
 	req := FormatEtType(EtASK) + " " + formatEtAskType(EtAskPING)
@@ -192,8 +184,7 @@ func sendSingleAskPingReq(e *NetArg) bool {
 	duration := end.Sub(start)
 	ns := duration.Nanoseconds()
 	ms := ns / 1000 / 1000
-	addr := (*tunnel.Right).RemoteAddr()
-	e.Reply = "ping to " + addr.String() + " time=" + strconv.FormatInt(ms, 10) + "ms"
+	e.Reply = strconv.FormatInt(ms, 10)
 	return true
 }
 

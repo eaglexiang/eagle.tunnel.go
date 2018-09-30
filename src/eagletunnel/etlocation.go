@@ -15,19 +15,19 @@ type ETLocation struct {
 // Send 发送请求
 func (el *ETLocation) Send(e *NetArg) bool {
 	var err error
-	_inside, ok := insideCache.Load(e.ip)
+	_inside, ok := insideCache.Load(e.IP)
 	if ok {
 		e.boolObj, _ = _inside.(bool)
 	} else {
 		err = el.checkInsideByRemote(e)
 		if err == nil {
-			insideCache.Store(e.ip, e.boolObj)
+			insideCache.Store(e.IP, e.boolObj)
 		} else {
 			var inside bool
-			inside, err = CheckInsideByLocal(e.ip)
+			inside, err = CheckInsideByLocal(e.IP)
 			if err == nil {
 				e.boolObj = inside
-				insideCache.Store(e.ip, e.boolObj)
+				insideCache.Store(e.IP, e.boolObj)
 			}
 		}
 	}
@@ -41,7 +41,7 @@ func (el *ETLocation) checkInsideByRemote(e *NetArg) error {
 	if err != nil {
 		return err
 	}
-	req := FormatEtType(EtLOCATION) + " " + e.ip
+	req := FormatEtType(EtLOCATION) + " " + e.IP
 	var count int
 	count, err = tunnel.WriteRight([]byte(req))
 	if err != nil {

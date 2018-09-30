@@ -30,13 +30,13 @@ func (conn *HTTPProxy) Handle(request Request, tunnel *eaglelib.Tunnel) bool {
 	if err == nil {
 		if reqType != HTTPERROR && host != "" && _port > 0 {
 			sender := EagleTunnel{}
-			e := NetArg{domain: host, port: _port, tunnel: tunnel}
+			e := NetArg{domain: host, Port: _port, tunnel: tunnel}
 			ip := net.ParseIP(host)
 			if ip == nil {
 				e.TheType = EtDNS
 				sender.Send(&e)
 			} else {
-				e.ip = e.domain
+				e.IP = e.domain
 			}
 			e.TheType = EtTCP
 			ok := sender.Send(&e)
@@ -89,7 +89,7 @@ func dismantle(request string) (int, string, string) {
 				e := NetArg{domain: host, TheType: EtDNS}
 				conn := EagleTunnel{}
 				if conn.Send(&e) {
-					host = e.ip
+					host = e.IP
 				}
 			}
 			if port == "" {

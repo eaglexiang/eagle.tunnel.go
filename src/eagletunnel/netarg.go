@@ -7,8 +7,8 @@ import (
 // NetArg 服务内部需要的参数集合
 type NetArg struct {
 	domain  string
-	ip      string
-	port    int
+	IP      string
+	Port    int
 	tunnel  *eaglelib.Tunnel
 	user    *EagleUser
 	boolObj bool
@@ -17,12 +17,12 @@ type NetArg struct {
 	Args    []string
 }
 
-// Clone 以深拷贝的方式克隆一个NetArg
+// Clone 克隆一个NetArg，深拷贝Args字段
 func (na *NetArg) Clone() *NetArg {
 	result := NetArg{
 		domain:  na.domain,
-		ip:      na.ip,
-		port:    na.port,
+		IP:      na.IP,
+		Port:    na.Port,
 		tunnel:  na.tunnel,
 		user:    na.user,
 		boolObj: na.boolObj,
