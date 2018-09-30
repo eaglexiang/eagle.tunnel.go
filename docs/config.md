@@ -138,7 +138,7 @@ ET使用`proxy-status`参数来控制其代理模式。当其值为`enable`时�
 
 这个白名单的位置是`${config-dir}/whitelist_domain.txt`，默认情况下这个位置是主配置文件同目录的`whitelist_domain.txt`。它来自[SmartDNSDomainList](https://github.com/eaglexiang/SmartDNSDomainList)项目，并遵循[模板文件](https://github.com/eaglexiang/SmartDNSDomainList/raw/master/list.txt)中注释部分所述规则。
 
-如果被解析的域名处于白名单中，则会使用服务端进行代理解析。如果没有，则会先在本地解析，然后判断其是否处于国内。如果不是处于国内，则重新使用代理进行解析。
+如果被解析的域名处于白名单中，则会使用服务端进行代理解析。如果没有，则会先在本地解析，然后利用[ip2c](https://ip2c.org/)判断其是否处于大陆。如果不是，则重新使用代理进行解析。
 
 这样做的好处是可以尽量使用国内服务最近的CDN。
 
@@ -152,7 +152,7 @@ hosts文件是网络活动中常用的规则文件。但全局代理状态下，
 
 所有以`.hosts`为后缀的文件都将被加载。
 
-> ET默认使用了neoHosts项目提供的广告屏蔽hosts，如果你不喜欢可以自由删去。
+> ET默认使用了neoHosts项目提供的广告屏蔽hosts。当然，如果你不喜欢，可以自由删去。
 
 ## 参数总览
 

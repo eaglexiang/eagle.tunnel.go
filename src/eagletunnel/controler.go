@@ -266,6 +266,16 @@ func readHosts(configDir string) {
 	}
 
 	for _, host := range hosts {
+		// 将所有连续两个以上空格缩减为一个
+		for {
+			newHost := strings.Replace(host, "  ", " ", -1)
+			if newHost != host {
+				host = newHost
+			} else {
+				break
+			}
+		}
+
 		items := strings.Split(host, " ")
 		if len(items) >= 2 {
 			domain := strings.TrimSpace(items[0])
@@ -286,7 +296,9 @@ func getHostsList(hostsDir string) []string {
 	for _, file := range files {
 		if !file.IsDir() {
 			filename := file.Name()
-			hosts = append(hosts, filename)
+			if strings.HasSuffix(filename, ".hosts") {
+				hosts = append(hosts, filename)
+			}
 		}
 	}
 	return hosts
