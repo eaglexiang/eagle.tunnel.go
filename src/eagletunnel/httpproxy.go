@@ -23,9 +23,8 @@ type HTTPProxy struct {
 
 // Handle 处理HTTPProxy请求
 func (conn *HTTPProxy) Handle(request Request, tunnel *eaglelib.Tunnel) bool {
-	_ipOfReq := strings.Split((*tunnel.Left).RemoteAddr().String(), ":")[0]
-	ipOfReq := net.ParseIP(_ipOfReq)
-	if ipOfReq.IsGlobalUnicast() {
+	ipOfReq := strings.Split((*tunnel.Left).RemoteAddr().String(), ":")[0]
+	if !CheckPrivateIPv4(ipOfReq) {
 		// 不接受来自公网IP的HTTP代理请求
 		return false
 	}
