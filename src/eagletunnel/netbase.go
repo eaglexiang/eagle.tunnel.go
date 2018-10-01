@@ -12,14 +12,34 @@ import (
 // WhitelistDomains 需要被智能解析的DNS域名列表
 var WhitelistDomains []string
 
-// ResolvDNSByLocal 本地解析DNS
-func ResolvDNSByLocal(e *NetArg) error {
+// ResolvIPv4ByLocal 本地解析IPv4
+func ResolvIPv4ByLocal(e *NetArg) error {
 	addrs, err := net.LookupHost(e.domain)
 	if err == nil {
 		var ok bool
 		for _, addr := range addrs {
 			ip := net.ParseIP(addr)
 			if ip.To4() != nil {
+				e.IP = addr
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			err = errors.New("ipv4 not found")
+		}
+	}
+	return err
+}
+
+// ResolvIPv6ByLocal 本地解析IPv6
+func ResolvIPv6ByLocal(e *NetArg) error {
+	addrs, err := net.LookupHost(e.domain)
+	if err == nil {
+		var ok bool
+		for _, addr := range addrs {
+			ip := net.ParseIP(addr)
+			if ip.To16() != nil {
 				e.IP = addr
 				ok = true
 				break

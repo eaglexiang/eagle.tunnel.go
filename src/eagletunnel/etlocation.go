@@ -1,7 +1,6 @@
 package eagletunnel
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -81,7 +80,7 @@ func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) {
 				var err error
 				inside, err := CheckInsideByLocal(ip)
 				if err != nil {
-					reply = fmt.Sprint(err)
+					reply = err.Error()
 				} else {
 					reply = strconv.FormatBool(inside)
 					insideCache.Store(ip, inside)

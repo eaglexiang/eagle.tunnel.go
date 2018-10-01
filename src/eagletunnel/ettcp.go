@@ -16,27 +16,30 @@ type ETTCP struct {
 
 // Send 发送请求
 func (et *ETTCP) Send(e *NetArg) bool {
-	var ok bool
 	switch ProxyStatus {
 	case ProxySMART:
-		var inside bool
 		el := ETLocation{}
-		ok = el.Send(e)
-		if ok {
-			inside = e.boolObj
-		} else {
-			inside = false
+		ok := el.Send(e)
+		if !ok {
+			// 位置解析失败，默认使用代理
+			return et.sendTCPReq2Remote(e) == nil
 		}
-		if inside {
-			ok = et.sendTCPReq2Server(e) == nil
-		} else {
-			ok = et.sendTCPReq2Remote(e) == nil
+		if e.boolObj {
+			// 启用直连
+			err := et.sendTCPReq2Server(e)
+			if err != nil {
+				// 直连失败，换用代理
+				return et.sendTCPReq2Remote(e) == nil
+			}
+			return true
 		}
+		// 不启用直连
+		return et.sendTCPReq2Remote(e) == nil
 	case ProxyENABLE:
-		ok = et.sendTCPReq2Remote(e) == nil
+		return et.sendTCPReq2Remote(e) == nil
+	default:
+		return false
 	}
-	return ok
-
 }
 
 func (et *ETTCP) sendTCPReq2Remote(e *NetArg) error {
@@ -62,7 +65,13 @@ func (et *ETTCP) sendTCPReq2Remote(e *NetArg) error {
 }
 
 func (et *ETTCP) sendTCPReq2Server(e *NetArg) error {
-	ipe := e.IP + ":" + strconv.Itoa(e.Port)
+	var ipe string
+	ip := net.ParseIP(e.IP)
+	if ip.To4() != nil {
+		ipe = e.IP + ":" + strconv.Itoa(e.Port) // ipv4:port
+	} else {
+		ipe = "[" + e.IP + "]:" + strconv.Itoa(e.Port) // [ipv6]:port
+	}
 	conn, err := net.DialTimeout("tcp", ipe, 5*time.Second)
 	if err != nil {
 		return err

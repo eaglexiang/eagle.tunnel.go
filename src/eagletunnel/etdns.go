@@ -1,6 +1,8 @@
 package eagletunnel
 
 import (
+	"errors"
+	"net"
 	"strings"
 
 	"github.com/eaglexiang/eagle.lib.go/src"
@@ -16,7 +18,7 @@ func (ed *ETDNS) Handle(req Request, tunnel *eaglelib.Tunnel) {
 	if len(reqs) >= 2 {
 		domain := reqs[1]
 		e := NetArg{domain: domain}
-		err := resolvDNSByLocal(&e, false)
+		err := resolvDNSByLocal(&e)
 		if err == nil {
 			tunnel.WriteLeft([]byte(e.IP))
 		}
@@ -36,7 +38,7 @@ func (ed *ETDNS) Send(e *NetArg) bool {
 			if white {
 				result = resolvDNSByProxy(e) == nil
 			} else {
-				result = resolvDNSByLocal(e, true) == nil
+				result = resolvDNSByLocal(e) == nil
 			}
 		case ProxyENABLE:
 			result = resolvDNSByProxy(e) == nil
@@ -79,31 +81,42 @@ func _resolvDNSByProxy(e *NetArg) error {
 	if err != nil {
 		return err
 	}
-	e.IP = string(buffer[:count])
+	_ip := string(buffer[:count])
+	ip := net.ParseIP(_ip)
+	if ip == nil {
+		return errors.New("failed to resolv by remote")
+	}
+	e.IP = _ip
 	cache := eaglelib.CreateDNSCache(e.domain, e.IP)
 	dnsRemoteCache.Store(cache.Domain, cache)
 	return err
 }
 
-func resolvDNSByLocal(e *NetArg, recursive bool) error {
-	err := ResolvDNSByLocal(e)
+// resolvDNSByLocal 本地解析DNS，优先返回IPv4结果
+func resolvDNSByLocal(e *NetArg) error {
+	err := ResolvIPv4ByLocal(e)
+	if err != nil {
+		err = ResolvIPv6ByLocal(e)
+	}
 
 	if err != nil {
+		// 本地解析失败不得已使用远端解析
 		err = resolvDNSByProxy(e)
-	} else {
-		if recursive {
-			el := ETLocation{}
-			ok := el.Send(e)
-			if ok {
-				if !e.boolObj {
-					ne := NetArg{domain: e.domain}
-					err1 := resolvDNSByProxy(&ne)
-					if err1 == nil {
-						e.IP = ne.IP
-					}
-				}
-			}
+		return err
+	}
+
+	// 判断本地解析结果的所在位置
+	el := ETLocation{}
+	ok := el.Send(e)
+	if !ok {
+		return nil
+	}
+	if !e.boolObj {
+		ne := NetArg{domain: e.domain}
+		err = resolvDNSByProxy(&ne)
+		if err == nil {
+			e.IP = ne.IP
 		}
 	}
-	return err
+	return nil
 }
