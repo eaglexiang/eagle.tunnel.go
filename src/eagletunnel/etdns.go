@@ -51,12 +51,12 @@ func (ed *ETDNS) Send(e *NetArg) bool {
 func resolvDNSByProxy(e *NetArg) error {
 	var err error
 	_cache, ok := dnsRemoteCache.Load(e.domain)
-	if ok { // found cache
+	if ok {
 		cache := _cache.(*eaglelib.DNSCache)
+		e.IP = cache.IP
 		if !cache.OverTTL() {
-			e.IP = cache.IP
-		} else { // cache's timed out
-			err = _resolvDNSByProxy(e)
+			eTmp := e.Clone()
+			go _resolvDNSByProxy(eTmp)
 		}
 	} else { // not found
 		err = _resolvDNSByProxy(e)
