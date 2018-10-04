@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/eaglexiang/eagle.lib.go/src"
+	"../eaglelib/src"
 )
 
 // LocalAddr 本地监听地址

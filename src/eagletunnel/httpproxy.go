@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/eaglexiang/eagle.lib.go/src"
+	"../eaglelib/src"
 )
 
 // HTTP请求的类型

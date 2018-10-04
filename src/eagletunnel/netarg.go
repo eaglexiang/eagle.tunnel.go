@@ -1,7 +1,7 @@
 package eagletunnel
 
 import (
-	"github.com/eaglexiang/eagle.lib.go/src"
+	"../eaglelib/src"
 )
 
 // NetArg 服务内部需要的参数集合

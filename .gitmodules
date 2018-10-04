@@ -1,3 +1,6 @@
 [submodule "src/whitelistdomains"]
 	path = src/whitelistdomains
 	url = git@github.com:eaglexiang/SmartDNSDomainList.git
+[submodule "src/eaglelib"]
+	path = src/eaglelib
+	url = git@github.com:eaglexiang/eagle.lib.go.git

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eaglexiang/eagle.lib.go/src"
+	"../eaglelib/src"
 )
 
 // EtASK请求的类型

@@ -5,7 +5,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/eaglexiang/eagle.lib.go/src"
+	"../eaglelib/src"
 )
 
 // ETDNS ET-DNS子协议的实现

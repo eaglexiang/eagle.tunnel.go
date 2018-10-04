@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eaglexiang/eagle.lib.go/src"
+	"../eaglelib/src"
 )
 
 // EagleUser 提供基本和轻量的账户系统
