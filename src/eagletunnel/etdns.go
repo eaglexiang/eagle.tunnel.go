@@ -53,7 +53,7 @@ func resolvDNSByProxy(e *NetArg) error {
 	_cache, ok := dnsRemoteCache.Load(e.domain)
 	if ok {
 		cache := _cache.(*eaglelib.DNSCache)
-		e.IP = cache.IP
+		e.IP = cache.GetIP()
 		if !cache.OverTTL() {
 			eTmp := e.Clone()
 			go _resolvDNSByProxy(eTmp)
@@ -88,7 +88,7 @@ func _resolvDNSByProxy(e *NetArg) error {
 	}
 	e.IP = _ip
 	cache := eaglelib.CreateDNSCache(e.domain, e.IP)
-	dnsRemoteCache.Store(cache.Domain, cache)
+	dnsRemoteCache.Store(cache.GetDomain(), cache)
 	return err
 }
 
