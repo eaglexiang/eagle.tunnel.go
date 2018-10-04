@@ -51,18 +51,8 @@ func ask(args []string) {
 	e := eagletunnel.NetArg{}
 	e.TheType = eagletunnel.EtASK
 	e.Args = args
-	var oks int
-	times := 10
-	for i := 0; i < times; i++ {
-		eTmp := e.Clone()
-		result := et.Send(eTmp)
-		if result {
-			oks++
-		}
-		fmt.Println("ping to ", eTmp.IP, ":", eTmp.Port, " time=", eTmp.Reply, "ms")
-	}
-	fmt.Println("--------------- ET ASK PING ---------------")
-	fmt.Println(times, " packets transmitted, ", oks, " received, ", (times-oks)*20, "% packet loss")
+	et.Send(&e)
+	fmt.Println(e.Reply)
 }
 
 func startUI(pathOfConfig string) {

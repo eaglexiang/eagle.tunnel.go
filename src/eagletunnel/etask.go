@@ -1,6 +1,7 @@
 package eagletunnel
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -137,13 +138,39 @@ func sendAskAuthReq(e *NetArg) bool {
 }
 
 func sendAskPingReq(e *NetArg) bool {
+	var ok bool
+	times := 10
+	durations := make([]int, times)
+	var addr string
+	var oks int
+	for i := 0; i < times; i++ {
+		eTmp := e.Clone()
+		var okTmp bool
+		okTmp, addr = sendSingleAskPingReq(eTmp)
+		if okTmp {
+			duration, _ := strconv.ParseInt(eTmp.Reply, 10, 32)
+			durations[i] = int(duration)
+			fmt.Println("ping to ", addr, " time=", duration, "ms")
+			oks++
+		}
+		ok = ok || okTmp
+	}
+	fmt.Println("--- ", addr, " ping statistics ---")
+	fmt.Println(
+		times, " packets transmitted, ",
+		oks, " received, ",
+		(times-oks)*(100/times), "% packet loss")
+	return ok
+}
+
+func sendSingleAskPingReq(e *NetArg) (bool, string) {
 	if len(e.Args) < 1 {
 		e.Args = append(e.Args, DefaultClientConfig())
 	}
 	err := Init(e.Args[0])
 	if err != nil {
 		e.Reply = err.Error()
-		return false
+		return false, ""
 	}
 	// 连接服务器
 	tunnel := eaglelib.Tunnel{}
@@ -151,7 +178,7 @@ func sendAskPingReq(e *NetArg) bool {
 	err = connect2Relayer(&tunnel)
 	if err != nil {
 		e.Reply = err.Error()
-		return false
+		return false, (*tunnel.Right).RemoteAddr().String()
 	}
 
 	addr := (*tunnel.Right).RemoteAddr()
@@ -166,7 +193,7 @@ func sendAskPingReq(e *NetArg) bool {
 	_, err = tunnel.WriteRight([]byte(req))
 	if err != nil {
 		e.Reply = "when send ask: " + err.Error()
-		return false
+		return false, (*tunnel.Right).RemoteAddr().String()
 	}
 	// 接收响应数据
 	buffer := make([]byte, 8)
@@ -174,18 +201,18 @@ func sendAskPingReq(e *NetArg) bool {
 	end := time.Now() // 停止计时
 	if err != nil {
 		e.Reply = "when read ask reply: " + err.Error()
-		return false
+		return false, (*tunnel.Right).RemoteAddr().String()
 	}
 	reply := string(buffer[:count])
 	if reply != "ok" {
 		e.Reply = "invalid ping reply"
-		return false
+		return false, (*tunnel.Right).RemoteAddr().String()
 	}
 	duration := end.Sub(start)
 	ns := duration.Nanoseconds()
 	ms := ns / 1000 / 1000
 	e.Reply = strconv.FormatInt(ms, 10)
-	return true
+	return true, (*tunnel.Right).RemoteAddr().String()
 }
 
 func handleEtAskPingReq(tunnel *eaglelib.Tunnel) {
