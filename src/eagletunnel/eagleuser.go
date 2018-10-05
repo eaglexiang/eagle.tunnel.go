@@ -178,6 +178,8 @@ func (user *EagleUser) totalBytes() int64 {
 
 func (user *EagleUser) addTunnel(tunnel *eaglelib.Tunnel) {
 	tunnel.Pause = user.pause
+	tunnel.Encrypt = encrypt
+	tunnel.Decrypt = decrypt
 	user.tunnels.Push(tunnel)
 }
 
@@ -209,4 +211,16 @@ func parseUserType(typeStr string) (int, error) {
 		err = errors.New("unknown user type")
 	}
 	return theType, err
+}
+
+func encrypt(data []byte) {
+	for i, value := range data {
+		data[i] = value ^ EncryptKey
+	}
+}
+
+func decrypt(data []byte) {
+	for i, value := range data {
+		data[i] = value ^ EncryptKey
+	}
 }

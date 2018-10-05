@@ -66,7 +66,7 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 		return
 	}
 	request := Request{requestMsg: buffer[:count]}
-	tunnel := eaglelib.Tunnel{Left: &conn, EncryptKey: EncryptKey}
+	tunnel := eaglelib.Tunnel{Left: &conn}
 	var handler Handler
 	switch request.getType() {
 	case EagleTunnelReq:

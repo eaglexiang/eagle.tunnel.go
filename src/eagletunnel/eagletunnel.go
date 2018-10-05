@@ -49,8 +49,8 @@ func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (keepAli
 	if !isVersionOk {
 		return false
 	}
-	tunnel.EncryptLeft = true
 	isUserOk := checkUserOfReq(tunnel)
+	tunnel.EncryptLeft = true
 	if !isUserOk {
 		return false
 	}
@@ -110,13 +110,12 @@ func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 		return err
 	}
 	tunnel.Right = &conn
-	tunnel.EncryptKey = EncryptKey
 	err = checkVersionOfRelayer(tunnel)
 	if err != nil {
 		return err
 	}
-	tunnel.EncryptRight = true
 	err = checkUserOfLocal(tunnel)
+	tunnel.EncryptRight = true
 	return err
 }
 
