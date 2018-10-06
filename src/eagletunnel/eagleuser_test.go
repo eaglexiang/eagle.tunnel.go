@@ -50,10 +50,6 @@ func compareEagleUser(t *testing.T, input string, theErr error, id string, passw
 			if user.speedLimit != speedlimit {
 				t.Error("限速不匹配")
 			}
-			output := user.toString()
-			if output != id+":"+password {
-				t.Error("错误的输出：", output)
-			}
 			if user.bytes != 0 {
 				t.Error("bytes应该初始化为0")
 			}
