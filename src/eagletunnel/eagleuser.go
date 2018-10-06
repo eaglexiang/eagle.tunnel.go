@@ -83,8 +83,18 @@ func ParseEagleUser(userStr string, ip string) (*EagleUser, error) {
 	return &user, nil
 }
 
-func (user *EagleUser) toString() string {
-	return user.ID + ":" + user.Password
+// ParseClientEagleUser 将ID转化为EagleUser
+func ParseClientEagleUser(username string, ip string) (*EagleUser, error) {
+	if username == "" {
+		return nil, errors.New("null username")
+	}
+	now := time.Now()
+	user := EagleUser{
+		ID:       username,
+		lastIP:   ip,
+		lastTime: now,
+	}
+	return &user, nil
 }
 
 // CheckAuth 检查请求EagleUser的密码是否正确，并通过校对登录地址与上次登录时间，以防止重复登录
@@ -93,17 +103,13 @@ func (user *EagleUser) CheckAuth(user2Check *EagleUser) error {
 	case PrivateUser:
 		return user.checkPrivateUser(user2Check)
 	case SharedUser:
-		return user.checkSharedUser(user2Check)
+		return nil
 	default:
 		return errors.New("invalid user type")
 	}
 }
 
 func (user *EagleUser) checkPrivateUser(user2Check *EagleUser) error {
-	valid := user.Password == user2Check.Password
-	if !valid {
-		return errors.New("incorrent username or password")
-	}
 	if user.lastIP == "" {
 		// 初次登录
 		user.lastIP = user2Check.lastIP
@@ -111,7 +117,7 @@ func (user *EagleUser) checkPrivateUser(user2Check *EagleUser) error {
 		return nil
 	}
 	// 检查IP是否与上次一样
-	valid = user.lastIP == user2Check.lastIP
+	valid := user.lastIP == user2Check.lastIP
 	if valid {
 		// IP相同
 		return nil
@@ -128,14 +134,6 @@ func (user *EagleUser) checkPrivateUser(user2Check *EagleUser) error {
 	}
 	user.loginMutex.Unlock()
 	return errors.New("logined")
-}
-
-func (user *EagleUser) checkSharedUser(user2Check *EagleUser) error {
-	valid := user.Password == user2Check.Password
-	if !valid {
-		return errors.New("incorrent username or password")
-	}
-	return nil
 }
 
 func (user *EagleUser) limitSpeed() {
@@ -178,8 +176,9 @@ func (user *EagleUser) totalBytes() int64 {
 
 func (user *EagleUser) addTunnel(tunnel *eaglelib.Tunnel) {
 	tunnel.Pause = user.pause
-	tunnel.Encrypt = encrypt
-	tunnel.Decrypt = decrypt
+	c := CreateCipher(user.Password)
+	tunnel.Encrypt = c.Encrypt
+	tunnel.Decrypt = c.Decrypt
 	user.tunnels.Push(tunnel)
 }
 

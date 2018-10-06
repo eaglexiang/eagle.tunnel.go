@@ -108,7 +108,7 @@ func SPrintConfig() string {
 	}
 	var localUser string
 	if LocalUser != nil {
-		localUser = LocalUser.toString()
+		localUser = LocalUser.ID
 	} else {
 		localUser = "null"
 	}

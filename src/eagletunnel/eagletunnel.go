@@ -179,7 +179,7 @@ func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
 	if LocalUser.ID == "root" {
 		return nil // no need to check
 	}
-	user := LocalUser.toString()
+	user := LocalUser.ID
 	var count int
 	count, err = tunnel.WriteRight([]byte(user))
 	if err != nil {
@@ -212,7 +212,7 @@ func checkUserOfReq(tunnel *eaglelib.Tunnel) (isValid bool) {
 	userStr := string(buffer[:count])
 	addr := (*tunnel.Left).RemoteAddr()
 	ip := strings.Split(addr.String(), ":")[0]
-	user2Check, err := ParseEagleUser(userStr, ip)
+	user2Check, err := ParseClientEagleUser(userStr, ip)
 	if err != nil {
 		tunnel.WriteLeft([]byte(err.Error()))
 		return false
