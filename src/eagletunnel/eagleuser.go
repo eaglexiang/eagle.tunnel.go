@@ -176,9 +176,6 @@ func (user *EagleUser) totalBytes() int64 {
 
 func (user *EagleUser) addTunnel(tunnel *eaglelib.Tunnel) {
 	tunnel.Pause = user.pause
-	c := CreateCipher(user.Password)
-	tunnel.Encrypt = c.Encrypt
-	tunnel.Decrypt = c.Decrypt
 	user.tunnels.Push(tunnel)
 }
 

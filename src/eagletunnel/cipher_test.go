@@ -5,7 +5,8 @@ import (
 )
 
 func Test_Cipher(t *testing.T) {
-	c := CreateCipher("password")
+	c := Cipher{}
+	c.SetPassword("password")
 
 	ori := "hello world!"
 	bytes := []byte(ori)

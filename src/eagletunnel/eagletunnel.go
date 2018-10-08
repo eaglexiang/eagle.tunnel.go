@@ -50,7 +50,6 @@ func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (keepAli
 		return false
 	}
 	isUserOk := checkUserOfReq(tunnel)
-	tunnel.EncryptLeft = true
 	if !isUserOk {
 		return false
 	}
@@ -115,7 +114,6 @@ func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 		return err
 	}
 	err = checkUserOfLocal(tunnel)
-	tunnel.EncryptRight = true
 	return err
 }
 
@@ -186,6 +184,11 @@ func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
 		return err
 	}
 	buffer := make([]byte, 1024)
+	c := Cipher{}
+	c.SetPassword(LocalUser.Password)
+	tunnel.Encrypt = c.Encrypt
+	tunnel.Decrypt = c.Decrypt
+	tunnel.EncryptRight = true
 	count, err = tunnel.ReadRight(buffer)
 	if err != nil {
 		return err
@@ -203,7 +206,7 @@ func checkUserOfReq(tunnel *eaglelib.Tunnel) (isValid bool) {
 	if !EnableUserCheck {
 		return true
 	}
-	// 接收用户信息
+	// 获取用户名
 	buffer := make([]byte, 1024)
 	count, err := tunnel.ReadLeft(buffer)
 	if err != nil {
@@ -223,8 +226,7 @@ func checkUserOfReq(tunnel *eaglelib.Tunnel) (isValid bool) {
 	}
 	validUser, ok := Users[user2Check.ID]
 	if !ok {
-		// 找不到该用户
-		tunnel.WriteLeft([]byte("incorrent username or password"))
+		tunnel.WriteLeft([]byte("user not found"))
 		return false
 	}
 	err = validUser.CheckAuth(user2Check)
@@ -233,6 +235,11 @@ func checkUserOfReq(tunnel *eaglelib.Tunnel) (isValid bool) {
 		tunnel.WriteLeft([]byte(reply))
 		return false
 	}
+	c := Cipher{}
+	c.SetPassword(validUser.Password)
+	tunnel.Encrypt = c.Encrypt
+	tunnel.Decrypt = c.Decrypt
+	tunnel.EncryptLeft = true
 	reply := "valid"
 	count, _ = tunnel.WriteLeft([]byte(reply))
 	ok = count == 5
