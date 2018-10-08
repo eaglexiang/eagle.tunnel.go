@@ -8,24 +8,39 @@ import (
 
 // Cipher 加解密器
 type Cipher struct {
-	en *cipher.Stream
-	de *cipher.Stream
+	key []byte
+	iv  []byte
+	en  *cipher.Stream
+	de  *cipher.Stream
 }
 
 // SetPassword 设置密码
 func (c *Cipher) SetPassword(password string) {
 	key := md5.Sum([]byte(password))
-	iv := key[:]
-	block, err := aes.NewCipher([]byte(key[:]))
+	c.key = key[:]
+	if c.iv == nil {
+		c.iv = c.key
+	}
+	c.reset()
+}
+
+// SetIV 设置IV
+func (c *Cipher) SetIV(iv []byte) {
+	c.iv = iv
+	c.reset()
+}
+
+func (c *Cipher) reset() {
+	block, err := aes.NewCipher(c.key)
 	if err != nil {
 		panic(err)
 	}
-	en := cipher.NewCFBEncrypter(block, []byte(iv))
-	block, err = aes.NewCipher([]byte(key[:]))
+	en := cipher.NewCFBEncrypter(block, c.iv)
+	block, err = aes.NewCipher(c.key)
 	if err != nil {
 		panic(err)
 	}
-	de := cipher.NewCFBDecrypter(block, []byte(iv))
+	de := cipher.NewCFBDecrypter(block, c.iv)
 	c.en = &en
 	c.de = &de
 }
