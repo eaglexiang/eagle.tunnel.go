@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"../eaglelib/src"
@@ -27,9 +26,6 @@ var defaultPathsOfServerConfig = []string{
 
 // ConfigPath 主配置文件的路径
 var ConfigPath string
-
-// ConfigDir 次要配置文件所在的文件夹
-var ConfigDir string
 
 // ConfigKeyValues 主配置文件的所有键值对参数
 var ConfigKeyValues map[string]string
@@ -57,33 +53,30 @@ func Init(filePath string) error {
 		fmt.Println("failed to read " + ConfigPath)
 	}
 
-	ConfigKeyValues, _ := getKeyValues(allConfLines)
+	ConfigKeyValues = getKeyValues(allConfLines)
 
-	var ok bool
-
-	ConfigDir, ok = ConfigKeyValues["config-dir"]
-	if !ok {
-		ConfigDir = filepath.Dir(ConfigPath)
-		// fmt.Println("default config-dir -> ", ConfigDir)
+	// 设定默认值
+	if _, ok := ConfigKeyValues["data-key"]; !ok {
+		ConfigKeyValues["data-key"] = "34"
 	}
 
-	var enableUsercheck string
-	enableUsercheck, ok = ConfigKeyValues["user-check"]
-	if ok {
+	if _, ok := ConfigKeyValues["config-dir"]; !ok {
+		ConfigKeyValues["config-dir"] = filepath.Dir(ConfigPath)
+	}
+
+	if enableUsercheck, ok := ConfigKeyValues["user-check"]; ok {
 		EnableUserCheck = enableUsercheck == "on"
 	}
 
 	if EnableUserCheck {
-		usersPath := ConfigDir + "/users.list"
+		usersPath := ConfigKeyValues["config-dir"] + "/users.list"
 		err = importUsers(usersPath)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
 
-	var user string
-	user, ok = ConfigKeyValues["user"]
-	if ok {
+	if user, ok := ConfigKeyValues["user"]; ok {
 		LocalUser, err = ParseEagleUser(user, "")
 		if err != nil {
 			fmt.Println(err)
@@ -93,18 +86,6 @@ func Init(filePath string) error {
 	}
 
 	go CheckSpeedOfUsers()
-
-	EncryptKey = 0x22
-	var encryptKey string
-	encryptKey, ok = ConfigKeyValues["data-key"]
-	if ok {
-		var _encryptKey uint64
-		_encryptKey, err = strconv.ParseUint(encryptKey, 16, 8)
-		if err != nil {
-			return err
-		}
-		EncryptKey = byte(uint8(_encryptKey))
-	}
 
 	var localIpe string
 	_localIpe, ok := ConfigKeyValues["listen"]
@@ -153,10 +134,10 @@ func Init(filePath string) error {
 		}
 	}
 
-	whiteDomainsPath := ConfigDir + "/whitelist_domain.txt"
+	whiteDomainsPath := ConfigKeyValues["config-dir"] + "/whitelist_domain.txt"
 	WhitelistDomains, _ = readLines(whiteDomainsPath)
 
-	readHosts(ConfigDir)
+	readHosts(ConfigKeyValues["config-dir"] + "/hosts")
 
 	return err
 }
@@ -200,9 +181,8 @@ func importUsers(usersPath string) error {
 	return err
 }
 
-func getKeyValues(lines []string) (map[string]string, []string) {
+func getKeyValues(lines []string) map[string]string {
 	keyValues := make(map[string]string)
-	keys := make([]string, 0)
 	for _, line := range lines {
 		keyValue := strings.Split(line, "=")
 		if len(keyValue) >= 2 {
@@ -211,12 +191,11 @@ func getKeyValues(lines []string) (map[string]string, []string) {
 				value += "=" + item
 			}
 			key := strings.TrimSpace(keyValue[0])
-			keys = append(keys, key)
 			value = strings.TrimSpace(value)
 			keyValues[key] = value
 		}
 	}
-	return keyValues, keys
+	return keyValues
 }
 
 func exportKeyValues(keyValues *map[string]string, keys []string) string {
@@ -252,8 +231,7 @@ func SetListen(localIpe string) {
 	}
 }
 
-func readHosts(configDir string) {
-	hostsDir := configDir + "/hosts"
+func readHosts(hostsDir string) {
 
 	hostsFiles := getHostsList(hostsDir)
 

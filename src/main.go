@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"./eaglelib/src"
 	"./eagletunnel"
-	"github.com/eaglexiang/eagle.lib.go/src"
 )
 
 // version 程序版本

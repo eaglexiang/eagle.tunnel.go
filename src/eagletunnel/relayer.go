@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strconv"
 	"time"
 
 	"../eaglelib/src"
@@ -66,7 +65,7 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 		return
 	}
 	request := Request{requestMsg: buffer[:count]}
-	tunnel := eaglelib.Tunnel{Left: &conn, EncryptKey: EncryptKey}
+	tunnel := eaglelib.Tunnel{Left: &conn}
 	var handler Handler
 	switch request.getType() {
 	case EagleTunnelReq:
@@ -139,10 +138,10 @@ func SPrintConfig() string {
 
 	var configStr string
 	configStr += "config-path=" + ConfigPath + "\n"
-	configStr += "config-dir=" + ConfigDir + "\n"
+	configStr += "config-dir=" + ConfigKeyValues["config-dir"] + "\n"
 	configStr += "relayer=" + RemoteAddr + ":" + RemotePort + "\n"
 	configStr += "listen=" + LocalAddr + ":" + LocalPort + "\n"
-	configStr += "data-key=" + strconv.Itoa(int(EncryptKey)) + "\n"
+	configStr += "data-key=" + ConfigKeyValues["data-key"] + "\n"
 	configStr += "user=" + localUser + "\n"
 	configStr += "user-check=" + userCheck + "\n"
 	configStr += "http=" + http + "\n"

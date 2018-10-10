@@ -54,7 +54,7 @@ func resolvDNSByProxy(e *NetArg) error {
 	if ok {
 		cache := _cache.(*eaglelib.DNSCache)
 		e.IP = cache.GetIP()
-		if !cache.OverTTL() {
+		if cache.OverTTL() {
 			eTmp := e.Clone()
 			go _resolvDNSByProxy(eTmp)
 		}

@@ -35,8 +35,8 @@ var insideCache = sync.Map{}
 var dnsRemoteCache = sync.Map{}
 var hostsCache = make(map[string]string)
 
-// EncryptKey 所有Tunnel使用的Key
-var EncryptKey byte
+// LocalCipherType 本地使用的加密方式
+var LocalCipherType = SimpleCipherType
 
 // EagleTunnel 遵循ET协议的数据隧道
 type EagleTunnel struct {
@@ -45,10 +45,20 @@ type EagleTunnel struct {
 // Handle 处理ET请求
 func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (keepAlive bool) {
 	args := strings.Split(request.RequestMsgStr, " ")
-	isVersionOk := et.checkVersionOfReq(args, tunnel)
+	isVersionOk, cipherType := et.checkHeaderOfReq(args, tunnel)
 	if !isVersionOk {
 		return false
 	}
+	var c Cipher
+	switch cipherType {
+	case SimpleCipherType:
+		c = new(SimpleCipher)
+		c.SetPassword(ConfigKeyValues["data-key"])
+	default:
+		return false
+	}
+	tunnel.Encrypt = c.Encrypt
+	tunnel.Decrypt = c.Decrypt
 	tunnel.EncryptLeft = true
 	isUserOk := checkUserOfReq(tunnel)
 	if !isUserOk {
@@ -110,11 +120,23 @@ func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 		return err
 	}
 	tunnel.Right = &conn
-	tunnel.EncryptKey = EncryptKey
 	err = checkVersionOfRelayer(tunnel)
 	if err != nil {
 		return err
 	}
+	var c Cipher
+	switch LocalCipherType {
+	case SimpleCipherType:
+		c = new(SimpleCipher)
+		err = c.SetPassword(ConfigKeyValues["data-key"])
+		if err != nil {
+			return err
+		}
+	default:
+		return errors.New("unknown cipher type")
+	}
+	tunnel.Encrypt = c.Encrypt
+	tunnel.Decrypt = c.Decrypt
 	tunnel.EncryptRight = true
 	err = checkUserOfLocal(tunnel)
 	return err
@@ -143,11 +165,11 @@ func checkVersionOfRelayer(tunnel *eaglelib.Tunnel) error {
 	return err
 }
 
-func (et *EagleTunnel) checkVersionOfReq(
+func (et *EagleTunnel) checkHeaderOfReq(
 	headers []string,
-	tunnel *eaglelib.Tunnel) (isValid bool) {
+	tunnel *eaglelib.Tunnel) (isValid bool, cipherType int) {
 	if len(headers) < 3 {
-		return false
+		return false, UnknownCipherType
 	}
 	replys := make([]string, 3)
 	if headers[0] == "eagle_tunnel" {
@@ -165,14 +187,15 @@ func (et *EagleTunnel) checkVersionOfReq(
 	} else {
 		replys[1] = err.Error()
 	}
-	if headers[2] == "simple" {
-		replys[2] = "valid"
-	} else {
+	theType := ParseCipherType(headers[2])
+	if theType == UnknownCipherType {
 		replys[2] = "invalid"
+	} else {
+		replys[2] = "valid"
 	}
 	reply := replys[0] + " " + replys[1] + " " + replys[2]
 	count, _ := tunnel.WriteLeft([]byte(reply))
-	return count == 17 // length of "valid valid valid"
+	return count == 17, theType // length of "valid valid valid"
 }
 
 func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
