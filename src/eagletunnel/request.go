@@ -29,7 +29,7 @@ func (request *Request) getType() int {
 			switch args[0] {
 			case "OPTIONS", "HEAD", "GET", "POST", "PUT", "DELETE", "TRACE", "CONNECT":
 				result = HTTPProxyReq
-			case "eagle_tunnel":
+			case ConfigKeyValues["head"]:
 				result = EagleTunnelReq
 			default:
 				result = UnknownReq
