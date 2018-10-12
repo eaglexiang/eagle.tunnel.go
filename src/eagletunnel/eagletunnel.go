@@ -143,7 +143,7 @@ func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 }
 
 func checkVersionOfRelayer(tunnel *eaglelib.Tunnel) error {
-	req := "eagle_tunnel " + ProtocolVersion.Raw + " simple"
+	req := ConfigKeyValues["head"] + " " + ProtocolVersion.Raw + " simple"
 	count, err := tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err
@@ -172,7 +172,7 @@ func (et *EagleTunnel) checkHeaderOfReq(
 		return false, UnknownCipherType
 	}
 	replys := make([]string, 3)
-	if headers[0] == "eagle_tunnel" {
+	if headers[0] == ConfigKeyValues["head"] {
 		replys[0] = "valid"
 	} else {
 		replys[0] = "invalid"
