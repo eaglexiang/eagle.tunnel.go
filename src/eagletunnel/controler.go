@@ -59,6 +59,9 @@ func Init(filePath string) error {
 	if _, ok := ConfigKeyValues["data-key"]; !ok {
 		ConfigKeyValues["data-key"] = "34"
 	}
+	if _, ok := ConfigKeyValues["head"]; !ok {
+		ConfigKeyValues["head"] = "eagle_tunnel"
+	}
 
 	if _, ok := ConfigKeyValues["config-dir"]; !ok {
 		ConfigKeyValues["config-dir"] = filepath.Dir(ConfigPath)
