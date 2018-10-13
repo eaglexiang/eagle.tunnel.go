@@ -37,6 +37,7 @@ func (conn *HTTPProxy) Handle(request Request, tunnel *eaglelib.Tunnel) bool {
 		if reqType != HTTPERROR && host != "" && _port > 0 {
 			sender := EagleTunnel{}
 			e := NetArg{domain: host, Port: _port, tunnel: tunnel}
+			// get ip
 			ip := net.ParseIP(host)
 			if ip == nil {
 				e.TheType = EtDNS
@@ -44,18 +45,21 @@ func (conn *HTTPProxy) Handle(request Request, tunnel *eaglelib.Tunnel) bool {
 			} else {
 				e.IP = e.domain
 			}
-			e.TheType = EtTCP
-			ok := sender.Send(&e)
-			if ok {
-				if reqType == HTTPCONNECT {
+			// dail tcp
+			if reqType == HTTPCONNECT {
+				e.TheType = EtTCP
+				if ok := sender.Send(&e); ok {
 					re443 := "HTTP/1.1 200 Connection Established\r\n\r\n"
 					_, err = tunnel.WriteLeft([]byte(re443))
-				} else {
+				}
+			} else {
+				e.TheType = EtTCP
+				if ok := sender.Send(&e); ok {
 					newReq := createNewRequest(reqStr)
 					_, err = tunnel.WriteRight([]byte(newReq))
 				}
-				result = err == nil
 			}
+			result = err == nil
 		}
 	}
 	return result
@@ -79,24 +83,27 @@ func dismantle(request string) (int, string, string) {
 		u, err := url.Parse(args[1])
 		if err == nil {
 			if u.Host == "" {
-				args[1] = "http://" + args[1]
+				switch reqType {
+				case HTTPCONNECT:
+					args[1] = "https://" + args[1]
+				case HTTPOTHERS:
+					args[1] = "http://" + args[1]
+				}
 				u, err = url.Parse(args[1])
+			}
+		} else {
+			args := strings.Split(args[1], ":")
+			if len(args) == 2 {
+				host = args[0]
+				port = args[1]
 			}
 		}
 		if err == nil {
 			host = u.Host
 			hostLines := strings.Split(host, ":")
+			host = hostLines[0]
 			if len(hostLines) == 2 {
-				host = hostLines[0]
 				port = hostLines[1]
-			}
-			addr := net.ParseIP(host)
-			if addr == nil {
-				e := NetArg{domain: host, TheType: EtDNS}
-				conn := EagleTunnel{}
-				if conn.Send(&e) {
-					host = e.IP
-				}
 			}
 			if port == "" {
 				port = u.Port()
