@@ -148,4 +148,4 @@ et ask local ping
 
 ## 更多参数
 
-ET支持很多参数，帮助你实现更高级的体验，请参照[ET 配置](/docs/config.md)一文。
+ET支持很多参数，帮助你实现更高级的体验，请参照[ET 配置](../config.md)一文。
