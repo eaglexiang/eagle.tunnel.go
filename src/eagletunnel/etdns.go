@@ -27,7 +27,6 @@ func (ed *ETDNS) Handle(req Request, tunnel *eaglelib.Tunnel) {
 
 // Send 发送ET-DNS请求
 func (ed *ETDNS) Send(e *NetArg) bool {
-	var result bool
 	ip, result := hostsCache[e.domain]
 	if result {
 		e.IP = ip
