@@ -152,6 +152,8 @@ func sendAskPingReq(e *NetArg) bool {
 			durations[i] = int(duration)
 			fmt.Println("ping to ", addr, " time=", duration, "ms")
 			oks++
+		} else {
+			fmt.Println("fail to ping")
 		}
 		ok = ok || okTmp
 	}
@@ -178,7 +180,7 @@ func sendSingleAskPingReq(e *NetArg) (bool, string) {
 	err = connect2Relayer(&tunnel)
 	if err != nil {
 		e.Reply = err.Error()
-		return false, (*tunnel.Right).RemoteAddr().String()
+		return false, ""
 	}
 
 	addr := (*tunnel.Right).RemoteAddr()
@@ -192,27 +194,27 @@ func sendSingleAskPingReq(e *NetArg) (bool, string) {
 	start := time.Now() // 开始计时
 	_, err = tunnel.WriteRight([]byte(req))
 	if err != nil {
-		e.Reply = "when send ask: " + err.Error()
-		return false, (*tunnel.Right).RemoteAddr().String()
+		e.Reply = err.Error()
+		return false, addr.String()
 	}
 	// 接收响应数据
 	buffer := make([]byte, 8)
 	count, err := tunnel.ReadRight(buffer)
 	end := time.Now() // 停止计时
 	if err != nil {
-		e.Reply = "when read ask reply: " + err.Error()
-		return false, (*tunnel.Right).RemoteAddr().String()
+		e.Reply = err.Error()
+		return false, ""
 	}
 	reply := string(buffer[:count])
 	if reply != "ok" {
 		e.Reply = "invalid ping reply"
-		return false, (*tunnel.Right).RemoteAddr().String()
+		return false, addr.String()
 	}
 	duration := end.Sub(start)
 	ns := duration.Nanoseconds()
 	ms := ns / 1000 / 1000
 	e.Reply = strconv.FormatInt(ms, 10)
-	return true, (*tunnel.Right).RemoteAddr().String()
+	return true, addr.String()
 }
 
 func handleEtAskPingReq(tunnel *eaglelib.Tunnel) {
