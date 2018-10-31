@@ -192,21 +192,21 @@ func sendSingleAskPingReq(e *NetArg) (bool, string) {
 	start := time.Now() // 开始计时
 	_, err = tunnel.WriteRight([]byte(req))
 	if err != nil {
-		e.Reply = "when send ask: " + err.Error()
-		return false, (*tunnel.Right).RemoteAddr().String()
+		e.Reply = "req error"
+		return false, ""
 	}
 	// 接收响应数据
 	buffer := make([]byte, 8)
 	count, err := tunnel.ReadRight(buffer)
 	end := time.Now() // 停止计时
 	if err != nil {
-		e.Reply = "when read ask reply: " + err.Error()
-		return false, (*tunnel.Right).RemoteAddr().String()
+		e.Reply = "reply error"
+		return false, ""
 	}
 	reply := string(buffer[:count])
 	if reply != "ok" {
 		e.Reply = "invalid ping reply"
-		return false, (*tunnel.Right).RemoteAddr().String()
+		return false, ""
 	}
 	duration := end.Sub(start)
 	ns := duration.Nanoseconds()
