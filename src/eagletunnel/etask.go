@@ -203,7 +203,7 @@ func sendSingleAskPingReq(e *NetArg) (bool, string) {
 	end := time.Now() // 停止计时
 	if err != nil {
 		e.Reply = err.Error()
-		return false, ""
+		return false, addr.String()
 	}
 	reply := string(buffer[:count])
 	if reply != "ok" {
