@@ -128,7 +128,11 @@ func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 	switch LocalCipherType {
 	case SimpleCipherType:
 		c = new(SimpleCipher)
-		err = c.SetPassword(ConfigKeyValues["data-key"])
+		key, found := ConfigKeyValues["data-key"]
+		if !found {
+			panic("data-key not found")
+		}
+		err = c.SetPassword(key)
 		if err != nil {
 			return err
 		}
@@ -171,29 +175,21 @@ func (et *EagleTunnel) checkHeaderOfReq(
 	if len(headers) < 3 {
 		return false, UnknownCipherType
 	}
-	replys := make([]string, 3)
-	if headers[0] == ConfigKeyValues["head"] {
-		replys[0] = "valid"
-	} else {
-		replys[0] = "invalid"
+	if headers[0] != ConfigKeyValues["head"] {
+		return false, UnknownCipherType
 	}
 	versionOfReq, err := eaglelib.CreateVersion(headers[1])
-	if err == nil {
-		if ProtocolCompatibleVersion.IsSTOrE2(&versionOfReq) {
-			replys[1] = "valid"
-		} else {
-			replys[1] = "incompatible et protocol version"
-		}
-	} else {
-		replys[1] = err.Error()
+	if err != nil {
+		return false, UnknownCipherType
+	}
+	if !ProtocolCompatibleVersion.IsSTOrE2(&versionOfReq) {
+		return false, UnknownCipherType
 	}
 	theType := ParseCipherType(headers[2])
 	if theType == UnknownCipherType {
-		replys[2] = "invalid"
-	} else {
-		replys[2] = "valid"
+		return false, UnknownCipherType
 	}
-	reply := replys[0] + " " + replys[1] + " " + replys[2]
+	reply := "valid valid valid"
 	count, _ := tunnel.WriteLeft([]byte(reply))
 	return count == 17, theType // length of "valid valid valid"
 }
