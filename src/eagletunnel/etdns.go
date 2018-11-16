@@ -4,9 +4,13 @@ import (
 	"errors"
 	"net"
 	"strings"
+	"sync"
 
 	"../eaglelib/src"
 )
+
+var dnsRemoteCache = sync.Map{}
+var hostsCache = make(map[string]string)
 
 // ETDNS ET-DNS子协议的实现
 type ETDNS struct {
@@ -52,15 +56,32 @@ func resolvDNSByProxy(e *NetArg) error {
 	_cache, ok := dnsRemoteCache.Load(e.domain)
 	if ok {
 		cache := _cache.(*eaglelib.DNSCache)
-		e.IP = cache.GetIP()
+		e.IP, err = cache.Wait4IP()
+		if err != nil {
+			return err
+		}
 		if cache.OverTTL() {
 			eTmp := e.Clone()
-			go _resolvDNSByProxy(eTmp)
+			go syncResolvDNSByProxy(eTmp)
 		}
 	} else { // not found
-		err = _resolvDNSByProxy(e)
+		syncResolvDNSByProxy(e)
 	}
 	return err
+}
+
+func syncResolvDNSByProxy(e *NetArg) error {
+	cache := eaglelib.CreateDNSCache(e.domain, "")
+	cache.Sync()
+	dnsRemoteCache.Store(e.domain, cache)
+	err := _resolvDNSByProxy(e)
+	if err != nil {
+		cache.Destroy()
+		dnsRemoteCache.Delete(e.domain)
+		return err
+	}
+	cache.Update(e.IP)
+	return nil
 }
 
 func _resolvDNSByProxy(e *NetArg) error {
@@ -86,8 +107,6 @@ func _resolvDNSByProxy(e *NetArg) error {
 		return errors.New("failed to resolv by remote")
 	}
 	e.IP = _ip
-	cache := eaglelib.CreateDNSCache(e.domain, e.IP)
-	dnsRemoteCache.Store(cache.GetDomain(), cache)
 	return err
 }
 

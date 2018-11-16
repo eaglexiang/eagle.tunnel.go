@@ -32,8 +32,6 @@ var ProtocolVersion, _ = eaglelib.CreateVersion("1.2")
 var ProtocolCompatibleVersion, _ = eaglelib.CreateVersion("1.1")
 
 var insideCache = sync.Map{}
-var dnsRemoteCache = sync.Map{}
-var hostsCache = make(map[string]string)
 
 // LocalCipherType 本地使用的加密方式
 var LocalCipherType = SimpleCipherType
