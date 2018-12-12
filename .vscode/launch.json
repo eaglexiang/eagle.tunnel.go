@@ -12,7 +12,8 @@
             "remotePath": "",
             "port": 2345,
             "host": "127.0.0.1",
-            "program": "${fileDirname}",
+            // "program": "${fileDirname}",
+            "program": "${workspaceFolder}/src/main.go",
             "env": {},
             // "args": ["ask","local","ping","../tmp/t.conf"],
             "args": [
