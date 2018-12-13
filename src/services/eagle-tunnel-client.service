@@ -5,7 +5,6 @@ Description=Eagle Tunnel Client
 Type=simple
 User=root
 ExecStart=/usr/bin/et /etc/eagle-tunnel.d/client.conf
-Restart=on-failure
-
+Restart=on-abort
 [Install]
 WantedBy=multi-user.target
