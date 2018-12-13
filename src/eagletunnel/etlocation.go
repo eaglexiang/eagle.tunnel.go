@@ -1,3 +1,11 @@
+/*
+ * @Description:
+ * @Author: EagleXiang
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2018-12-13 19:04:31
+ * @LastEditors: EagleXiang
+ * @LastEditTime: 2018-12-13 19:04:46
+ */
 package eagletunnel
 
 import (
@@ -26,15 +34,7 @@ func (el *ETLocation) Send(e *NetArg) bool {
 	}
 	err := el.checkInsideByRemote(e)
 	if err != nil {
-		// 远端不响应，不得已本地解析。尽量使用远端解析可减少外部API的负载
-		var inside bool
-		inside, err = CheckInsideByLocal(e.IP)
-		if err != nil {
-			return false
-		}
-		e.boolObj = inside
-		insideCache.Store(e.IP, e.boolObj)
-		return true
+		return false
 	}
 	insideCache.Store(e.IP, e.boolObj)
 	return true
