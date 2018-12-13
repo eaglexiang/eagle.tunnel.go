@@ -27,3 +27,4 @@ source ${ScriptPath}/copy-whitelist.sh
 source ${ScriptPath}/copy-hosts.sh
 source ${ScriptPath}/copy-services.sh
 source ${ScriptPath}/copy-conf.sh
+cp -n ./LICENSE ${PublishPath}
