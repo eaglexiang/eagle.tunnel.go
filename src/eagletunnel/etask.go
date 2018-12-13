@@ -153,7 +153,7 @@ func sendAskPingReq(e *NetArg) bool {
 			fmt.Println("ping to ", addr, " time=", duration, "ms")
 			oks++
 		} else {
-			fmt.Println("fail to ping")
+			fmt.Println(eTmp.Reply)
 		}
 		ok = ok || okTmp
 	}
