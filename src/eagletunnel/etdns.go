@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-21 21:32:04
+ * @LastEditTime: 2018-12-22 06:06:26
  */
 
 package eagletunnel
@@ -69,7 +69,7 @@ func resolvDNSByProxy(e *NetArg) error {
 	dnsRemoteCache.Add(e.domain)
 	err = _resolvDNSByProxy(e)
 	if err != nil {
-		dnsRemoteCache.Destroy(e.domain)
+		dnsRemoteCache.Delete(e.domain)
 		return err
 	}
 	dnsRemoteCache.Update(e.domain, e.IP)

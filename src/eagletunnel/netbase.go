@@ -2,9 +2,7 @@ package eagletunnel
 
 import (
 	"errors"
-	"io/ioutil"
 	"net"
-	"net/http"
 	"strconv"
 	"strings"
 )
@@ -50,29 +48,6 @@ func ResolvIPv6ByLocal(e *NetArg) error {
 		}
 	}
 	return err
-}
-
-// CheckInsideByLocal 本地解析IP是否适合直连
-func CheckInsideByLocal(ip string) (bool, error) {
-	var inside bool
-	req := "https://ip2c.org/" + ip
-	res, err := http.Get(req)
-	if err != nil {
-		return inside, err
-	}
-	defer res.Body.Close()
-	body, _ := ioutil.ReadAll(res.Body)
-	bodyStr := string(body)
-	if err == nil {
-		switch bodyStr {
-		case "0;;;WRONG INPUT":
-			err = errors.New("0;;;WRONG INPUT")
-		case "1;ZZ;ZZZ;Reserved", "1;CN;CHN;China":
-			inside = true
-		default:
-		}
-	}
-	return inside, err
 }
 
 // CheckPrivateIPv4 检查是否是保留IPv4地址

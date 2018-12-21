@@ -4,17 +4,22 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-20 23:05:13
+ * @LastEditTime: 2018-12-22 06:42:50
  */
 
 package eagletunnel
 
 import (
+	"errors"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 	"strings"
 
 	"../eaglelib/src"
 )
+
+var iPLocationCache = CreateLocationCache()
 
 // ETLocation ET-LOCATION子协议的实现
 type ETLocation struct {
@@ -90,4 +95,53 @@ func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) {
 		}
 		tunnel.WriteLeft([]byte(reply))
 	}
+}
+
+// CheckInsideByLocal 本地解析IP是否适合直连
+func CheckInsideByLocal(ip string) (bool, error) {
+	location, err := CheckLocation(ip)
+	if err != nil {
+		return false, err
+	}
+	switch location {
+	case "0;;;WRONG INPUT":
+		err = errors.New("0;;;WRONG INPUT")
+		return false, err
+	case "1;ZZ;ZZZ;Reserved", "1;CN;CHN;China":
+		return true, nil
+	default:
+		return false, nil
+	}
+}
+
+// CheckLocation 本地解析IP的Location
+func CheckLocation(ip string) (string, error) {
+	if iPLocationCache.Exsit(ip) {
+		location, err := iPLocationCache.Wait4Location(ip)
+		if err != nil {
+			return "", err
+		}
+		return location, nil
+	}
+	iPLocationCache.Add(ip)
+	location, err := CheckLocationByWeb(ip)
+	if err != nil {
+		iPLocationCache.Delete(ip)
+		return "", err
+	}
+	iPLocationCache.Update(ip, location)
+	return location, nil
+}
+
+// CheckLocationByWeb 外部解析IP的Location
+func CheckLocationByWeb(ip string) (string, error) {
+	req := "https://ip2c.org/" + ip
+	res, err := http.Get(req)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	body, _ := ioutil.ReadAll(res.Body)
+	bodyStr := string(body)
+	return bodyStr, nil
 }
