@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-13 18:55:11
+ * @LastEditTime: 2018-12-21 21:32:04
  */
 
 package eagletunnel
@@ -13,12 +13,11 @@ import (
 	"errors"
 	"net"
 	"strings"
-	"sync"
 
 	"../eaglelib/src"
 )
 
-var dnsRemoteCache = sync.Map{}
+var dnsRemoteCache = eaglelib.CreateDNSCache()
 var hostsCache = make(map[string]string)
 
 // ETDNS ET-DNS子协议的实现
@@ -62,34 +61,18 @@ func (ed *ETDNS) Send(e *NetArg) bool {
 
 func resolvDNSByProxy(e *NetArg) error {
 	var err error
-	_cache, ok := dnsRemoteCache.Load(e.domain)
+	ok := dnsRemoteCache.Exsit(e.domain)
 	if ok {
-		cache := _cache.(*eaglelib.DNSCache)
-		e.IP, err = cache.Wait4IP()
-		if err != nil {
-			return err
-		}
-		if cache.OverTTL() {
-			eTmp := e.Clone()
-			go syncResolvDNSByProxy(eTmp)
-		}
-	} else { // not found
-		syncResolvDNSByProxy(e)
+		e.IP, err = dnsRemoteCache.Wait4IP(e.domain)
+		return nil
 	}
-	return err
-}
-
-func syncResolvDNSByProxy(e *NetArg) error {
-	cache := eaglelib.CreateDNSCache(e.domain, "")
-	cache.Sync()
-	dnsRemoteCache.Store(e.domain, cache)
-	err := _resolvDNSByProxy(e)
+	dnsRemoteCache.Add(e.domain)
+	err = _resolvDNSByProxy(e)
 	if err != nil {
-		cache.Destroy()
-		dnsRemoteCache.Delete(e.domain)
+		dnsRemoteCache.Destroy(e.domain)
 		return err
 	}
-	cache.Update(e.IP)
+	dnsRemoteCache.Update(e.domain, e.IP)
 	return nil
 }
 
