@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-22 06:42:50
+ * @LastEditTime: 2018-12-22 13:32:01
  */
 
 package eagletunnel
@@ -19,7 +19,7 @@ import (
 	"../eaglelib/src"
 )
 
-var iPLocationCache = CreateLocationCache()
+var ifProxyCache = CreateProxyCache() // [ip string, proxy bool]
 
 // ETLocation ET-LOCATION子协议的实现
 type ETLocation struct {
@@ -27,22 +27,27 @@ type ETLocation struct {
 
 // Send 发送ET-LOCATION请求 解析IP是否适合直连。返回值表示是否成功解析，解析结果保存在e.boolObj
 func (el *ETLocation) Send(e *NetArg) bool {
-	_inside, ok := insideCache.Load(e.IP)
-	if ok {
-		e.boolObj, _ = _inside.(bool)
+	if ifProxyCache.Exsit(e.IP) {
+		proxy, err := ifProxyCache.Wait4Proxy(e.IP)
+		if err != nil {
+			return false
+		}
+		e.boolObj = proxy
 		return true
 	}
 	if CheckPrivateIPv4(e.IP) {
 		// 保留地址适合直连
 		e.boolObj = true
-		insideCache.Store(e.IP, true)
+		ifProxyCache.Add(e.IP)
+		ifProxyCache.Update(e.IP, true)
 		return true
 	}
 	err := el.checkInsideByRemote(e)
 	if err != nil {
+		e.boolObj = false
 		return false
 	}
-	insideCache.Store(e.IP, e.boolObj)
+	ifProxyCache.Update(e.IP, e.boolObj)
 	return true
 }
 
@@ -74,22 +79,25 @@ func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) {
 	if len(reqs) >= 2 {
 		var reply string
 		ip := reqs[1]
-		_inside, ok := insideCache.Load(ip)
-		if ok {
-			inside := _inside.(bool)
-			reply = strconv.FormatBool(inside)
+		if ifProxyCache.Exsit(ip) {
+			proxy, err := ifProxyCache.Wait4Proxy(ip)
+			if err != nil {
+				reply = err.Error()
+			}
+			reply = strconv.FormatBool(proxy)
 		} else {
 			if CheckPrivateIPv4(ip) {
 				reply = strconv.FormatBool(true)
-				insideCache.Store(ip, true)
+				ifProxyCache.Add(ip)
+				ifProxyCache.Update(ip, true)
 			} else {
-				var err error
-				inside, err := CheckInsideByLocal(ip)
+				proxy, err := CheckProxyByLocal(ip)
 				if err != nil {
 					reply = err.Error()
 				} else {
-					reply = strconv.FormatBool(inside)
-					insideCache.Store(ip, inside)
+					reply = strconv.FormatBool(proxy)
+					ifProxyCache.Add(ip)
+					ifProxyCache.Update(ip, proxy)
 				}
 			}
 		}
@@ -97,9 +105,9 @@ func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) {
 	}
 }
 
-// CheckInsideByLocal 本地解析IP是否适合直连
-func CheckInsideByLocal(ip string) (bool, error) {
-	location, err := CheckLocation(ip)
+// CheckProxyByLocal 本地解析IP是否需要使用代理
+func CheckProxyByLocal(ip string) (bool, error) {
+	location, err := CheckLocationByWeb(ip)
 	if err != nil {
 		return false, err
 	}
@@ -112,25 +120,6 @@ func CheckInsideByLocal(ip string) (bool, error) {
 	default:
 		return false, nil
 	}
-}
-
-// CheckLocation 本地解析IP的Location
-func CheckLocation(ip string) (string, error) {
-	if iPLocationCache.Exsit(ip) {
-		location, err := iPLocationCache.Wait4Location(ip)
-		if err != nil {
-			return "", err
-		}
-		return location, nil
-	}
-	iPLocationCache.Add(ip)
-	location, err := CheckLocationByWeb(ip)
-	if err != nil {
-		iPLocationCache.Delete(ip)
-		return "", err
-	}
-	iPLocationCache.Update(ip, location)
-	return location, nil
 }
 
 // CheckLocationByWeb 外部解析IP的Location

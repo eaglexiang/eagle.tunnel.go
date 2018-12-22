@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net"
 	"strings"
-	"sync"
 	"time"
 
 	"../eaglelib/src"
@@ -30,8 +29,6 @@ var ProtocolVersion, _ = eaglelib.CreateVersion("1.2")
 
 // ProtocolCompatibleVersion 作为Handler可兼容的最低协议版本号
 var ProtocolCompatibleVersion, _ = eaglelib.CreateVersion("1.1")
-
-var insideCache = sync.Map{}
 
 // LocalCipherType 本地使用的加密方式
 var LocalCipherType = SimpleCipherType
