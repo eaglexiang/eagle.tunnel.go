@@ -19,22 +19,18 @@ func (et *ETTCP) Send(e *NetArg) bool {
 	switch ProxyStatus {
 	case ProxySMART:
 		el := ETLocation{}
-		ok := el.Send(e)
-		if !ok {
-			// 位置解析失败，默认使用代理
+		el.Send(e)
+		if e.boolObj {
+			// 启用代理
 			return et.sendTCPReq2Remote(e) == nil
 		}
-		if e.boolObj {
-			// 启用直连
-			err := et.sendTCPReq2Server(e)
-			if err != nil {
-				// 直连失败，换用代理
-				return et.sendTCPReq2Remote(e) == nil
-			}
-			return true
+		// 不启用代理
+		err := et.sendTCPReq2Server(e)
+		if err != nil {
+			return false // 直连失败的网站应被用户察觉
 		}
-		// 不启用直连
-		return et.sendTCPReq2Remote(e) == nil
+		return true
+
 	case ProxyENABLE:
 		return et.sendTCPReq2Remote(e) == nil
 	default:

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net"
 	"strings"
-	"time"
+	// "time"
 
 	"../eaglelib/src"
 )
@@ -25,10 +25,10 @@ const (
 )
 
 // ProtocolVersion 作为Sender使用的协议版本号
-var ProtocolVersion, _ = eaglelib.CreateVersion("1.2")
+var ProtocolVersion, _ = eaglelib.CreateVersion("1.3")
 
 // ProtocolCompatibleVersion 作为Handler可兼容的最低协议版本号
-var ProtocolCompatibleVersion, _ = eaglelib.CreateVersion("1.1")
+var ProtocolCompatibleVersion, _ = eaglelib.CreateVersion("1.3")
 
 // LocalCipherType 本地使用的加密方式
 var LocalCipherType = SimpleCipherType
@@ -110,7 +110,8 @@ func (et *EagleTunnel) Send(e *NetArg) (succeed bool) {
 // connect2Relayer 连接到下一个Relayer，完成版本校验和用户校验两个步骤
 func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 	remoteIpe := RemoteAddr + ":" + RemotePort
-	conn, err := net.DialTimeout("tcp", remoteIpe, 5*time.Second)
+	// conn, err := net.DialTimeout("tcp", remoteIpe, 5*time.Second)
+	conn, err := net.Dial("tcp", remoteIpe)
 	if err != nil {
 		return err
 	}

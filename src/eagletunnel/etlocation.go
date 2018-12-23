@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-22 13:32:01
+ * @LastEditTime: 2018-12-23 23:12:49
  */
 
 package eagletunnel
@@ -30,28 +30,29 @@ func (el *ETLocation) Send(e *NetArg) bool {
 	if ifProxyCache.Exsit(e.IP) {
 		proxy, err := ifProxyCache.Wait4Proxy(e.IP)
 		if err != nil {
+			e.boolObj = true
 			return false
 		}
 		e.boolObj = proxy
 		return true
 	}
 	if CheckPrivateIPv4(e.IP) {
-		// 保留地址适合直连
-		e.boolObj = true
+		// 保留地址不适合代理
+		e.boolObj = false
 		ifProxyCache.Add(e.IP)
-		ifProxyCache.Update(e.IP, true)
+		ifProxyCache.Update(e.IP, e.boolObj)
 		return true
 	}
-	err := el.checkInsideByRemote(e)
+	err := el.checkProxyByRemote(e)
 	if err != nil {
-		e.boolObj = false
+		e.boolObj = true
 		return false
 	}
 	ifProxyCache.Update(e.IP, e.boolObj)
 	return true
 }
 
-func (el *ETLocation) checkInsideByRemote(e *NetArg) error {
+func (el *ETLocation) checkProxyByRemote(e *NetArg) error {
 	tunnel := eaglelib.Tunnel{}
 	defer tunnel.Close()
 	err := connect2Relayer(&tunnel)
@@ -69,7 +70,8 @@ func (el *ETLocation) checkInsideByRemote(e *NetArg) error {
 	if err != nil {
 		return err
 	}
-	e.boolObj, err = strconv.ParseBool(string(buffer[0:count]))
+	reply := string(buffer[:count])
+	e.boolObj, err = strconv.ParseBool(reply)
 	return err
 }
 
@@ -114,11 +116,11 @@ func CheckProxyByLocal(ip string) (bool, error) {
 	switch location {
 	case "0;;;WRONG INPUT":
 		err = errors.New("0;;;WRONG INPUT")
-		return false, err
+		return true, err
 	case "1;ZZ;ZZZ;Reserved", "1;CN;CHN;China":
-		return true, nil
-	default:
 		return false, nil
+	default:
+		return true, nil
 	}
 }
 
