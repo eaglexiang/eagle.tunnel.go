@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-26 11:06:48
+ * @LastEditTime: 2018-12-26 17:01:21
  */
 
 package eagletunnel
@@ -42,19 +42,20 @@ func (ed *ETDNS) Send(e *NetArg) bool {
 	ip, result := hostsCache[e.domain]
 	if result {
 		e.IP = ip
-	} else {
-		switch ProxyStatus {
-		case ProxySMART:
-			white := IsWhiteDomain(e.domain)
-			if white {
-				result = resolvDNSByProxy(e) == nil
-			} else {
-				result = resolvDNSByLocal(e, true) == nil
-			}
-		case ProxyENABLE:
+		return true
+	}
+	switch ProxyStatus {
+	case ProxySMART:
+		white := IsWhiteDomain(e.domain)
+		if white {
 			result = resolvDNSByProxy(e) == nil
-		default:
+		} else {
+			result = resolvDNSByLocal(e, true) == nil
 		}
+	case ProxyENABLE:
+		result = resolvDNSByProxy(e) == nil
+	default:
+		result = false
 	}
 	return result
 }
@@ -127,19 +128,20 @@ func resolvDNSByLocal(e *NetArg, recursive bool) error {
 		return errors.New("fail to resolv DNS by local")
 	}
 
-	if recursive {
-		// 判断IP所在位置是否适合代理
-		el := ETLocation{}
-		ok := el.Send(e)
-		if !ok {
-			return nil
-		}
-		if e.boolObj {
-			ne := NetArg{domain: e.domain}
-			err = resolvDNSByProxy(&ne)
-			if err == nil {
-				e.IP = ne.IP
-			}
+	if !recursive {
+		return nil
+	}
+	// 判断IP所在位置是否适合代理
+	el := ETLocation{}
+	ok := el.Send(e)
+	if !ok {
+		return nil
+	}
+	if e.boolObj {
+		ne := NetArg{domain: e.domain}
+		err = resolvDNSByProxy(&ne)
+		if err == nil {
+			e.IP = ne.IP
 		}
 	}
 

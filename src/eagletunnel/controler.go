@@ -191,15 +191,16 @@ func importUsers(usersPath string) error {
 func getKeyValues(keyValues map[string]string, lines []string) {
 	for _, line := range lines {
 		keyValue := strings.Split(line, "=")
-		if len(keyValue) >= 2 {
-			value := keyValue[1]
-			for _, item := range keyValue[2:] {
-				value += "=" + item
-			}
-			key := strings.TrimSpace(keyValue[0])
-			value = strings.TrimSpace(value)
-			keyValues[key] = value
+		if len(keyValue) < 2 {
+			continue
 		}
+		value := keyValue[1]
+		for _, item := range keyValue[2:] {
+			value += "=" + item
+		}
+		key := strings.TrimSpace(keyValue[0])
+		value = strings.TrimSpace(value)
+		keyValues[key] = value
 	}
 }
 
@@ -277,11 +278,12 @@ func getHostsList(hostsDir string) []string {
 	}
 	var hosts []string
 	for _, file := range files {
-		if !file.IsDir() {
-			filename := file.Name()
-			if strings.HasSuffix(filename, ".hosts") {
-				hosts = append(hosts, filename)
-			}
+		if file.IsDir() {
+			continue
+		}
+		filename := file.Name()
+		if strings.HasSuffix(filename, ".hosts") {
+			hosts = append(hosts, filename)
 		}
 	}
 	return hosts
