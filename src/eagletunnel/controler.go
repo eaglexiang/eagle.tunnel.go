@@ -47,26 +47,36 @@ var ProxyStatus int
 
 // Init 根据给定的配置文件初始化参数
 func Init(filePath string) error {
+	ConfigKeyValues = make(map[string]string)
+
+	// 设定默认值
 	ConfigPath = filePath
+	ConfigKeyValues["data-key"] = "34"
+	ConfigKeyValues["head"] = "eagle_tunnel"
+	ConfigKeyValues["config-dir"] = filepath.Dir(ConfigPath)
+
+	// 读取配置文件
 	allConfLines, err := readLines(ConfigPath)
 	if err != nil {
 		fmt.Println("failed to read " + ConfigPath)
 	}
+	getKeyValues(ConfigKeyValues, allConfLines)
 
-	ConfigKeyValues = getKeyValues(allConfLines)
+	// 初始化配置
+	err = initConfig()
 
-	// 设定默认值
-	if _, ok := ConfigKeyValues["data-key"]; !ok {
-		ConfigKeyValues["data-key"] = "34"
-	}
-	if _, ok := ConfigKeyValues["head"]; !ok {
-		ConfigKeyValues["head"] = "eagle_tunnel"
-	}
+	// DNS解析白名单
+	whiteDomainsPath := ConfigKeyValues["config-dir"] + "/whitelist_domain.txt"
+	WhitelistDomains, _ = readLines(whiteDomainsPath)
 
-	if _, ok := ConfigKeyValues["config-dir"]; !ok {
-		ConfigKeyValues["config-dir"] = filepath.Dir(ConfigPath)
-	}
+	// hosts文件
+	readHosts(ConfigKeyValues["config-dir"] + "/hosts")
 
+	return err
+}
+
+func initConfig() error {
+	var err error
 	if enableUsercheck, ok := ConfigKeyValues["user-check"]; ok {
 		EnableUserCheck = enableUsercheck == "on"
 	}
@@ -136,12 +146,6 @@ func Init(filePath string) error {
 			ProxyStatus = ProxyENABLE
 		}
 	}
-
-	whiteDomainsPath := ConfigKeyValues["config-dir"] + "/whitelist_domain.txt"
-	WhitelistDomains, _ = readLines(whiteDomainsPath)
-
-	readHosts(ConfigKeyValues["config-dir"] + "/hosts")
-
 	return err
 }
 
@@ -184,8 +188,7 @@ func importUsers(usersPath string) error {
 	return err
 }
 
-func getKeyValues(lines []string) map[string]string {
-	keyValues := make(map[string]string)
+func getKeyValues(keyValues map[string]string, lines []string) {
 	for _, line := range lines {
 		keyValue := strings.Split(line, "=")
 		if len(keyValue) >= 2 {
@@ -198,7 +201,6 @@ func getKeyValues(lines []string) map[string]string {
 			keyValues[key] = value
 		}
 	}
-	return keyValues
 }
 
 func exportKeyValues(keyValues *map[string]string, keys []string) string {

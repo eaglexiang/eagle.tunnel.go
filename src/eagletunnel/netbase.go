@@ -1,3 +1,12 @@
+/*
+ * @Description:
+ * @Author: EagleXiang
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2018-12-26 11:09:54
+ * @LastEditors: EagleXiang
+ * @LastEditTime: 2018-12-26 11:22:02
+ */
+
 package eagletunnel
 
 import (
@@ -37,7 +46,7 @@ func ResolvIPv6ByLocal(e *NetArg) error {
 		var ok bool
 		for _, addr := range addrs {
 			ip := net.ParseIP(addr)
-			if ip.To16() != nil {
+			if ip.To16() != nil && ip.To4() == nil {
 				e.IP = addr
 				ok = true
 				break

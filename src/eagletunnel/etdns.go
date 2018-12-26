@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-23 22:51:05
+ * @LastEditTime: 2018-12-26 11:06:48
  */
 
 package eagletunnel
@@ -30,7 +30,7 @@ func (ed *ETDNS) Handle(req Request, tunnel *eaglelib.Tunnel) {
 	if len(reqs) >= 2 {
 		domain := reqs[1]
 		e := NetArg{domain: domain}
-		err := resolvDNSByLocal(&e)
+		err := resolvDNSByLocal(&e, false)
 		if err == nil {
 			tunnel.WriteLeft([]byte(e.IP))
 		}
@@ -49,7 +49,7 @@ func (ed *ETDNS) Send(e *NetArg) bool {
 			if white {
 				result = resolvDNSByProxy(e) == nil
 			} else {
-				result = resolvDNSByLocal(e) == nil
+				result = resolvDNSByLocal(e, true) == nil
 			}
 		case ProxyENABLE:
 			result = resolvDNSByProxy(e) == nil
@@ -102,31 +102,46 @@ func _resolvDNSByProxy(e *NetArg) error {
 	return err
 }
 
-// resolvDNSByLocal 本地解析DNS，优先返回IPv4结果
-func resolvDNSByLocal(e *NetArg) error {
-	err := ResolvIPv4ByLocal(e)
-	if err != nil {
-		err = ResolvIPv6ByLocal(e)
+// resolvDNSByLocal 本地解析DNS，recursive表明是否递归使用上一级relayer，如无ip-type配置，优先返回IPv4
+func resolvDNSByLocal(e *NetArg, recursive bool) error {
+	var firstIPResolver func(*NetArg) error
+	var secondIPResolver func(*NetArg) error
+	if ConfigKeyValues["ip-type"] == "4" {
+		firstIPResolver = ResolvIPv4ByLocal
+		secondIPResolver = ResolvIPv4ByLocal
+	} else if ConfigKeyValues["ip-type"] == "6" {
+		firstIPResolver = ResolvIPv6ByLocal
+		secondIPResolver = ResolvIPv6ByLocal
+	} else {
+		firstIPResolver = ResolvIPv4ByLocal
+		secondIPResolver = ResolvIPv6ByLocal
 	}
 
+	err := firstIPResolver(e)
 	if err != nil {
-		// 本地解析失败不得已使用远端解析
-		err = resolvDNSByProxy(e)
-		return err
+		err = secondIPResolver(e)
 	}
 
-	// 判断IP所在位置是否适合代理
-	el := ETLocation{}
-	ok := el.Send(e)
-	if !ok {
-		return nil
+	// 本地解析失败应该让用户察觉，手动添加DNS白名单
+	if err != nil {
+		return errors.New("fail to resolv DNS by local")
 	}
-	if e.boolObj {
-		ne := NetArg{domain: e.domain}
-		err = resolvDNSByProxy(&ne)
-		if err == nil {
-			e.IP = ne.IP
+
+	if recursive {
+		// 判断IP所在位置是否适合代理
+		el := ETLocation{}
+		ok := el.Send(e)
+		if !ok {
+			return nil
+		}
+		if e.boolObj {
+			ne := NetArg{domain: e.domain}
+			err = resolvDNSByProxy(&ne)
+			if err == nil {
+				e.IP = ne.IP
+			}
 		}
 	}
+
 	return nil
 }
