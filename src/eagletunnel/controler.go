@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-27 08:45:42
+ * @LastEditTime: 2018-12-27 09:16:47
  */
 
 package eagletunnel
@@ -52,10 +52,13 @@ var EnableET bool
 // ProxyStatus 代理的状态（全局/智能）
 var ProxyStatus int
 
+// Init 初始化参数系统
+func Init() {
+	ConfigKeyValues = make(map[string]string)
+}
+
 // InitConfig 根据给定的配置文件初始化参数
 func InitConfig(filePath string) error {
-	ConfigKeyValues = make(map[string]string)
-
 	// 设定默认值
 	ConfigPath = filePath
 	addDefaultArg("data-key", "34")
@@ -93,8 +96,8 @@ func addDefaultArg(key, value string) {
 	}
 }
 
-// ExcConfig 执行配置
-func ExcConfig() error {
+// ExecConfig 执行配置
+func ExecConfig() error {
 	EnableUserCheck = ConfigKeyValues["user-check"] == "on"
 
 	if EnableUserCheck {

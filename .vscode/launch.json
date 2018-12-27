@@ -16,9 +16,19 @@
             "program": "${workspaceFolder}/src/main.go",
             "env": {},
             // "args": ["ask","local","ping","../tmp/t.conf"],
+            // "args": [
+            //     "-c",
+            //     "../tmp/t.conf"
+            // ],
             "args": [
-                "-c",
-                "../tmp/t.conf"
+                "-l","0.0.0.0:8082",
+                "-r","198.13.60.71",
+                "-u","eaglex:eaglex",
+                "--head","\"hibody\"",
+                "--http","on",
+                "--socks","on",
+                "-s","smart",
+                "--config-dir","/etc/eagle-tunnel.d/"
             ],
             "showLog": false
         }
