@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-26 10:29:43
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-26 11:22:15
+ * @LastEditTime: 2018-12-27 08:25:10
  */
 
 package eagletunnel
@@ -14,7 +14,8 @@ import (
 )
 
 func Test_ETLocation_Send(t *testing.T) {
-	Init("../../tmp/t.conf")
+	InitConfig("../../tmp/t.conf")
+	ExcConfig()
 	testETLocationSend(t, "192.168.50.1", false)
 	testETLocationSend(t, "127.0.0.1", false)
 	testETLocationSend(t, "245.5.2.1", false)

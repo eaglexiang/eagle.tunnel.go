@@ -1,14 +1,21 @@
+/*
+ * @Description:
+ * @Author: EagleXiang
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2018-12-27 08:37:36
+ * @LastEditors: EagleXiang
+ * @LastEditTime: 2018-12-27 08:45:42
+ */
+
 package eagletunnel
 
 import (
 	"bufio"
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"../eaglelib/src"
 )
 
 var defaultPathsOfClientConfig = []string{
@@ -45,108 +52,115 @@ var EnableET bool
 // ProxyStatus 代理的状态（全局/智能）
 var ProxyStatus int
 
-// Init 根据给定的配置文件初始化参数
-func Init(filePath string) error {
+// InitConfig 根据给定的配置文件初始化参数
+func InitConfig(filePath string) error {
 	ConfigKeyValues = make(map[string]string)
 
 	// 设定默认值
 	ConfigPath = filePath
-	ConfigKeyValues["data-key"] = "34"
-	ConfigKeyValues["head"] = "eagle_tunnel"
-	ConfigKeyValues["config-dir"] = filepath.Dir(ConfigPath)
-
-	// 读取配置文件
-	allConfLines, err := readLines(ConfigPath)
-	if err != nil {
-		fmt.Println("failed to read " + ConfigPath)
+	addDefaultArg("data-key", "34")
+	addDefaultArg("head", "eagle_tunnel")
+	addDefaultArg("proxy-status", "enable")
+	addDefaultArg("user", "root:root")
+	addDefaultArg("user-check", "off")
+	addDefaultArg("listen", "0.0.0.0")
+	addDefaultArg("relayer", "127.0.0.1")
+	addDefaultArg("http", "off")
+	addDefaultArg("socks", "off")
+	addDefaultArg("et", "off")
+	if ConfigPath != "" {
+		addDefaultArg("config-dir", filepath.Dir(ConfigPath))
 	}
-	getKeyValues(ConfigKeyValues, allConfLines)
 
-	// 初始化配置
-	err = initConfig()
+	if ConfigPath != "" {
+		// 读取配置文件
+		allConfLines, err := readLines(ConfigPath)
+		if err != nil {
+			return err
+		}
+		err = getKeyValues(ConfigKeyValues, allConfLines)
+		if err != nil {
+			return err
+		}
+	}
 
-	// DNS解析白名单
-	whiteDomainsPath := ConfigKeyValues["config-dir"] + "/whitelist_domain.txt"
-	WhitelistDomains, _ = readLines(whiteDomainsPath)
-
-	// hosts文件
-	readHosts(ConfigKeyValues["config-dir"] + "/hosts")
-
-	return err
+	return nil
 }
 
-func initConfig() error {
-	var err error
-	if enableUsercheck, ok := ConfigKeyValues["user-check"]; ok {
-		EnableUserCheck = enableUsercheck == "on"
+func addDefaultArg(key, value string) {
+	if _, ok := ConfigKeyValues[key]; !ok {
+		ConfigKeyValues[key] = value
 	}
+}
+
+// ExcConfig 执行配置
+func ExcConfig() error {
+	EnableUserCheck = ConfigKeyValues["user-check"] == "on"
 
 	if EnableUserCheck {
 		usersPath := ConfigKeyValues["config-dir"] + "/users.list"
-		err = importUsers(usersPath)
+		err := importUsers(usersPath)
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 	}
 
-	if user, ok := ConfigKeyValues["user"]; ok {
-		LocalUser, err = ParseEagleUser(user, "")
-		if err != nil {
-			fmt.Println(err)
-		}
-	} else {
-		LocalUser, _ = ParseEagleUser("root:root", "")
+	err := SetUser(ConfigKeyValues["user"], "")
+	if err != nil {
+		return err
+	}
+
+	EnableSOCKS5 = ConfigKeyValues["socks"] == "on"
+	EnableHTTP = ConfigKeyValues["http"] == "on"
+	EnableET = ConfigKeyValues["et"] == "on"
+
+	SetListen(ConfigKeyValues["listen"])
+	SetRelayer(ConfigKeyValues["relayer"])
+
+	err = SetProxyStatus(ConfigKeyValues["proxy-status"])
+	if err != nil {
+		return err
+	}
+
+	// DNS解析白名单
+	whiteDomainsPath := ConfigKeyValues["config-dir"] + "/whitelist_domain.txt"
+	WhitelistDomains, err = readLines(whiteDomainsPath)
+	if err != nil {
+		return err
+	}
+
+	// hosts文件
+	err = readHosts(ConfigKeyValues["config-dir"] + "/hosts")
+	if err != nil {
+		return err
 	}
 
 	go CheckSpeedOfUsers()
+	return nil
+}
 
-	var localIpe string
-	_localIpe, ok := ConfigKeyValues["listen"]
-	if ok {
-		localIpe = _localIpe
+//SetUser 设置本地用户
+func SetUser(user, ip string) error {
+	localUser, err := ParseEagleUser(user, "")
+	if err != nil {
+		return err
 	}
-	SetListen(localIpe)
-
-	var socks string
-	socks, ok = ConfigKeyValues["socks"]
-	if ok {
-		EnableSOCKS5 = socks == "on"
-	}
-
-	var http string
-	http, ok = ConfigKeyValues["http"]
-	if ok {
-		EnableHTTP = http == "on"
-	}
-
-	var et string
-	et, ok = ConfigKeyValues["et"]
-	if ok {
-		EnableET = et == "on"
-	}
-
-	if EnableSOCKS5 || EnableHTTP {
-		var remoteIpe string
-		remoteIpe, ok = ConfigKeyValues["relayer"]
-		if ok {
-			SetRelayer(remoteIpe)
-		}
-	}
-
-	ProxyStatus = ProxyENABLE
-	var status string
-	status, ok = ConfigKeyValues["proxy-status"]
-	if ok {
-		switch status {
-		case "enable":
-			ProxyStatus = ProxyENABLE
-		case "smart":
-			ProxyStatus = ProxySMART
-		default:
-			ProxyStatus = ProxyENABLE
-		}
-	}
+	LocalUser = localUser
 	return err
+}
+
+//SetProxyStatus 设置Proxy-Status，enable/smart
+func SetProxyStatus(status string) error {
+	switch status {
+	case "enable":
+		ProxyStatus = ProxyENABLE
+		return nil
+	case "smart":
+		ProxyStatus = ProxySMART
+		return nil
+	default:
+		return errors.New("invalid value for proxy-status: " + status)
+	}
 }
 
 func readLines(filePath string) ([]string, error) {
@@ -188,11 +202,11 @@ func importUsers(usersPath string) error {
 	return err
 }
 
-func getKeyValues(keyValues map[string]string, lines []string) {
+func getKeyValues(keyValues map[string]string, lines []string) error {
 	for _, line := range lines {
 		keyValue := strings.Split(line, "=")
 		if len(keyValue) < 2 {
-			continue
+			return errors.New("invalid line: " + line)
 		}
 		value := keyValue[1]
 		for _, item := range keyValue[2:] {
@@ -202,6 +216,7 @@ func getKeyValues(keyValues map[string]string, lines []string) {
 		value = strings.TrimSpace(value)
 		keyValues[key] = value
 	}
+	return nil
 }
 
 func exportKeyValues(keyValues *map[string]string, keys []string) string {
@@ -225,9 +240,6 @@ func SetRelayer(remoteIpe string) {
 
 // SetListen 设定本地监听地址
 func SetListen(localIpe string) {
-	if localIpe == "" {
-		localIpe = "0.0.0.0:8080"
-	}
 	items := strings.Split(localIpe, ":")
 	LocalAddr = items[0]
 	if len(items) >= 2 {
@@ -237,38 +249,42 @@ func SetListen(localIpe string) {
 	}
 }
 
-func readHosts(hostsDir string) {
+func readHosts(hostsDir string) error {
 
 	hostsFiles := getHostsList(hostsDir)
 
 	var hosts []string
 	for _, file := range hostsFiles {
 		newHosts, err := readLines(hostsDir + "/" + file)
-		if err == nil {
-			hosts = append(hosts, newHosts...)
+		if err != nil {
+			return err
 		}
+		hosts = append(hosts, newHosts...)
 	}
 
 	for _, host := range hosts {
-		// 将所有连续两个以上空格缩减为一个
+		// 将所有连续空格缩减为单个空格
 		for {
 			newHost := strings.Replace(host, "  ", " ", -1)
-			if newHost != host {
-				host = newHost
-			} else {
+			if newHost == host {
 				break
 			}
+			host = newHost
 		}
 
 		items := strings.Split(host, " ")
-		if len(items) >= 2 {
-			ip := strings.TrimSpace(items[0])
-			domain := strings.TrimSpace(items[1])
-			if domain != "" && ip != "" {
-				hostsCache[domain] = ip
-			}
+		if len(items) < 2 {
+			return errors.New("invalid hosts line: " + host)
+		}
+		ip := strings.TrimSpace(items[0])
+		domain := strings.TrimSpace(items[1])
+		if domain != "" && ip != "" {
+			hostsCache[domain] = ip
+		} else {
+			return errors.New("invalid hosts line: " + host)
 		}
 	}
+	return nil
 }
 
 func getHostsList(hostsDir string) []string {
@@ -289,22 +305,11 @@ func getHostsList(hostsDir string) []string {
 	return hosts
 }
 
-// DefaultClientConfig 返回最匹配的client.conf文件
-func DefaultClientConfig() string {
-	for _, path := range defaultPathsOfClientConfig {
-		if eaglelib.FileExsits(path) {
-			return path
-		}
+//SprintConfig 将配置输出为字符串
+func SprintConfig() string {
+	text := ""
+	for k, v := range ConfigKeyValues {
+		text = text + k + ": " + v + "\n"
 	}
-	return ""
-}
-
-// DefaultServerConfig 返回最匹配的server.conf文件
-func DefaultServerConfig() string {
-	for _, path := range defaultPathsOfServerConfig {
-		if eaglelib.FileExsits(path) {
-			return path
-		}
-	}
-	return ""
+	return text
 }

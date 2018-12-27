@@ -17,6 +17,7 @@
             "env": {},
             // "args": ["ask","local","ping","../tmp/t.conf"],
             "args": [
+                "-c",
                 "../tmp/t.conf"
             ],
             "showLog": false

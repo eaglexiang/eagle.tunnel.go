@@ -1,10 +1,18 @@
+/*
+ * @Description:
+ * @Author: EagleXiang
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2018-12-27 08:24:57
+ * @LastEditors: EagleXiang
+ * @LastEditTime: 2018-12-27 08:41:33
+ */
+
 package eagletunnel
 
 import (
 	"errors"
 	"net"
 	"strings"
-	// "time"
 
 	"../eaglelib/src"
 )
@@ -100,8 +108,8 @@ func (et *EagleTunnel) Send(e *NetArg) (succeed bool) {
 		el := ETLocation{}
 		result = el.Send(e)
 	case EtASK:
-		et := ETAsk{}
-		result = et.Send(e)
+		// et := ETAsk{}
+		// result = et.Send(e)
 	default:
 	}
 	return result

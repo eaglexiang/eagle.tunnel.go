@@ -1,3 +1,12 @@
+/*
+ * @Description:
+ * @Author: EagleXiang
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2018-12-27 08:24:42
+ * @LastEditors: EagleXiang
+ * @LastEditTime: 2018-12-27 08:41:21
+ */
+
 package eagletunnel
 
 import (
@@ -75,67 +84,67 @@ func (ea *ETAsk) Handle(req Request, tunnel *eaglelib.Tunnel) bool {
 }
 
 // Send 发送ET-ASK请求
-func (ea *ETAsk) Send(e *NetArg) bool {
-	if len(e.Args) < 1 {
-		e.Reply = "is it 'ask local' or 'ask remote'?"
-		return false
-	}
-	etAskType := parseEtAskType(e.Args[0])
-	switch etAskType {
-	case EtAskLOCAL:
-		e.Args = e.Args[1:]
-		return sendLocalReq(e)
-	default:
-		e.Reply = "is it 'ask local' or 'ask remote'?"
-		return false
-	}
-}
+// func (ea *ETAsk) Send(e *NetArg) bool {
+// 	if len(e.Args) < 1 {
+// 		e.Reply = "is it 'ask local' or 'ask remote'?"
+// 		return false
+// 	}
+// 	etAskType := parseEtAskType(e.Args[0])
+// 	switch etAskType {
+// 	case EtAskLOCAL:
+// 		e.Args = e.Args[1:]
+// 		return sendLocalReq(e)
+// 	default:
+// 		e.Reply = "is it 'ask local' or 'ask remote'?"
+// 		return false
+// 	}
+// }
 
-func sendLocalReq(e *NetArg) bool {
-	if len(e.Args) < 1 {
-		e.Reply = "what do you want 'et ask local' to do?"
-		return false
-	}
-	etAskType := parseEtAskType(e.Args[0])
-	switch etAskType {
-	case EtAskAUTH:
-		e.Args = e.Args[1:]
-		return sendAskAuthReq(e)
-	case EtAskPING:
-		e.Args = e.Args[1:]
-		return sendAskPingReq(e)
-	default:
-		e.Reply = "Unknown ET-ASK local type: " + e.Args[0]
-		return false
-	}
-}
+// func sendLocalReq(e *NetArg) bool {
+// 	if len(e.Args) < 1 {
+// 		e.Reply = "what do you want 'et ask local' to do?"
+// 		return false
+// 	}
+// 	etAskType := parseEtAskType(e.Args[0])
+// 	switch etAskType {
+// 	case EtAskAUTH:
+// 		e.Args = e.Args[1:]
+// 		return sendAskAuthReq(e)
+// 	case EtAskPING:
+// 		e.Args = e.Args[1:]
+// 		return sendAskPingReq(e)
+// 	default:
+// 		e.Reply = "Unknown ET-ASK local type: " + e.Args[0]
+// 		return false
+// 	}
+// }
 
-func sendAskAuthReq(e *NetArg) bool {
-	if len(e.Args) < 1 {
-		e.Args = append(e.Args, DefaultClientConfig())
-	}
-	err := Init(e.Args[0])
-	if err != nil {
-		e.Reply = err.Error()
-		return false
-	}
+// func sendAskAuthReq(e *NetArg) bool {
+// 	if len(e.Args) < 1 {
+// 		e.Args = append(e.Args, ConfigPath)
+// 	}
+// 	err := Init(e.Args[0])
+// 	if err != nil {
+// 		e.Reply = err.Error()
+// 		return false
+// 	}
 
-	// 当connect2Relayer成功，则说明鉴权成功
-	tunnel := eaglelib.Tunnel{}
-	defer tunnel.Close()
-	err = connect2Relayer(&tunnel)
-	if err != nil {
-		e.Reply = err.Error() // 通过参数集返回具体的错误信息
-		return false
-	}
+// 	// 当connect2Relayer成功，则说明鉴权成功
+// 	tunnel := eaglelib.Tunnel{}
+// 	defer tunnel.Close()
+// 	err = connect2Relayer(&tunnel)
+// 	if err != nil {
+// 		e.Reply = err.Error() // 通过参数集返回具体的错误信息
+// 		return false
+// 	}
 
-	if LocalUser.ID == "root" {
-		e.Reply = "no local user"
-	} else {
-		e.Reply = "AUTH OK with local user: " + LocalUser.ID
-	}
-	return true
-}
+// 	if LocalUser.ID == "root" {
+// 		e.Reply = "no local user"
+// 	} else {
+// 		e.Reply = "AUTH OK with local user: " + LocalUser.ID
+// 	}
+// 	return true
+// }
 
 func sendAskPingReq(e *NetArg) bool {
 	var ok bool
@@ -167,9 +176,9 @@ func sendAskPingReq(e *NetArg) bool {
 
 func sendSingleAskPingReq(e *NetArg) (bool, string) {
 	if len(e.Args) < 1 {
-		e.Args = append(e.Args, DefaultClientConfig())
+		e.Args = append(e.Args, ConfigPath)
 	}
-	err := Init(e.Args[0])
+	err := InitConfig(e.Args[0])
 	if err != nil {
 		e.Reply = err.Error()
 		return false, ""
