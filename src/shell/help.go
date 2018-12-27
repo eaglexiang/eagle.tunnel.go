@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 06:14:23
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-27 07:36:34
+ * @LastEditTime: 2018-12-27 09:42:18
  */
 
 package shell
@@ -39,14 +39,5 @@ func printHelpAsk() {
 		"Usage: et ask [options] <config file>\n",
 		"\tauth\tcheck you local user\n",
 		"\tping\tcheck your ping to remote relayer",
-	)
-}
-
-// PrintVersion 打印版本信息
-func PrintVersion(programVersion, protocolVersion, ProtocolCompatibleVersion string) {
-	fmt.Println(
-		"et version:\t", programVersion, "\n",
-		"protocol version:\t", protocolVersion, "\n",
-		"protocol compatible version:\t", ProtocolCompatibleVersion,
 	)
 }

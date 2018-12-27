@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-27 08:41:54
+ * @LastEditTime: 2018-12-27 09:41:09
  */
 
 package main
@@ -23,6 +23,9 @@ var ProgramVersion, _ = eaglelib.CreateVersion("0.7")
 func main() {
 	err := ImportArgs(os.Args)
 	if err != nil {
+		if err.Error() == "no need to continue" {
+			return
+		}
 		panic(err)
 	}
 

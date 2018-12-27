@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-27 09:16:58
+ * @LastEditTime: 2018-12-27 09:40:05
  */
 
 package main
@@ -33,14 +33,27 @@ func ImportArgs(argStrs []string) error {
 		if i == 0 {
 			continue
 		}
-		if v == "-c" || v == "--config" {
+
+		v := toLongArg(v)
+		argStrs[i] = v
+		switch v {
+		case "--config":
 			skip = true
 			continue
-		}
-		var err error
-		skip, err = importArg(argStrs, i)
-		if err != nil {
-			return err
+		case "--help":
+			shell.PrintHelpMain()
+			return errors.New("no need to continue")
+		case "--version":
+			shell.PrintVersion(ProgramVersion.Raw,
+				eagletunnel.ProtocolVersion.Raw,
+				eagletunnel.ProtocolCompatibleVersion.Raw)
+			return errors.New("no need to continue")
+		default:
+			var err error
+			skip, err = importArg(argStrs, i)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -68,16 +81,7 @@ func ImportArgs(argStrs []string) error {
 
 // importArg skip表示下个参数是否跳过
 func importArg(argStrs []string, indexOfArg int) (skip bool, err error) {
-	longArg := toLongArg(argStrs[indexOfArg])
-	switch longArg {
-	case "--help":
-		shell.PrintHelpMain()
-		return false, nil
-	case "--version":
-		shell.PrintVersion(ProgramVersion.Raw,
-			eagletunnel.ProtocolVersion.Raw,
-			eagletunnel.ProtocolCompatibleVersion.Raw)
-		return false, nil
+	switch argStrs[indexOfArg] {
 	case "--listen",
 		"--relayer",
 		"--proxy-status",
@@ -88,7 +92,7 @@ func importArg(argStrs []string, indexOfArg int) (skip bool, err error) {
 		"--data-key",
 		"--head",
 		"--config-dir":
-		return true, setKeyValue(longArg, argStrs, indexOfArg)
+		return true, setKeyValue(argStrs, indexOfArg)
 	default:
 		return false, errors.New("invalid arg: " + argStrs[indexOfArg])
 	}
@@ -101,7 +105,8 @@ func checkIndex(argStrs []string, indexOfArg int) error {
 	return nil
 }
 
-func setKeyValue(argName string, argStrs []string, indexOfArg int) error {
+func setKeyValue(argStrs []string, indexOfArg int) error {
+	argName := argStrs[indexOfArg]
 	argName = strings.TrimPrefix(argName, "--")
 	err := checkIndex(argStrs, indexOfArg)
 	if err != nil {
