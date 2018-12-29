@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-27 09:40:05
+ * @LastEditTime: 2018-12-29 12:00:38
  */
 
 package main
@@ -139,6 +139,8 @@ func toLongArg(shortArg string) string {
 		return "--proxy-status"
 	case "-u":
 		return "--user"
+	case "-c":
+		return "--config"
 	default:
 		return shortArg
 	}
