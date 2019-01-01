@@ -26,65 +26,8 @@
 
 ## 下载
 
-[最新发布](https://github.com/eaglexiang/eagle.tunnel.go/releases)
+[最新发布](https://github.com/eaglexiang/eagle.tunnel.go/releases/latest)
 
-## 简单服务示例
-
-### 服务端
-
-进入程序目录，运行以下程序：
-
-Linux
-
-```shell
-./et.go.linux server
-```
-
-Windows
-
-```powershell
-.\et.go.exe server
-```
-
-Mac
-
-```shell
-./et.go.mac server
-```
-
-### 客户端
-
-进入程序目录，修改配置文件`config/client.conf`
-
-配置文件示例：
-
-> listen = 0.0.0.0  
-> relayer = # 服务端的IP  
-> http = on  
-> socks = on
-
-将`relayer`修改为服务端IP，然后运行
-
-Linux
-
-```shell
-./et.go.linux client
-```
-
-Windows
-
-```powershell
-.\et.go.exe client
-```
-
-Mac
-
-```shell
-./et.go.mac client
-```
-
-**注意** ：服务端必须打开TCP-8080端口的防火墙，系统或浏览器的代理地址设置为`127.0.0.1:8080`即可使用。
-
-## 详细使用说明
+## 使用说明
 
 参照[使用指南](./docs/guide.md)一文。

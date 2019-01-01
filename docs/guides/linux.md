@@ -6,12 +6,12 @@ ET分为服务端和客户端两部分，服务端通过ET协议提供隧道，�
 
 ### 下载
 
-可从[Release](https://github.com/eaglexiang/eagle.tunnel.go/releases)下载你需要的软件包。
+可从[Release](https://github.com/eaglexiang/eagle.tunnel.go/releases/latest)下载你需要的软件包。
 
-对于Linux_x64用户，也可尝试执行下面的指令
+附Linux下载命令：
 
 ```shell
-curl https://raw.githubusercontent.com/eaglexiang/eagle.tunnel.go/master/docs/latestReleases/linux64.txt | xargs wget
+wget 下载链接
 ```
 
 ### 安装
@@ -23,9 +23,9 @@ cd ./Eagle_Tunnel_Go # 进入程序目录
 sudo ./install.sh # 安装
 ```
 
-### 启动
+### 服务端启动
 
-最简单的启动方式是执行指令`et server`，不过如果你使用的是支持Systemd服务的Linux发行版，建议执行以下指令启动并开机启动后台服务：
+ET启动命令的格式为`et -c 配置脚本`，不过如果你使用的是支持Systemd服务的Linux发行版，建议执行以下指令启动并开机启动后台服务：
 
 ```shell
 sudo systemctl enable eagle-tunnel-server
@@ -42,12 +42,12 @@ sudo systemctl status eagle-tunnel-server
 
 ### 同样是下载
 
-可从[Release](https://github.com/eaglexiang/eagle.tunnel.go/releases)下载你需要的软件包。
+可从[Release](https://github.com/eaglexiang/eagle.tunnel.go/releases/latest)下载你需要的软件包。
 
-对于Linux_x64用户，也可尝试执行下面的指令
+附Linux下载命令：
 
 ```shell
-curl https://raw.githubusercontent.com/eaglexiang/eagle.tunnel.go/master/docs/latestReleases/linux64.txt | xargs wget
+wget 下载链接
 ```
 
 ### 同样是安装
@@ -115,11 +115,9 @@ sudo nano /etc/eagle-tunnel.d/client.conf
 > http=on  
 > socks=on
 
-### 稍有不同的启动
+### 客户端启动
 
-> 注意和上文服务端的指令是稍有不同的
-
-最简单的启动方式是执行指令`et client`，不过如果你使用的是支持Systemd服务的Linux发行版，建议执行以下指令启动并开机启动后台服务：
+重复一遍：ET启动命令的格式为`et -c 配置脚本`，不过如果你使用的是支持Systemd服务的Linux发行版，建议执行以下指令启动并开机启动后台服务：
 
 ```shell
 sudo systemctl enable eagle-tunnel-client
@@ -137,7 +135,7 @@ sudo systemctl status eagle-tunnel-client
 配置完成后也许有验证服务是否正在运行的需求，可在客户端处执行以下指令：
 
 ```shell
-et ask local ping
+etask ping
 ```
 
 如果服务正常，应该会返回类似以下结果：

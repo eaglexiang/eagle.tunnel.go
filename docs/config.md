@@ -4,11 +4,11 @@
 
 ## 主配置文件
 
-所谓主配置文件就是启动ET必须给出的配置文件，其中记录了程序运行需要的基本参数，这些参数会在接下来的指南中有所涉及，也会在文末进行汇总。如基础使用教程中的`client.conf`或`server.conf`这两个文件，就是主配置文件。这个配置文件可以根据你的喜好创建于任何位置，叫做任何名字。只要它遵循本文所述参数规则，你就可以用`et <配置文件>`这个格式的命令启动ET。
+所谓主配置文件就是启动ET必须给出的配置文件，其中记录了程序运行需要的基本参数，这些参数会在接下来的指南中有所涉及，也会在文末进行汇总。如基础使用教程中的`client.conf`或`server.conf`这两个文件，就是主配置文件。这个配置文件可以根据你的喜好创建于任何位置，叫做任何名字。只要它遵循本文所述参数规则，你就可以用`et -c <配置文件>`这个格式的命令启动ET。
 
 ```shell
-et <config-file>
-# 例如 et /etc/eagle-tunnel.d/client.conf
+et -c <config-file>
+# 例如 et -c /etc/eagle-tunnel.d/client.conf
 ```
 
 主配置文件遵循以下格式：
@@ -18,38 +18,6 @@ et <config-file>
 > 参数2=参数2的值
 
 每行一对键值对。\#表示注释，符号`#`以及其所在行接下来的内容都将被忽略
-
-### 快捷命令
-
-ET提供了几个默认的配置文件位置，你可以通过快捷命令调用它：
-
-```shell
-# 调用服务端默认脚本
-et server
-```
-
-此命令对应的默认脚本有四个可选位置（程序会顺序查找）：  
-
-1. ./server.conf
-2. ./config/server.conf
-3. ./eagle-tunnel.conf
-4. /etc/eagle-tunnel.d/server.conf
-
-```shell
-# 调用客户端默认脚本
-et client
-```
-
-此命令对应的默认脚本有三个可选位置（程序会顺序查找）：
-
-1. ./server.conf
-2. ./config/server.conf
-3. ./eagle-tunnel.conf
-4. /etc/eagle-tunnel.d/server.conf
-
-### 主配置文件的省略
-
-当执行过安装脚本`install.sh`之后，主配置文件参数是可以被省略的。当它被省略后，默认会加载文件`/etc/eagle-tunnel.d/client.conf`。
 
 ## 用户认证
 
@@ -108,7 +76,7 @@ user=wang:aaa
 # 用户名为wang，密码是aaa
 ```
 
-> 当然，在客户端你也可以通过`wang:aaa:100`这样的方式来对用户进行限速。（虽然很少情况需要这么干）
+> 当然，在客户端你也可以通过`wang:aaa:100`这样的方式来对客户端进行限速。（虽然很少情况需要这么干）
 
 ### 备注
 
@@ -119,7 +87,7 @@ user=wang:aaa
 可在客户端处执行以下指令证明用户认证是否成功配置：
 
 ```shell
-et ask local auth
+etask auth
 ```
 
 成功的返回应该类似下面的示例：
@@ -128,27 +96,27 @@ et ask local auth
 
 ## 代理模式
 
-ET使用`proxy-status`参数来控制其代理模式。当其值为`enable`时，ET表现为普通的全局代理软件，所有DNS解析和流量转发都通过服务端进行。当其值为`smart`时，ET会有额外的智能分流特性，所谓智能分流分为两个部分——DNS智能解析和流量智能转发。
+默认情况下，ET会表现为全局代理软件：即所有流量都使用服务端进行中转。但这有时会带来不便——例如，除非关掉关掉代理，你可能无法访问B站仅限国内访问的内容。
+
+因此ET提供了`proxy-status`参数来控制其代理模式。当其值为`smart`时，ET会有额外的智能分流特性，连接网站之前，程序首先会检测目标IP的地理位置，如果处于`国外`则使用`代理`，如果处于`国内`则采用`直连`。
 
 > proxy-status=smart
 
-### DNS智能解析
+### 智能DNS
 
-当ET进行DNS解析时，首先会判断其被解析的域名是否处于`DNS智能解析白名单`中。
+智能模式下，DNS会优先本地解析，解析结果IP如果位于国外，则使用代理重新进行解析。
 
-这个白名单的位置是`${config-dir}/whitelist_domain.txt`，默认情况下这个位置是主配置文件同目录的`whitelist_domain.txt`。它来自[SmartDNSDomainList](https://github.com/eaglexiang/SmartDNSDomainList)项目，并遵循[模板文件](https://github.com/eaglexiang/SmartDNSDomainList/raw/master/list.txt)中注释部分所述规则。
+### DNS污染
 
-如果被解析的域名处于白名单中，则会使用服务端进行代理解析。如果没有，则会先在本地解析，然后利用[ip2c](https://ip2c.org/)判断其是否处于大陆。如果不是，则重新使用代理进行解析。
+优先本地DNS解析，这会带来DNS污染的问题。所以我们需要将部分容易遭受污染的域名添加进`域名白名单`，使这些域名强制使用代理进行解析。
 
-这样做的好处是可以尽量使用国内服务最近的CDN。
+这个白名单的位置是`${config-dir}/whitelist_domain.txt`，即主配置文件（例如client.conf）同目录的`whitelist_domain.txt`。
 
-### 流量智能转发
-
-流量的智能转发则相对简单得多。每个数据包会根据目的IP所在地的不同而采用不同的转发策略。对于大陆IP，直接由客户端在本地进行转发。对于其它IP，则由服务端进行代理转发。
+程序通常会内置一个默认白名单文件，它来自[SmartDNSDomainList](https://github.com/eaglexiang/SmartDNSDomainList)项目，并遵循[模板文件](https://github.com/eaglexiang/SmartDNSDomainList/raw/master/list.txt)中注释部分所述规则。用户可以依照规则自由添加新的域名。
 
 ## hosts文件
 
-hosts文件是网络活动中常用的规则文件。但全局代理状态下，hosts文件是不生效的。为弥补这一点，ET提供了对hosts文件的支持。用户只需要将hosts文件放置于配置文件目录中hosts文件夹（例如`/etc/eagle-tunnel.d/hosts/`）内，ET便会在启动时自动加载它。
+hosts文件是网络活动中常用的规则文件，ET提供了对hosts文件的支持。用户只需要将hosts文件放置于配置文件目录中hosts文件夹（例如`/etc/eagle-tunnel.d/hosts/`）内，ET便会在启动时自动加载它。
 
 所有以`.hosts`为后缀的文件都将被加载。
 
@@ -156,7 +124,7 @@ hosts文件是网络活动中常用的规则文件。但全局代理状态下，
 
 ## 自定义协议头
 
-固定协议头意味着流量识别的方便，但这种方便不但被提供给用户，也被提供给互联网的第三方。如果你不希望他人知道你正在运行ET服务，可使用自定义协议头来达到你的目的。
+固定协议头意味着流量识别的方便，但这种方便不但被提供给用户，也被提供给互联网中的第三方。如果你不希望他人知道你正在运行ET服务，可使用自定义协议头来达到你的目的。
 
 ```shell
 head=协议头内容
@@ -164,7 +132,7 @@ head=协议头内容
 
 如上，`head`参数被用来定义ET使用的协议头，它的值仅需遵循三条原则：
 
-1. 可以为任意随机或不随机字符串，但不得包含制表符（`\t`）和空格
+1. 可以为任意随机或不随机字符串，但不得包含制表符（`\t`）或空格
 2. 服务端与客户端必须同时配置，并被配置为相同的值
 3. 不得照搬本文或其它任何地方的示例，因为这样便无法保证你的协议头的独特性，那么也就失去使用本参数的意义
 
@@ -184,5 +152,4 @@ et|on/off|on|off|ET协议的开关。当值为on时，程序会接收ET协议的
 user|用户名:密码|username:password|空|客户端使用的登录账户。当它为空时，表示关闭用户检查（这需要服务端同时关闭用户检查）。
 user-check|on/off|on|off|服务端的用户检查开关，当它为on时，用户检查功能开启。所有被授权的用户应该被写在用户列表中。
 proxy-status|enable/smart|smart|enable|代理服务的模式状态，这个参数只对客户端生效。当为enable时，为全局代理，当为smart时，为只能代理。
-config-dir|文件路径名|/etc/eagle-tunnel.d|/etc/eagle-tunnel.d|次要配置文件所在目录。次要配置文件包括用户列表、需要智能DNS解析的域名列表等
 head|自定义协议头|helloworld|eagle_tunnel|自定义协议头
