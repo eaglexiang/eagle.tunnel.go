@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-27 09:16:47
+ * @LastEditTime: 2019-01-01 12:39:30
  */
 
 package eagletunnel
@@ -106,6 +106,7 @@ func ExecConfig() error {
 		if err != nil {
 			return err
 		}
+		go CheckSpeedOfUsers()
 	}
 
 	err := SetUser(ConfigKeyValues["user"], "")
@@ -125,6 +126,10 @@ func ExecConfig() error {
 		return err
 	}
 
+	if _, ok := ConfigKeyValues["config-dir"]; !ok {
+		return nil
+	}
+
 	// DNS解析白名单
 	whiteDomainsPath := ConfigKeyValues["config-dir"] + "/whitelist_domain.txt"
 	WhitelistDomains, err = readLines(whiteDomainsPath)
@@ -138,7 +143,6 @@ func ExecConfig() error {
 		return err
 	}
 
-	go CheckSpeedOfUsers()
 	return nil
 }
 
