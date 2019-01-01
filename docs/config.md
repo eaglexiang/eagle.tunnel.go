@@ -138,6 +138,23 @@ head=协议头内容
 
 为保证向下兼容性，当本参数未启用时，其值被设定为默认值：eagle_tunnel
 
+## 参数化启动
+
+所有配置文件中支持的参数（可参考下文[参数总览](#参数总览)），皆支持加上`--`前缀后作为程序启动参数被提供。
+
+```shell
+et --relayer 127.0.0.1:8080 --listen 127.0.0.1:8081
+```
+
+上述启动方式等价于
+
+```shell
+et --config ./client.conf
+# ./client.conf
+# relayer = 127.0.0.1:8080
+# listen= = 127.0.0.1:8081
+```
+
 ## 参数总览
 
 这一小节所说的参数，指的是主配置文件中所使用的参数。ET目前拥有的参数，以及其解释会被放在下表：
@@ -153,3 +170,4 @@ user|用户名:密码|username:password|空|客户端使用的登录账户。当
 user-check|on/off|on|off|服务端的用户检查开关，当它为on时，用户检查功能开启。所有被授权的用户应该被写在用户列表中。
 proxy-status|enable/smart|smart|enable|代理服务的模式状态，这个参数只对客户端生效。当为enable时，为全局代理，当为smart时，为只能代理。
 head|自定义协议头|helloworld|eagle_tunnel|自定义协议头
+config-dir|配置文件目录|/etc/eagle-tunnel.d|当使用配置文件，则为配置文件所在目录；当未使用配置文件，则为空|存放users.list等配置文件的目录
