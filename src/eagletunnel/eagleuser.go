@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-10-08 10:51:05
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 19:33:20
+ * @LastEditTime: 2019-01-03 01:37:40
  */
 
 package eagletunnel
@@ -152,11 +152,14 @@ func (user *EagleUser) CheckAuth(user2Check *ReqUser) error {
 		// 共享用户不限制登录
 		return nil
 	}
+	// 查找该IP的既有登录
 	for _, v := range user.logins {
 		if v.ip == user2Check.IP {
-			// 该IP合法
 			return nil
 		}
+	}
+	// 查找已失效的登录
+	for _, v := range user.logins {
 		if v.isDead() {
 			user.loginMutex.Lock()
 			defer user.loginMutex.Unlock()
@@ -165,6 +168,7 @@ func (user *EagleUser) CheckAuth(user2Check *ReqUser) error {
 			return nil
 		}
 	}
+	// 注册新登录
 	if len(user.logins) >= user.maxLoginCount {
 		return errors.New("too much login reqs")
 	}
