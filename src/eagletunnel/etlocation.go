@@ -4,60 +4,61 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-26 10:49:33
+ * @LastEditTime: 2019-01-02 17:14:51
  */
 
 package eagletunnel
 
 import (
-	"errors"
+	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"../eaglelib/src"
 )
 
-// IfProxyCache 缓存IP是否需要被代理
-var IfProxyCache = CreateProxyCache() // [ip string, proxy bool]
+// IPGeoCacheClient Client持有的IP-Geo数据缓存
+var IPGeoCacheClient = CreateLocationCache() // [ip string, location string]
+// IPGeoCacheServer Server持有的IP-Geo数据缓存
+var IPGeoCacheServer = CreateLocationCache() // [ip string, location string]
 
 // ETLocation ET-LOCATION子协议的实现
 type ETLocation struct {
 }
 
-// Send 发送ET-LOCATION请求 解析IP是否适合代理。返回值表示是否成功解析，解析结果保存在e.boolObj
-func (el *ETLocation) Send(e *NetArg) bool {
-	if IfProxyCache.Exsit(e.IP) {
+// Send 发送ET-LOCATION请求 解析IP的地理位置，结果存放于e.Reply
+func (el *ETLocation) Send(e *NetArg) {
+	if IPGeoCacheClient.Exsit(e.IP) {
 		// 读取缓存
-		proxy, err := IfProxyCache.Wait4Proxy(e.IP)
+		location, err := IPGeoCacheClient.Wait4Proxy(e.IP)
 		if err != nil {
-			e.boolObj = true
-			return false
+			e.Reply = err.Error()
+			return
 		}
-		e.boolObj = proxy
-		return true
+		e.Reply = location
+		return
 	}
+
+	IPGeoCacheClient.Add(e.IP)
 	if CheckPrivateIPv4(e.IP) {
 		// 保留地址不适合代理
-		e.boolObj = false
-		IfProxyCache.Add(e.IP)
-		IfProxyCache.Update(e.IP, e.boolObj)
-		return true
+		e.Reply = "1;ZZ;ZZZ;Reserved"
+		IPGeoCacheClient.Update(e.IP, e.Reply)
+		return
 	}
-	err := el.checkProxyByRemote(e)
+	err := el.checkLocationByRemote(e)
 	if err != nil {
 		// 解析失败，尝试直连
 		println("fail to resolv location by remote: ", err.Error())
-		e.boolObj = true
-		return false
+		e.Reply = "0;;;WRONG INPUT"
+		IPGeoCacheClient.Delete(e.IP)
+		return
 	}
-	IfProxyCache.Update(e.IP, e.boolObj)
-	return true
+	IPGeoCacheClient.Update(e.IP, e.Reply)
 }
 
-func (el *ETLocation) checkProxyByRemote(e *NetArg) error {
+func (el *ETLocation) checkLocationByRemote(e *NetArg) error {
 	tunnel := eaglelib.Tunnel{}
 	defer tunnel.Close()
 	err := connect2Relayer(&tunnel)
@@ -75,9 +76,8 @@ func (el *ETLocation) checkProxyByRemote(e *NetArg) error {
 	if err != nil {
 		return err
 	}
-	reply := string(buffer[:count])
-	e.boolObj, err = strconv.ParseBool(reply)
-	return err
+	e.Reply = string(buffer[:count])
+	return nil
 }
 
 // Handle 处理ET-LOCATION请求
@@ -88,58 +88,42 @@ func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) {
 	}
 
 	// read cache
-	var reply string
 	ip := reqs[1]
-	if IfProxyCache.Exsit(ip) {
-		proxy, err := IfProxyCache.Wait4Proxy(ip)
+	if IPGeoCacheServer.Exsit(ip) {
+		location, err := IPGeoCacheServer.Wait4Proxy(ip)
 		if err != nil {
-			reply = err.Error()
+			tunnel.WriteLeft([]byte(err.Error()))
+		} else {
+			tunnel.WriteLeft([]byte(location))
 		}
-		reply = strconv.FormatBool(proxy)
-		tunnel.WriteLeft([]byte(reply))
 		return
 	}
 
-	// check private
-	if CheckPrivateIPv4(ip) {
-		reply = strconv.FormatBool(false)
-		IfProxyCache.Add(ip)
-		IfProxyCache.Update(ip, false)
-		tunnel.WriteLeft([]byte(reply))
-		return
-	}
+	IPGeoCacheServer.Add(ip)
 
 	// check location
-	proxy, err := CheckProxyByLocal(ip)
-	if err != nil {
-		reply = err.Error()
-	} else {
-		reply = strconv.FormatBool(proxy)
-		IfProxyCache.Add(ip)
-		IfProxyCache.Update(ip, proxy)
-	}
-	tunnel.WriteLeft([]byte(reply))
-}
-
-// CheckProxyByLocal 本地解析IP是否需要使用代理
-func CheckProxyByLocal(ip string) (bool, error) {
-	_ip := net.ParseIP(ip)
-	if _ip.To4() == nil {
-		println("ipv6: ", ip)
-		return true, errors.New("dont suport ipv6")
-	}
 	location, err := CheckLocationByWeb(ip)
 	if err != nil {
-		return false, err
+		fmt.Println("fail to resolv location by web: " + err.Error())
+		IPGeoCacheServer.Delete(ip)
+		tunnel.WriteLeft([]byte(err.Error()))
+	} else {
+		IPGeoCacheServer.Add(ip)
+		IPGeoCacheServer.Update(ip, location)
+		tunnel.WriteLeft([]byte(location))
 	}
+
+}
+
+// CheckProxyByLocation 本地解析IP是否需要使用代理
+func CheckProxyByLocation(location string) bool {
 	switch location {
 	case "0;;;WRONG INPUT":
-		err = errors.New("0;;;WRONG INPUT")
-		return true, err
-	case "1;ZZ;ZZZ;Reserved", "1;CN;CHN;China":
-		return false, nil
+		return true
+	case "1;ZZ;ZZZ;Reserved", ConfigKeyValues["location"]:
+		return false
 	default:
-		return true, nil
+		return true
 	}
 }
 

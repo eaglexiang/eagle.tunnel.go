@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-26 10:29:43
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-27 09:29:55
+ * @LastEditTime: 2019-01-02 16:36:45
  */
 
 package eagletunnel
@@ -28,12 +28,9 @@ func Test_ETLocation_Send(t *testing.T) {
 func testETLocationSend(t *testing.T, ip string, proxy bool) {
 	el := ETLocation{}
 	e := NetArg{IP: ip}
-	reuslt := el.Send(&e)
-	if !reuslt {
-		t.Error("解析失败 ", ip)
-	} else {
-		if e.boolObj != proxy {
-			t.Error("代理情况错误 ", ip, " ", e.boolObj)
-		}
+	el.Send(&e)
+	_proxy := CheckProxyByLocation(e.Reply)
+	if _proxy != proxy {
+		t.Error("代理情况错误 ", ip, " ", e.Reply)
 	}
 }

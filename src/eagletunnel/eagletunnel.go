@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 15:19:59
+ * @LastEditTime: 2019-01-02 16:28:27
  */
 
 package eagletunnel
@@ -103,7 +103,7 @@ func (et *EagleTunnel) Send(e *NetArg) (succeed bool) {
 		result = ett.Send(e)
 	case EtLOCATION:
 		el := ETLocation{}
-		result = el.Send(e)
+		el.Send(e)
 	default:
 	}
 	return result

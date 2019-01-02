@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 14:52:30
+ * @LastEditTime: 2019-01-02 15:38:42
  */
 
 package eagletunnel
@@ -43,6 +43,7 @@ var ProxyStatus int
 func InitConfig(filePath string) error {
 	// 设定默认值
 	ConfigPath = filePath
+	addDefaultArg("location", "1;CN;CHN;China")
 	addDefaultArg("data-key", "34")
 	addDefaultArg("head", "eagle_tunnel")
 	addDefaultArg("proxy-status", "enable")

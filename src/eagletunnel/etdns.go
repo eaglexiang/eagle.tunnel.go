@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-26 17:01:21
+ * @LastEditTime: 2019-01-02 16:27:44
  */
 
 package eagletunnel
@@ -133,11 +133,10 @@ func resolvDNSByLocal(e *NetArg, recursive bool) error {
 	}
 	// 判断IP所在位置是否适合代理
 	el := ETLocation{}
-	ok := el.Send(e)
-	if !ok {
-		return nil
-	}
-	if e.boolObj {
+	el.Send(e)
+	proxy := CheckProxyByLocation(e.Reply)
+	if proxy {
+		// 更新IP为Relayer端的解析结果
 		ne := NetArg{domain: e.domain}
 		err = resolvDNSByProxy(&ne)
 		if err == nil {

@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-26 17:03:17
+ * @LastEditTime: 2019-01-02 16:29:29
  */
 
 package eagletunnel
@@ -29,7 +29,8 @@ func (et *ETTCP) Send(e *NetArg) bool {
 	case ProxySMART:
 		el := ETLocation{}
 		el.Send(e)
-		if e.boolObj {
+		proxy := CheckProxyByLocation(e.Reply)
+		if proxy {
 			// 启用代理
 			return et.sendTCPReq2Remote(e) == nil
 		}
