@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 18:40:22
+ * @LastEditTime: 2019-01-03 01:44:01
  */
 
 package eagletunnel
@@ -108,7 +108,6 @@ func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) {
 		IPGeoCacheServer.Delete(ip)
 		tunnel.WriteLeft([]byte(err.Error()))
 	} else {
-		IPGeoCacheServer.Add(ip)
 		IPGeoCacheServer.Update(ip, location)
 		tunnel.WriteLeft([]byte(location))
 	}
