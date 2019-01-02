@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-27 09:41:09
+ * @LastEditTime: 2019-01-02 12:08:11
  */
 
 package main
@@ -40,11 +40,4 @@ func ask(args []string) {
 	e.Args = args
 	et.Send(&e)
 	fmt.Println(e.Reply)
-}
-
-func startUI(pathOfConfig string) {
-	err := eagletunnel.StartUI()
-	if err != nil {
-		fmt.Println(err)
-	}
 }
