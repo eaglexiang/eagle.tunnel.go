@@ -4,24 +4,20 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-29 12:00:38
+ * @LastEditTime: 2019-01-02 14:47:34
  */
 
-package main
+package cmd
 
 import (
-	"./eagletunnel"
-	"./shell"
+	"../eagletunnel"
 
 	"errors"
-	"fmt"
 	"strings"
 )
 
 // ImportArgs 解析并导入参数
 func ImportArgs(argStrs []string) error {
-	eagletunnel.Init()
-
 	indexOfConfig := findConfig(argStrs)
 
 	var skip bool
@@ -41,10 +37,11 @@ func ImportArgs(argStrs []string) error {
 			skip = true
 			continue
 		case "--help":
-			shell.PrintHelpMain()
+			PrintHelpMain()
 			return errors.New("no need to continue")
 		case "--version":
-			shell.PrintVersion(ProgramVersion.Raw,
+			PrintVersion(
+				ProgramVersion.Raw,
 				eagletunnel.ProtocolVersion.Raw,
 				eagletunnel.ProtocolCompatibleVersion.Raw)
 			return errors.New("no need to continue")
@@ -75,7 +72,6 @@ func ImportArgs(argStrs []string) error {
 		return err
 	}
 
-	fmt.Println(eagletunnel.SprintConfig())
 	return err
 }
 

@@ -38,6 +38,8 @@ et --listen 0.0.0.0 --http on --relayer [服务端IP]
 
 此时本地HTTP代理服务地址为`127.0.0.1:8080`。
 
+> 如果服务端开启了防火墙服务，则必须开启`8080/tcp`端口
+
 ## 下载
 
 [最新发布](https://github.com/eaglexiang/eagle.tunnel.go/releases/latest)

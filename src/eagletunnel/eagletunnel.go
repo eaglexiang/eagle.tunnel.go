@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-01 11:23:14
+ * @LastEditTime: 2019-01-02 12:34:52
  */
 
 package eagletunnel
@@ -22,7 +22,7 @@ const (
 	EtTCP = iota
 	EtDNS
 	EtLOCATION
-	EtASK
+	EtCHECK
 	EtUNKNOWN
 )
 
@@ -87,9 +87,9 @@ func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (keepAli
 	case EtLOCATION:
 		el := ETLocation{}
 		el.Handle(etReq, tunnel)
-	case EtASK:
-		ea := ETAsk{}
-		ea.Handle(etReq, tunnel)
+	case EtCHECK:
+		ec := ETCheck{}
+		ec.Handle(etReq, tunnel)
 	default:
 	}
 	return false
@@ -108,9 +108,6 @@ func (et *EagleTunnel) Send(e *NetArg) (succeed bool) {
 	case EtLOCATION:
 		el := ETLocation{}
 		result = el.Send(e)
-	case EtASK:
-		// et := ETAsk{}
-		// result = et.Send(e)
 	default:
 	}
 	return result
@@ -279,8 +276,8 @@ func ParseEtType(src string) int {
 		result = EtTCP
 	case "LOCATION":
 		result = EtLOCATION
-	case "ASK":
-		result = EtASK
+	case "CHECK":
+		result = EtCHECK
 	default:
 		result = EtUNKNOWN
 	}
@@ -297,8 +294,8 @@ func FormatEtType(src int) string {
 		result = "TCP"
 	case EtLOCATION:
 		result = "LOCATION"
-	case EtASK:
-		result = "ASK"
+	case EtCHECK:
+		result = "CHECK"
 	default:
 		result = "UNKNOWN"
 	}

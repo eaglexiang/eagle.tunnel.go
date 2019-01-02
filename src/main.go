@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 12:08:11
+ * @LastEditTime: 2019-01-02 14:49:16
  */
 
 package main
@@ -13,31 +13,41 @@ import (
 	"fmt"
 	"os"
 
-	"./eaglelib/src"
+	"./cmd"
 	"./eagletunnel"
 )
 
-// ProgramVersion 程序版本
-var ProgramVersion, _ = eaglelib.CreateVersion("0.7")
-
 func main() {
-	err := ImportArgs(os.Args)
+	args := os.Args
+	if len(args) < 2 {
+		fmt.Println("error: no arg for Eagle Tunnel")
+	}
+
+	switch args[1] {
+	case "check":
+		Init(args[2:])
+		cmd.Check(args[:3])
+	default:
+		if Init(args) {
+			fmt.Println(eagletunnel.SprintConfig())
+			core(args)
+		}
+	}
+}
+
+// Init 初始化参数系统
+func Init(args []string) bool {
+	err := cmd.ImportArgs(args)
 	if err != nil {
 		if err.Error() == "no need to continue" {
-			return
+			return false
 		}
 		panic(err)
 	}
-
-	relayer := eagletunnel.Relayer{}
-	relayer.Start()
+	return true
 }
 
-func ask(args []string) {
-	et := eagletunnel.EagleTunnel{}
-	e := eagletunnel.NetArg{}
-	e.TheType = eagletunnel.EtASK
-	e.Args = args
-	et.Send(&e)
-	fmt.Println(e.Reply)
+func core(args []string) {
+	relayer := eagletunnel.Relayer{}
+	relayer.Start()
 }

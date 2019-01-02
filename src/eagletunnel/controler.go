@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-01 12:39:30
+ * @LastEditTime: 2019-01-02 14:52:30
  */
 
 package eagletunnel
@@ -18,24 +18,11 @@ import (
 	"strings"
 )
 
-var defaultPathsOfClientConfig = []string{
-	"./client.conf",
-	"./config/client.conf",
-	"./eagle-tunnel.conf",
-	"/etc/eagle-tunnel.d/client.conf",
-}
-var defaultPathsOfServerConfig = []string{
-	"./server.conf",
-	"./config/server.conf",
-	"./eagle-tunnel.conf",
-	"/etc/eagle-tunnel.d/server.conf",
-}
-
 // ConfigPath 主配置文件的路径
 var ConfigPath string
 
 // ConfigKeyValues 主配置文件的所有键值对参数
-var ConfigKeyValues map[string]string
+var ConfigKeyValues = make(map[string]string)
 
 // EnableUserCheck 启用用户检查特性
 var EnableUserCheck bool
@@ -51,11 +38,6 @@ var EnableET bool
 
 // ProxyStatus 代理的状态（全局/智能）
 var ProxyStatus int
-
-// Init 初始化参数系统
-func Init() {
-	ConfigKeyValues = make(map[string]string)
-}
 
 // InitConfig 根据给定的配置文件初始化参数
 func InitConfig(filePath string) error {

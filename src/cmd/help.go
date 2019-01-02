@@ -4,10 +4,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 06:14:23
  * @LastEditors: EagleXiang
- * @LastEditTime: 2018-12-27 09:42:18
+ * @LastEditTime: 2019-01-02 12:42:55
  */
 
-package shell
+package cmd
 
 import (
 	"fmt"
