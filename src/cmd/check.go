@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 14:59:17
+ * @LastEditTime: 2019-01-02 15:28:16
  */
 
 package cmd
@@ -28,6 +28,8 @@ func Check(args []string) {
 		ping()
 	case eagletunnel.EtCheckAuth:
 		auth()
+	case eagletunnel.EtCheckVERSION:
+		version()
 	default:
 		fmt.Println("invalid check command")
 	}
@@ -58,5 +60,10 @@ func ping() {
 
 func auth() {
 	reply := eagletunnel.SendEtCheckAuthReq()
+	fmt.Println(reply)
+}
+
+func version() {
+	reply := eagletunnel.SendEtCheckVersionReq()
 	fmt.Println(reply)
 }

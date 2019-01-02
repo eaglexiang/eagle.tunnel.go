@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 14:58:33
+ * @LastEditTime: 2019-01-02 15:27:28
  */
 
 package eagletunnel
@@ -58,20 +58,20 @@ func formatEtCheckType(src int) string {
 }
 
 // Handle 处理ET-Check请求
-func (ec *ETCheck) Handle(req Request, tunnel *eaglelib.Tunnel) bool {
+func (ec *ETCheck) Handle(req Request, tunnel *eaglelib.Tunnel) {
 	reqs := strings.Split(req.RequestMsgStr, " ")
 	if len(reqs) < 2 {
 		// 没有具体的Check请求内容
-		return false
+		return
 	}
 	theType := ParseEtCheckType(reqs[1])
 	switch theType {
 	case EtCheckPING:
 		handleEtCheckPingReq(tunnel)
 	case EtCheckVERSION:
+		handleEtCheckVersionReq(tunnel, reqs)
 	default:
 	}
-	return false
 }
 
 // SendEtCheckAuthReq 发射 ET-CHECK-AUTH 请求
@@ -88,6 +88,34 @@ func SendEtCheckAuthReq() string {
 		return "no local user"
 	}
 	return "AUTH OK with local user: " + LocalUser.ID
+}
+
+// SendEtCheckVersionReq 发射 ET-CHECK-VERSION 请求
+func SendEtCheckVersionReq() string {
+	tunnel := eaglelib.Tunnel{}
+	defer tunnel.Close()
+	err := connect2Relayer(&tunnel)
+	if err != nil {
+		return err.Error()
+	}
+
+	// 告知VERSION请求
+	req := FormatEtType(EtCHECK) + " " +
+		formatEtCheckType(EtCheckVERSION) + " " +
+		ProtocolVersion.Raw
+	_, err = tunnel.WriteRight([]byte(req))
+	if err != nil {
+		return err.Error()
+	}
+
+	// 接受回复
+	buffer := make([]byte, 1024)
+	count, err := tunnel.ReadRight(buffer)
+	if err != nil {
+		return err.Error()
+	}
+	reply := string(buffer[:count])
+	return reply
 }
 
 // SendEtCheckPingReq 发射ET-CHECK-PING请求
@@ -107,7 +135,6 @@ func SendEtCheckPingReq(sig interface{}) {
 
 	// 告知PING请求
 	req := FormatEtType(EtCHECK) + " " + formatEtCheckType(EtCheckPING)
-
 	_, err = tunnel.WriteRight([]byte(req))
 	if err != nil {
 		sigChan <- err.Error()
@@ -136,5 +163,26 @@ func SendEtCheckPingReq(sig interface{}) {
 
 func handleEtCheckPingReq(tunnel *eaglelib.Tunnel) {
 	reply := "ok"
+	tunnel.WriteLeft([]byte(reply))
+}
+
+func handleEtCheckVersionReq(tunnel *eaglelib.Tunnel, reqs []string) {
+	if len(reqs) < 3 {
+		reply := "no protocol version value"
+		tunnel.WriteLeft([]byte(reply))
+		return
+	}
+	versionOfReq, err := eaglelib.CreateVersion(reqs[2])
+	if err != nil {
+		reply := err.Error()
+		tunnel.WriteLeft([]byte(reply))
+		return
+	}
+	if versionOfReq.IsLessThan(&ProtocolCompatibleVersion) {
+		reply := "the version of protocol may be incompatible"
+		tunnel.WriteLeft([]byte(reply))
+		return
+	}
+	reply := "Protocol Version OK"
 	tunnel.WriteLeft([]byte(reply))
 }

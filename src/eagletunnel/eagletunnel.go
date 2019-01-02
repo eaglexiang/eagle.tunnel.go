@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 15:01:43
+ * @LastEditTime: 2019-01-02 15:19:59
  */
 
 package eagletunnel
@@ -180,7 +180,7 @@ func (et *EagleTunnel) checkHeaderOfReq(
 	if err != nil {
 		return false, UnknownCipherType
 	}
-	if !ProtocolCompatibleVersion.IsSTOrE2(&versionOfReq) {
+	if !ProtocolCompatibleVersion.IsLTOrE2(&versionOfReq) {
 		return false, UnknownCipherType
 	}
 	theType := ParseCipherType(headers[2])
