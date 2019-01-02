@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 15:27:28
+ * @LastEditTime: 2019-01-02 18:35:17
  */
 
 package eagletunnel
@@ -119,8 +119,7 @@ func SendEtCheckVersionReq() string {
 }
 
 // SendEtCheckPingReq 发射ET-CHECK-PING请求
-func SendEtCheckPingReq(sig interface{}) {
-	sigChan := sig.(chan string)
+func SendEtCheckPingReq(sig chan string) {
 
 	start := time.Now() // 开始计时
 
@@ -129,7 +128,7 @@ func SendEtCheckPingReq(sig interface{}) {
 	defer tunnel.Close()
 	err := connect2Relayer(&tunnel)
 	if err != nil {
-		sigChan <- err.Error()
+		sig <- err.Error()
 		return
 	}
 
@@ -137,7 +136,7 @@ func SendEtCheckPingReq(sig interface{}) {
 	req := FormatEtType(EtCHECK) + " " + formatEtCheckType(EtCheckPING)
 	_, err = tunnel.WriteRight([]byte(req))
 	if err != nil {
-		sigChan <- err.Error()
+		sig <- err.Error()
 		return
 	}
 
@@ -146,18 +145,18 @@ func SendEtCheckPingReq(sig interface{}) {
 	count, err := tunnel.ReadRight(buffer)
 	end := time.Now() // 停止计时
 	if err != nil {
-		sigChan <- err.Error()
+		sig <- err.Error()
 		return
 	}
 	reply := string(buffer[:count])
 	if reply != "ok" {
-		sigChan <- "invalid ping reply: " + reply
+		sig <- "invalid ping reply: " + reply
 		return
 	}
 	duration := end.Sub(start)
 	ns := duration.Nanoseconds()
 	ms := ns / 1000 / 1000
-	sigChan <- strconv.FormatInt(ms, 10)
+	sig <- strconv.FormatInt(ms, 10)
 	return
 }
 
