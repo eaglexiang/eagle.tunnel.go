@@ -22,13 +22,11 @@
             // ],
             "args": [
                 "-l","0.0.0.0:8082",
-                "-r","198.13.60.71",
-                "-u","eaglex:eaglex",
-                "--head","\"hibody\"",
+                "-r","127.0.0.1:8082",
                 "--http","on",
                 "--socks","on",
+                "--et","on",
                 "-s","smart",
-                "--config-dir","/etc/eagle-tunnel.d/"
             ],
             "showLog": false
         }
