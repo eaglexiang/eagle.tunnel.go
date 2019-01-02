@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 13:49:41
+ * @LastEditTime: 2019-01-02 14:58:33
  */
 
 package eagletunnel
@@ -75,22 +75,19 @@ func (ec *ETCheck) Handle(req Request, tunnel *eaglelib.Tunnel) bool {
 }
 
 // SendEtCheckAuthReq 发射 ET-CHECK-AUTH 请求
-func SendEtCheckAuthReq(e *NetArg) bool {
+func SendEtCheckAuthReq() string {
 	// 当connect2Relayer成功，则说明鉴权成功
 	tunnel := eaglelib.Tunnel{}
 	defer tunnel.Close()
 	err := connect2Relayer(&tunnel)
 	if err != nil {
-		e.Reply = err.Error() // 通过参数集返回具体的错误信息
-		return false
+		return err.Error()
 	}
 
 	if LocalUser.ID == "root" {
-		e.Reply = "no local user"
-	} else {
-		e.Reply = "AUTH OK with local user: " + LocalUser.ID
+		return "no local user"
 	}
-	return true
+	return "AUTH OK with local user: " + LocalUser.ID
 }
 
 // SendEtCheckPingReq 发射ET-CHECK-PING请求

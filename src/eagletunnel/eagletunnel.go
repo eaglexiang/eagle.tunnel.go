@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 12:34:52
+ * @LastEditTime: 2019-01-02 15:01:43
  */
 
 package eagletunnel
@@ -48,10 +48,6 @@ type EagleTunnel struct {
 // Handle 处理ET请求
 func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (keepAlive bool) {
 	args := strings.Split(request.RequestMsgStr, " ")
-	// isVersionOk, cipherType := et.checkHeaderOfReq(args, tunnel)
-	// if !isVersionOk {
-	// 	return false
-	// }
 	_, cipherType := et.checkHeaderOfReq(args, tunnel)
 	var c Cipher
 	switch cipherType {

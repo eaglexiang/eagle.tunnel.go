@@ -22,7 +22,6 @@ else
     source ${ScriptPath}/buildgo.sh $*
 fi
 
-source ${ScriptPath}/copy-http.sh
 source ${ScriptPath}/copy-whitelist.sh
 source ${ScriptPath}/copy-hosts.sh
 source ${ScriptPath}/copy-services.sh

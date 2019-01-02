@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 14:48:32
+ * @LastEditTime: 2019-01-02 14:59:17
  */
 
 package cmd
@@ -26,6 +26,10 @@ func Check(args []string) {
 	switch theType {
 	case eagletunnel.EtCheckPING:
 		ping()
+	case eagletunnel.EtCheckAuth:
+		auth()
+	default:
+		fmt.Println("invalid check command")
 	}
 }
 
@@ -50,4 +54,9 @@ func ping() {
 	}
 	fmt.Println("--- ping statistics ---")
 	fmt.Println("10 messages transmitted, ", success, " received, ", (10-success)*10, "% loss")
+}
+
+func auth() {
+	reply := eagletunnel.SendEtCheckAuthReq()
+	fmt.Println(reply)
 }
