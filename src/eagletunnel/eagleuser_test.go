@@ -3,7 +3,6 @@ package eagletunnel
 import (
 	"errors"
 	"testing"
-	"time"
 )
 
 func Test_EagleUser_Parse(t *testing.T) {
@@ -25,8 +24,7 @@ func Test_EagleUser_Parse(t *testing.T) {
 
 func compareEagleUser(t *testing.T, input string, theErr error, id string, password string, speedlimit int64, theType int) {
 	t.Log("开始检查：", input)
-	ip := "127.0.0.1"
-	user, err := ParseEagleUser(input, ip)
+	user, err := ParseEagleUser(input)
 	if err == nil {
 		if theErr != nil {
 			t.Error("本该有报错：", theErr.Error())
@@ -57,12 +55,6 @@ func compareEagleUser(t *testing.T, input string, theErr error, id string, passw
 			if user.bytes != 0 {
 				t.Error("bytes应该初始化为0")
 			}
-			if user.lastIP != ip {
-				t.Error("错误的IP")
-			}
-			if user.typeOfUser != theType {
-				t.Error("错误的类型")
-			}
 		}
 	} else {
 		if theErr == nil {
@@ -76,8 +68,8 @@ func compareEagleUser(t *testing.T, input string, theErr error, id string, passw
 }
 
 func Test_EagleUser_Check(t *testing.T) {
-	validUser, _ := ParseEagleUser("abc:jsl*", "")
-	user2Check, _ := ParseEagleUser("abc:jsl", "127.0.0.1")
+	validUser, _ := ParseEagleUser("abc:jsl*")
+	user2Check, _ := ParseReqUser("abc:jsl", "127.0.0.1")
 	err := validUser.CheckAuth(user2Check)
 	if err == nil {
 		t.Error("未发现错误密码")
@@ -87,24 +79,22 @@ func Test_EagleUser_Check(t *testing.T) {
 	if err != nil {
 		t.Error("不必要的报错：", err.Error())
 	}
-	user2Check.lastIP = "192.168.0.1"
+	user2Check.IP = "192.168.0.1"
 	err = validUser.CheckAuth(user2Check)
 	if err == nil {
 		t.Error("未识别已改变的IP")
 	}
-	user2Check.lastIP = "192.168.0.2"
-	user2Check.lastTime = user2Check.lastTime.Add(4 * time.Minute)
+	user2Check.IP = "192.168.0.2"
 	err = validUser.CheckAuth(user2Check)
 	if err != nil {
 		t.Error("未识别已过3分钟")
 	}
-	user2Check.lastIP = "192.168.0.3"
-	user2Check.lastTime = user2Check.lastTime.Add(2 * time.Minute)
+	user2Check.IP = "192.168.0.3"
 	err = validUser.CheckAuth(user2Check)
 	if err == nil {
 		t.Error("时间只过了2分钟")
 	}
-	user2Check.lastIP = "192.168.0.4"
+	user2Check.IP = "192.168.0.4"
 	err = validUser.CheckAuth(user2Check)
 	if err == nil {
 		t.Error("未识别已改变的IP")
@@ -113,22 +103,22 @@ func Test_EagleUser_Check(t *testing.T) {
 	if err == nil {
 		t.Error("未识别已改变的IP")
 	}
-	validUser, _ = ParseEagleUser("abc:jsl*::share", "")
+	validUser, _ = ParseEagleUser("abc:jsl*::share")
 	err = validUser.CheckAuth(user2Check)
 	if err != nil {
 		t.Error("不该有的报错：", err.Error())
 	}
-	user2Check.lastIP = "192.168.0.5"
+	user2Check.IP = "192.168.0.5"
 	err = validUser.CheckAuth(user2Check)
 	if err != nil {
 		t.Error("shared账户不应该限制多地同时登录")
 	}
-	validUser, _ = ParseEagleUser("abc:jsl*::shared", "")
+	validUser, _ = ParseEagleUser("abc:jsl*::shared")
 	err = validUser.CheckAuth(user2Check)
 	if err != nil {
 		t.Error("不该有的报错：", err.Error())
 	}
-	user2Check.lastIP = "192.168.0.6"
+	user2Check.IP = "192.168.0.6"
 	err = validUser.CheckAuth(user2Check)
 	if err != nil {
 		t.Error("shared账户不应该限制多地同时登录")

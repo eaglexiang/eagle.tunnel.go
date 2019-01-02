@@ -1,3 +1,12 @@
+/*
+ * @Description:
+ * @Author: EagleXiang
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2018-10-08 10:51:05
+ * @LastEditors: EagleXiang
+ * @LastEditTime: 2019-01-02 19:33:20
+ */
+
 package eagletunnel
 
 import (
@@ -12,12 +21,31 @@ import (
 	"../eaglelib/src"
 )
 
+// LoginStatus 用户的登录记录
+type LoginStatus struct {
+	ip       string
+	lastTime time.Time
+	ttl      int // min
+}
+
+func (ls *LoginStatus) isDead() bool {
+	if ls.ttl == 0 {
+		return false
+	}
+	now := time.Now()
+	duration := now.Sub(ls.lastTime)
+	if duration > time.Duration(ls.ttl)*time.Minute {
+		return true
+	}
+	ls.lastTime = now
+	return false
+}
+
 // EagleUser 提供基本和轻量的账户系统
 type EagleUser struct {
 	ID             string
 	Password       string
-	lastIP         string    // 上次登陆IP
-	lastTime       time.Time // 上次检查登陆IP的时间
+	logins         []LoginStatus // 登录记录
 	loginMutex     sync.Mutex
 	tunnels        *eaglelib.SyncList
 	pause          *bool
@@ -25,17 +53,44 @@ type EagleUser struct {
 	speed          int64 // KB/s
 	speedLimit     int64 // KB/s
 	lastCheckSpeed time.Time
-	typeOfUser     int
+	maxLoginCount  int
+}
+
+// ReqUser 请求登录使用的临时用户
+type ReqUser struct {
+	ID       string
+	Password string
+	IP       string
+}
+
+// ParseReqUser 通过字符串创建ReqUser
+func ParseReqUser(userStr, ip string) (*ReqUser, error) {
+	items := strings.Split(userStr, ":")
+	if len(items) < 2 {
+		return nil, errors.New("invalid user text")
+	}
+	if items[0] == "" {
+		return nil, errors.New("null username")
+	}
+	if items[1] == "" {
+		return nil, errors.New("null password")
+	}
+	user := ReqUser{
+		ID:       items[0],
+		Password: items[1],
+		IP:       ip,
+	}
+	return &user, nil
 }
 
 // 账户类型，PrivateUser的同时登录有限制，而SharedUser则没有
 const (
-	PrivateUser = iota
-	SharedUser
+	SharedUser  = iota // 0 表示不限制登录
+	PrivateUser        // 1 表示只允许一个登录地
 )
 
-// ParseEagleUser 通过格式化的字符串构造新的EagleUser，需要输入请求方地址，以防止重复登录
-func ParseEagleUser(userStr string, ip string) (*EagleUser, error) {
+// ParseEagleUser 通过格式化的字符串构造新的EagleUser
+func ParseEagleUser(userStr string) (*EagleUser, error) {
 	items := strings.Split(userStr, ":")
 	if len(items) < 2 {
 		return nil, errors.New("invalid user text")
@@ -50,8 +105,6 @@ func ParseEagleUser(userStr string, ip string) (*EagleUser, error) {
 	user := EagleUser{
 		ID:             items[0],
 		Password:       items[1],
-		lastIP:         ip,
-		lastTime:       now,
 		tunnels:        eaglelib.CreateSyncList(),
 		lastCheckSpeed: now,
 	}
@@ -60,6 +113,7 @@ func ParseEagleUser(userStr string, ip string) (*EagleUser, error) {
 	if len(items) < 3 {
 		return &user, nil
 	}
+	// 设置限速
 	if items[2] != "" {
 		var err error
 		user.speedLimit, err = strconv.ParseInt(items[2], 10, 64)
@@ -73,9 +127,10 @@ func ParseEagleUser(userStr string, ip string) (*EagleUser, error) {
 	if len(items) < 4 {
 		return &user, nil
 	}
+	// 设置最大同时登录地
 	if items[3] != "" {
 		var err error
-		user.typeOfUser, err = parseUserType(items[3])
+		user.maxLoginCount, err = parseLoginCount(items[3])
 		if err != nil {
 			return nil, err
 		}
@@ -87,54 +142,45 @@ func (user *EagleUser) toString() string {
 	return user.ID + ":" + user.Password
 }
 
-// CheckAuth 检查请求EagleUser的密码是否正确，并通过校对登录地址与上次登录时间，以防止重复登录
-func (user *EagleUser) CheckAuth(user2Check *EagleUser) error {
-	switch user.typeOfUser {
-	case PrivateUser:
-		return user.checkPrivateUser(user2Check)
-	case SharedUser:
-		return user.checkSharedUser(user2Check)
-	default:
-		return errors.New("invalid user type")
-	}
-}
-
-func (user *EagleUser) checkPrivateUser(user2Check *EagleUser) error {
+// CheckAuth 检查请求EagleUser的密码是否正确，并检查是否超出登录限制
+func (user *EagleUser) CheckAuth(user2Check *ReqUser) error {
 	valid := user.Password == user2Check.Password
 	if !valid {
 		return errors.New("incorrent username or password")
 	}
-	if user.lastIP == "" {
-		// 初次登录
-		user.lastIP = user2Check.lastIP
-		user.lastTime = user2Check.lastTime
+	if user.maxLoginCount == SharedUser {
+		// 共享用户不限制登录
 		return nil
 	}
-	// 检查IP是否与上次一样
-	valid = user.lastIP == user2Check.lastIP
-	if valid {
-		// IP相同
-		return nil
+	for _, v := range user.logins {
+		if v.ip == user2Check.IP {
+			// 该IP合法
+			return nil
+		}
+		if v.isDead() {
+			user.loginMutex.Lock()
+			defer user.loginMutex.Unlock()
+			v.ip = user2Check.IP
+			v.lastTime = time.Now()
+			return nil
+		}
+	}
+	if len(user.logins) >= user.maxLoginCount {
+		return errors.New("too much login reqs")
 	}
 	user.loginMutex.Lock()
-	duration := user2Check.lastTime.Sub(user.lastTime)
-	valid = duration > 3*time.Minute
-	if valid {
-		// 3分钟内未登录过
-		user.lastTime = user2Check.lastTime
-		user.lastIP = user2Check.lastIP
-		user.loginMutex.Unlock()
-		return nil
+	defer user.loginMutex.Unlock()
+	// 双检查，以平衡性能和线程安全
+	if len(user.logins) >= user.maxLoginCount {
+		return errors.New("too much login reqs")
 	}
-	user.loginMutex.Unlock()
-	return errors.New("logined")
-}
-
-func (user *EagleUser) checkSharedUser(user2Check *EagleUser) error {
-	valid := user.Password == user2Check.Password
-	if !valid {
-		return errors.New("incorrent username or password")
-	}
+	user.logins = append(user.logins,
+		LoginStatus{
+			ip:       user2Check.IP,
+			lastTime: time.Now(),
+			ttl:      3,
+		},
+	)
 	return nil
 }
 
@@ -194,19 +240,16 @@ func (user *EagleUser) checkSpeed() {
 	if seconds > 0 {
 		user.speed = user.bytes / seconds / 1024 // EagleTunnel.speed 单位为KB/s
 	}
-
 }
 
-func parseUserType(typeStr string) (int, error) {
-	var err error
-	var theType int
-	switch typeStr {
-	case "share", "SHARE", "shared", "SHARED":
-		theType = SharedUser
+func parseLoginCount(arg string) (int, error) {
+	switch arg {
 	case "private", "PRIVATE":
-		theType = PrivateUser
+		return PrivateUser, nil
+	case "share", "shared", "SHARED":
+		return SharedUser, nil
 	default:
-		err = errors.New("unknown user type")
+		value, err := strconv.ParseInt(arg, 10, 32)
+		return int(value), err
 	}
-	return theType, err
 }

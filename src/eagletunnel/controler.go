@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 18:27:17
+ * @LastEditTime: 2019-01-02 19:26:44
  */
 
 package eagletunnel
@@ -132,7 +132,7 @@ func ExecConfig() error {
 
 //SetUser 设置本地用户
 func SetUser(user, ip string) error {
-	localUser, err := ParseEagleUser(user, "")
+	localUser, err := ParseEagleUser(user)
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func importUsers(usersPath string) error {
 	}
 	var user *EagleUser
 	for _, line := range userLines {
-		user, err = ParseEagleUser(line, "")
+		user, err = ParseEagleUser(line)
 		if err != nil {
 			return err
 		}

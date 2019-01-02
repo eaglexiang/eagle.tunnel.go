@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 16:28:27
+ * @LastEditTime: 2019-01-02 19:33:30
  */
 
 package eagletunnel
@@ -230,7 +230,7 @@ func checkUserOfReq(tunnel *eaglelib.Tunnel) (isValid bool) {
 	userStr := string(buffer[:count])
 	addr := (*tunnel.Left).RemoteAddr()
 	ip := strings.Split(addr.String(), ":")[0]
-	user2Check, err := ParseEagleUser(userStr, ip)
+	user2Check, err := ParseReqUser(userStr, ip)
 	if err != nil {
 		tunnel.WriteLeft([]byte(err.Error()))
 		return false
