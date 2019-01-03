@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 15:40:22
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 15:49:49
+ * @LastEditTime: 2019-01-03 14:29:36
  */
 
 package eagletunnel
@@ -20,7 +20,7 @@ type LocationCache struct {
 
 // CreateLocationCache 创建LocationCache
 func CreateLocationCache() *LocationCache {
-	data := eaglelib.CreateCache(-1, 0) // 记录不过期，不进行过期检查
+	data := eaglelib.CreateCache(0) // 记录不过期，不进行过期检查
 	cache := LocationCache{data: data}
 	return &cache
 }
