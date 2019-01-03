@@ -1,3 +1,12 @@
+/*
+ * @Description:
+ * @Author: EagleXiang
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2019-01-03 15:27:00
+ * @LastEditors: EagleXiang
+ * @LastEditTime: 2019-01-03 15:34:48
+ */
+
 package eagletunnel
 
 import (
@@ -25,11 +34,13 @@ var Users map[string]*EagleUser
 // Relayer 网络入口，负责流量分发
 type Relayer struct {
 	listener net.Listener
+	running  bool
 }
 
 // Start 开始服务
 func (relayer *Relayer) Start() {
 	var err error
+	relayer.running = true
 
 	// disable tls check for ip-inside cache
 	http.DefaultTransport.(*http.Transport).TLSClientConfig =
@@ -46,10 +57,10 @@ func (relayer *Relayer) Start() {
 }
 
 func (relayer *Relayer) listen() {
-	for {
+	for relayer.running {
 		conn, err := relayer.listener.Accept()
 		if err != nil {
-			fmt.Println("error: failed to accept! ", err)
+			fmt.Println("stop to accept! ", err)
 			break
 		} else {
 			go relayer.handleClient(conn)
@@ -164,4 +175,11 @@ func CheckSpeedOfUsers() {
 
 		time.Sleep(time.Second)
 	}
+}
+
+// Close 关闭服务
+func (relayer *Relayer) Close() {
+	relayer.running = false
+	time.Sleep(time.Duration(1) * time.Second)
+	relayer.listener.Close()
 }
