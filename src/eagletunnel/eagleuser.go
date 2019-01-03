@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-10-08 10:51:05
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 18:44:00
+ * @LastEditTime: 2019-01-03 18:48:23
  */
 
 package eagletunnel
@@ -95,7 +95,10 @@ func (user *EagleUser) CheckAuth(user2Check *ReqUser) error {
 	if !valid {
 		return errors.New("incorrent username or password")
 	}
-	return user.loginlog.Login(user2Check.IP)
+	if user.loginlog != nil {
+		return user.loginlog.Login(user2Check.IP)
+	}
+	return nil
 }
 
 // LimitSpeed 限速

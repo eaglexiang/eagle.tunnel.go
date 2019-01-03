@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 18:01:40
+ * @LastEditTime: 2019-01-03 19:19:25
  */
 
 package eagletunnel
@@ -79,7 +79,8 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 		return
 	}
 	request := Request{requestMsg: buffer[:count]}
-	tunnel := eaglelib.Tunnel{Left: &conn}
+	tunnel := eaglelib.CreateTunnel()
+	tunnel.Left = &conn
 	var handler Handler
 	switch request.getType() {
 	case EagleTunnelReq:
@@ -98,7 +99,7 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 		handler = nil
 	}
 	if handler != nil {
-		result := handler.Handle(request, &tunnel)
+		result := handler.Handle(request, tunnel)
 		if result {
 			tunnel.Flow()
 		} else {

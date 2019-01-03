@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 18:04:41
+ * @LastEditTime: 2019-01-03 19:29:14
  */
 
 package main
@@ -45,6 +45,7 @@ func checkSig() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
+	fmt.Println("stoping...")
 	relayer.Close()
 	time.Sleep(time.Second)
 }
@@ -59,12 +60,6 @@ func Init(args []string) bool {
 		panic(err)
 	}
 	return true
-}
-
-func quit(relayer *eagletunnel.Relayer) {
-	relayer.Close()
-	time.Sleep(time.Second)
-	os.Exit(0)
 }
 
 func core() {
