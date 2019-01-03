@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-10-08 10:51:05
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 18:48:23
+ * @LastEditTime: 2019-01-03 19:56:56
  */
 
 package eagletunnel
@@ -146,9 +146,9 @@ func (user *EagleUser) CheckSpeed() {
 	duration := now.Sub(user.lastCheckSpeed)
 	user.lastCheckSpeed = now
 	bytes := user.totalBytes()
-	seconds := duration.Seconds()
+	seconds := uint64(duration.Seconds())
 	if seconds > 0 {
-		user.speed = bytes / uint64(seconds)
+		user.speed = bytes / seconds
 	}
 	user.speed = 0
 }

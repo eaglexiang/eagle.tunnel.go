@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 19:41:12
+ * @LastEditTime: 2019-01-03 19:56:09
  */
 
 package cmd
@@ -88,7 +88,8 @@ func importArg(argStrs []string, indexOfArg int) (skip bool, err error) {
 		"--data-key",
 		"--head",
 		"--config-dir",
-		"--user-check":
+		"--user-check",
+		"--speed-check":
 		return true, setKeyValue(argStrs, indexOfArg)
 	default:
 		return false, errors.New("invalid arg: " + argStrs[indexOfArg])
