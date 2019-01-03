@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 15:34:48
+ * @LastEditTime: 2019-01-03 16:21:26
  */
 
 package eagletunnel
@@ -180,6 +180,8 @@ func CheckSpeedOfUsers() {
 // Close 关闭服务
 func (relayer *Relayer) Close() {
 	relayer.running = false
-	time.Sleep(time.Duration(1) * time.Second)
-	relayer.listener.Close()
+	if relayer.listener != nil {
+		time.Sleep(time.Duration(1) * time.Second)
+		relayer.listener.Close()
+	}
 }
