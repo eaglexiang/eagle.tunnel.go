@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-10-08 10:51:05
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 17:46:23
+ * @LastEditTime: 2019-01-03 18:07:07
  */
 
 package eagletunnel
@@ -20,26 +20,6 @@ import (
 	"../eaglelib/src"
 )
 
-// LoginStatus 用户的登录记录
-type LoginStatus struct {
-	ip       string
-	lastTime time.Time
-	ttl      int // min
-}
-
-func (ls *LoginStatus) isDead() bool {
-	if ls.ttl == 0 {
-		return false
-	}
-	now := time.Now()
-	duration := now.Sub(ls.lastTime)
-	if duration > time.Duration(ls.ttl)*time.Minute {
-		return true
-	}
-	ls.lastTime = now
-	return false
-}
-
 // EagleUser 提供基本和轻量的账户系统
 type EagleUser struct {
 	ID             string
@@ -52,33 +32,6 @@ type EagleUser struct {
 	speedLimit     uint64 // KB/s
 	lastCheckSpeed time.Time
 	maxLoginCount  int
-}
-
-// ReqUser 请求登录使用的临时用户
-type ReqUser struct {
-	ID       string
-	Password string
-	IP       string
-}
-
-// ParseReqUser 通过字符串创建ReqUser
-func ParseReqUser(userStr, ip string) (*ReqUser, error) {
-	items := strings.Split(userStr, ":")
-	if len(items) < 2 {
-		return nil, errors.New("invalid user text")
-	}
-	if items[0] == "" {
-		return nil, errors.New("null username")
-	}
-	if items[1] == "" {
-		return nil, errors.New("null password")
-	}
-	user := ReqUser{
-		ID:       items[0],
-		Password: items[1],
-		IP:       ip,
-	}
-	return &user, nil
 }
 
 // 账户类型，PrivateUser的同时登录有限制，而SharedUser则没有
