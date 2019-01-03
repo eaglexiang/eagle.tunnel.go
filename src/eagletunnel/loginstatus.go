@@ -4,13 +4,14 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 18:06:14
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 18:43:34
+ * @LastEditTime: 2019-01-03 23:14:42
  */
 
 package eagletunnel
 
 import (
 	"errors"
+	"strconv"
 	"sync"
 	"time"
 
@@ -58,4 +59,16 @@ func (ls *LoginStatus) newLogin(ip string) error {
 	ls.log.Add(ip)
 	ls.log.Update(ip, "")
 	return nil
+}
+
+func parseLoginCount(arg string) (int, error) {
+	switch arg {
+	case "private", "PRIVATE":
+		return PrivateUser, nil
+	case "share", "shared", "SHARED":
+		return SharedUser, nil
+	default:
+		value, err := strconv.ParseInt(arg, 10, 32)
+		return int(value), err
+	}
 }

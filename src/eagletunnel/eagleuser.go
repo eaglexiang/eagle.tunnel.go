@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-10-08 10:51:05
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 19:56:56
+ * @LastEditTime: 2019-01-03 23:51:43
  */
 
 package eagletunnel
@@ -20,15 +20,18 @@ import (
 )
 
 // EagleUser 提供基本和轻量的账户系统
+// 必须使用 ParseEagleUser 函数进行构造
 type EagleUser struct {
-	ID             string
-	Password       string
-	loginlog       *LoginStatus
-	tunnels        *eaglelib.SyncList
-	pause          *bool
-	speed          uint64 // Byte/s
-	speedLimit     uint64 // KB/s
-	lastCheckSpeed time.Time
+	ID                string
+	Password          string
+	loginlog          *LoginStatus
+	tunnels           *eaglelib.SyncList
+	pause             *bool
+	bytes             eaglelib.AsyncCounter // Byte
+	speed             uint64                // Byte/s
+	speedLimit        uint64                // KB/s
+	checkSpeedFrom    time.Time             // 从这个时间开始阻塞
+	currentCheckSpeed time.Time             // 上次检查速度的时间
 }
 
 // 账户类型，PrivateUser的同时登录有限制，而SharedUser则没有
@@ -49,12 +52,11 @@ func ParseEagleUser(userStr string) (*EagleUser, error) {
 	if items[1] == "" {
 		return nil, errors.New("null password")
 	}
-	now := time.Now()
 	user := EagleUser{
-		ID:             items[0],
-		Password:       items[1],
-		tunnels:        eaglelib.CreateSyncList(),
-		lastCheckSpeed: now,
+		ID:       items[0],
+		Password: items[1],
+		tunnels:  eaglelib.CreateSyncList(),
+		bytes:    eaglelib.CreateAsyncCounter(),
 	}
 	var pause bool
 	user.pause = &pause
@@ -101,16 +103,6 @@ func (user *EagleUser) CheckAuth(user2Check *ReqUser) error {
 	return nil
 }
 
-// LimitSpeed 限速
-func (user *EagleUser) LimitSpeed() {
-	// 0表示不限速
-	if user.speedLimit == 0 {
-		return
-	}
-
-	*user.pause = user.KBSpeed() > user.speedLimit
-}
-
 func (user *EagleUser) totalBytes() uint64 {
 	var totalBytes uint64
 
@@ -142,15 +134,13 @@ func (user *EagleUser) addTunnel(tunnel *eaglelib.Tunnel) {
 
 // CheckSpeed 该User当前的速率（Byte/s）
 func (user *EagleUser) CheckSpeed() {
-	now := time.Now()
-	duration := now.Sub(user.lastCheckSpeed)
-	user.lastCheckSpeed = now
-	bytes := user.totalBytes()
+	user.currentCheckSpeed = time.Now()
+	duration := user.currentCheckSpeed.Sub(user.checkSpeedFrom)
 	seconds := uint64(duration.Seconds())
+	user.bytes.Add(user.totalBytes())
 	if seconds > 0 {
-		user.speed = bytes / seconds
+		user.speed = user.bytes.Value() / seconds
 	}
-	user.speed = 0
 }
 
 // ByteSpeed 获取User当前的速率（Byte/s）
@@ -163,14 +153,20 @@ func (user *EagleUser) KBSpeed() uint64 {
 	return user.speed / 1024
 }
 
-func parseLoginCount(arg string) (int, error) {
-	switch arg {
-	case "private", "PRIVATE":
-		return PrivateUser, nil
-	case "share", "shared", "SHARED":
-		return SharedUser, nil
-	default:
-		value, err := strconv.ParseInt(arg, 10, 32)
-		return int(value), err
+// LimitSpeed 限速
+func (user *EagleUser) LimitSpeed() {
+	if user.speedLimit == 0 {
+		// 0表示不限速
+		*user.pause = false
+		user.checkSpeedFrom = user.currentCheckSpeed
+		user.bytes.Set(0)
+		return
+	}
+	if user.KBSpeed() > user.speedLimit {
+		*user.pause = true
+	} else {
+		*user.pause = false
+		user.checkSpeedFrom = user.currentCheckSpeed
+		user.bytes.Set(0)
 	}
 }

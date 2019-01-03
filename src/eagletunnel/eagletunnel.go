@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 19:33:30
+ * @LastEditTime: 2019-01-03 20:47:02
  */
 
 package eagletunnel
@@ -141,7 +141,11 @@ func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 	tunnel.Decrypt = c.Decrypt
 	tunnel.EncryptRight = true
 	err = checkUserOfLocal(tunnel)
-	return err
+	if err != nil {
+		return err
+	}
+	LocalUser.addTunnel(tunnel)
+	return nil
 }
 
 func checkVersionOfRelayer(tunnel *eaglelib.Tunnel) error {
@@ -211,10 +215,8 @@ func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
 	reply := string(buffer[:count])
 	if reply != "valid" {
 		err = errors.New(reply)
-	} else {
-		LocalUser.addTunnel(tunnel)
 	}
-	return err
+	return nil
 }
 
 func checkUserOfReq(tunnel *eaglelib.Tunnel) (isValid bool) {
