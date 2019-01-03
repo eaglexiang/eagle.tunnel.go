@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-10-08 10:51:05
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 18:07:07
+ * @LastEditTime: 2019-01-03 18:44:00
  */
 
 package eagletunnel
@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"../eaglelib/src"
@@ -24,14 +23,12 @@ import (
 type EagleUser struct {
 	ID             string
 	Password       string
-	logins         []LoginStatus // 登录记录
-	loginMutex     sync.Mutex
+	loginlog       *LoginStatus
 	tunnels        *eaglelib.SyncList
 	pause          *bool
 	speed          uint64 // Byte/s
 	speedLimit     uint64 // KB/s
 	lastCheckSpeed time.Time
-	maxLoginCount  int
 }
 
 // 账户类型，PrivateUser的同时登录有限制，而SharedUser则没有
@@ -71,21 +68,20 @@ func ParseEagleUser(userStr string) (*EagleUser, error) {
 		if err != nil {
 			return nil, errors.New("when parse EagleUser: " + err.Error())
 		}
-		if user.speedLimit < 0 {
-			return nil, errors.New("speed limit must be bigger than or equal to 0")
-		}
 	}
 	if len(items) < 4 {
 		return &user, nil
 	}
 	// 设置最大同时登录地
+	maxLoginCount := 0
 	if items[3] != "" {
 		var err error
-		user.maxLoginCount, err = parseLoginCount(items[3])
+		maxLoginCount, err = parseLoginCount(items[3])
 		if err != nil {
 			return nil, err
 		}
 	}
+	user.loginlog = CreateLoginStatus(maxLoginCount)
 	return &user, nil
 }
 
@@ -99,44 +95,7 @@ func (user *EagleUser) CheckAuth(user2Check *ReqUser) error {
 	if !valid {
 		return errors.New("incorrent username or password")
 	}
-	if user.maxLoginCount == SharedUser {
-		// 共享用户不限制登录
-		return nil
-	}
-	// 查找该IP的既有登录
-	for _, v := range user.logins {
-		if v.ip == user2Check.IP {
-			return nil
-		}
-	}
-	// 查找已失效的登录
-	for _, v := range user.logins {
-		if v.isDead() {
-			user.loginMutex.Lock()
-			defer user.loginMutex.Unlock()
-			v.ip = user2Check.IP
-			v.lastTime = time.Now()
-			return nil
-		}
-	}
-	// 注册新登录
-	if len(user.logins) >= user.maxLoginCount {
-		return errors.New("too much login reqs")
-	}
-	user.loginMutex.Lock()
-	defer user.loginMutex.Unlock()
-	// 双检查，以平衡性能和线程安全
-	if len(user.logins) >= user.maxLoginCount {
-		return errors.New("too much login reqs")
-	}
-	user.logins = append(user.logins,
-		LoginStatus{
-			ip:       user2Check.IP,
-			lastTime: time.Now(),
-			ttl:      3,
-		},
-	)
-	return nil
+	return user.loginlog.Login(user2Check.IP)
 }
 
 // LimitSpeed 限速

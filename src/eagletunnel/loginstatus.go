@@ -4,31 +4,58 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 18:06:14
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 18:06:48
+ * @LastEditTime: 2019-01-03 18:43:34
  */
 
 package eagletunnel
 
 import (
+	"errors"
+	"sync"
 	"time"
+
+	"../eaglelib/src"
 )
 
 // LoginStatus 用户的登录记录
 type LoginStatus struct {
-	ip       string
-	lastTime time.Time
-	ttl      int // min
+	log   *eaglelib.Cache
+	count int
+	Cap   int
+	lock  sync.Mutex
 }
 
-func (ls *LoginStatus) isDead() bool {
-	if ls.ttl == 0 {
-		return false
+// CreateLoginStatus 创建LoginStatus，ttl：登录记录的生存时间
+func CreateLoginStatus(cap int) *LoginStatus {
+	log := eaglelib.CreateCache(time.Minute * time.Duration(3)) // 3min
+	ls := LoginStatus{log: log, Cap: cap}
+	return &ls
+}
+
+// Login 登录
+func (ls *LoginStatus) Login(ip string) error {
+	if ls.Cap == 0 {
+		// 不需要登记
+		return nil
 	}
-	now := time.Now()
-	duration := now.Sub(ls.lastTime)
-	if duration > time.Duration(ls.ttl)*time.Minute {
-		return true
+	if ls.log.Exsit(ip) {
+		// 已登录
+		return nil
 	}
-	ls.lastTime = now
-	return false
+	return ls.newLogin(ip)
+}
+
+func (ls *LoginStatus) newLogin(ip string) error {
+	if ls.count == ls.Cap {
+		return errors.New("too much login reqs")
+	}
+	ls.lock.Lock()
+	defer ls.lock.Unlock()
+	if ls.count == ls.Cap {
+		return errors.New("too much login reqs")
+	}
+	ls.count++
+	ls.log.Add(ip)
+	ls.log.Update(ip, "")
+	return nil
 }
