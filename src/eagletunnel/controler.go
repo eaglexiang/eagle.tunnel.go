@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 19:26:44
+ * @LastEditTime: 2019-01-03 17:54:05
  */
 
 package eagletunnel
@@ -90,7 +90,6 @@ func ExecConfig() error {
 		if err != nil {
 			return err
 		}
-		go CheckSpeedOfUsers()
 	}
 
 	err := SetUser(ConfigKeyValues["user"], "")

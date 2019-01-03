@@ -4,13 +4,12 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-10-08 10:51:05
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 01:37:40
+ * @LastEditTime: 2019-01-03 17:46:23
  */
 
 package eagletunnel
 
 import (
-	"container/list"
 	"errors"
 	"fmt"
 	"strconv"
@@ -49,9 +48,8 @@ type EagleUser struct {
 	loginMutex     sync.Mutex
 	tunnels        *eaglelib.SyncList
 	pause          *bool
-	bytes          int64
-	speed          int64 // KB/s
-	speedLimit     int64 // KB/s
+	speed          uint64 // Byte/s
+	speedLimit     uint64 // KB/s
 	lastCheckSpeed time.Time
 	maxLoginCount  int
 }
@@ -116,7 +114,7 @@ func ParseEagleUser(userStr string) (*EagleUser, error) {
 	// 设置限速
 	if items[2] != "" {
 		var err error
-		user.speedLimit, err = strconv.ParseInt(items[2], 10, 64)
+		user.speedLimit, err = strconv.ParseUint(items[2], 10, 64)
 		if err != nil {
 			return nil, errors.New("when parse EagleUser: " + err.Error())
 		}
@@ -188,35 +186,31 @@ func (user *EagleUser) CheckAuth(user2Check *ReqUser) error {
 	return nil
 }
 
-func (user *EagleUser) limitSpeed() {
+// LimitSpeed 限速
+func (user *EagleUser) LimitSpeed() {
 	// 0表示不限速
 	if user.speedLimit == 0 {
 		return
 	}
 
-	*user.pause = user.speed > user.speedLimit
+	*user.pause = user.KBSpeed() > user.speedLimit
 }
 
-func (user *EagleUser) totalBytes() int64 {
-	var totalBytes int64
+func (user *EagleUser) totalBytes() uint64 {
+	var totalBytes uint64
 
 	// 统计所有Tunnel的总Bytes
-	var next *list.Element
-	for e := user.tunnels.Front(); e != nil; e = next {
-		next = e.Next()
+	for e := user.tunnels.Front(); e != nil; e = e.Next() {
 		tunnel, ok := e.Value.(*eaglelib.Tunnel)
-		if ok {
-			bytesNew := tunnel.BytesFlowed()
-			totalBytes += bytesNew
-			if tunnel.Closed {
-				user.tunnels.Remove(e)
-			} else {
-				if tunnel.Flowed && !tunnel.IsRunning() {
-					user.tunnels.Remove(e)
-				}
-			}
-		} else {
+		if !ok {
 			fmt.Println("error: invalid object found in EagleUser.tunnels!")
+			continue
+		}
+		bytesNew := tunnel.BytesFlowed()
+		totalBytes += bytesNew
+		if tunnel.Closed() {
+			user.tunnels.Remove(e)
+			continue
 		}
 	}
 
@@ -231,19 +225,27 @@ func (user *EagleUser) addTunnel(tunnel *eaglelib.Tunnel) {
 	user.tunnels.Push(tunnel)
 }
 
-func (user *EagleUser) checkSpeed() {
+// CheckSpeed 该User当前的速率（Byte/s）
+func (user *EagleUser) CheckSpeed() {
 	now := time.Now()
 	duration := now.Sub(user.lastCheckSpeed)
-	// 每三分钟重置一次计数
-	if duration > (time.Minute * 3) {
-		user.lastCheckSpeed = now
-		user.bytes = 0
-	}
-	user.bytes += user.totalBytes()
-	seconds := int64(duration.Seconds())
+	user.lastCheckSpeed = now
+	bytes := user.totalBytes()
+	seconds := duration.Seconds()
 	if seconds > 0 {
-		user.speed = user.bytes / seconds / 1024 // EagleTunnel.speed 单位为KB/s
+		user.speed = bytes / uint64(seconds)
 	}
+	user.speed = 0
+}
+
+// ByteSpeed 获取User当前的速率（Byte/s）
+func (user *EagleUser) ByteSpeed() uint64 {
+	return user.speed
+}
+
+// KBSpeed 获取User当前的速率（KB/s）
+func (user *EagleUser) KBSpeed() uint64 {
+	return user.speed / 1024
 }
 
 func parseLoginCount(arg string) (int, error) {

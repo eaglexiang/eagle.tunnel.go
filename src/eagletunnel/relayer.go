@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 16:21:26
+ * @LastEditTime: 2019-01-03 18:01:40
  */
 
 package eagletunnel
@@ -38,7 +38,7 @@ type Relayer struct {
 }
 
 // Start 开始服务
-func (relayer *Relayer) Start() {
+func (relayer *Relayer) Start() error {
 	var err error
 	relayer.running = true
 
@@ -49,11 +49,14 @@ func (relayer *Relayer) Start() {
 	ipe := LocalAddr + ":" + LocalPort
 	relayer.listener, err = net.Listen("tcp", ipe)
 	if err != nil {
-		fmt.Println("error: failed to listen! ", err)
-	} else {
-		fmt.Println("start to listen: ", ipe)
-		relayer.listen()
+		return err
 	}
+	fmt.Println("start to listen: ", ipe)
+
+	go relayer.checkSpeedOfUsers()
+
+	relayer.listen()
+	return nil
 }
 
 func (relayer *Relayer) listen() {
@@ -106,72 +109,24 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 	}
 }
 
-// SPrintConfig 将所有配置按格式输出为字符串
-func SPrintConfig() string {
-	var status string
-	switch ProxyStatus {
-	case ProxySMART:
-		status = "smart"
-	case ProxyENABLE:
-		status = "enable"
-	default:
+// checkSpeedOfUsers 轮询所有用户的速度，并根据配置选择是否进行限速
+func (relayer *Relayer) checkSpeedOfUsers() {
+	v, ok := ConfigKeyValues["speed-check"]
+	if !ok {
+		return
 	}
-	var localUser string
-	if LocalUser != nil {
-		localUser = LocalUser.toString()
-	} else {
-		localUser = "null"
-	}
-	var userCheck string
-	if EnableUserCheck {
-		userCheck = "on"
-	} else {
-		userCheck = "off"
-	}
-	var http string
-	if EnableHTTP {
-		http = "on"
-	} else {
-		http = "off"
-	}
-	var socks string
-	if EnableSOCKS5 {
-		socks = "on"
-	} else {
-		socks = "off"
-	}
-	var ets string // et status
-	if EnableET {
-		ets = "on"
-	} else {
-		ets = "off"
+	if v != "on" {
+		return
 	}
 
-	var configStr string
-	configStr += "config-path=" + ConfigPath + "\n"
-	configStr += "config-dir=" + ConfigKeyValues["config-dir"] + "\n"
-	configStr += "relayer=" + RemoteAddr + ":" + RemotePort + "\n"
-	configStr += "listen=" + LocalAddr + ":" + LocalPort + "\n"
-	configStr += "data-key=" + ConfigKeyValues["data-key"] + "\n"
-	configStr += "user=" + localUser + "\n"
-	configStr += "user-check=" + userCheck + "\n"
-	configStr += "http=" + http + "\n"
-	configStr += "socks=" + socks + "\n"
-	configStr += "et=" + ets + "\n"
-	configStr += "proxy-status=" + status + "\n"
-	return configStr
-}
-
-// CheckSpeedOfUsers 轮询所有用户的速度，并根据配置选择是否进行限速
-func CheckSpeedOfUsers() {
-	for {
+	for relayer.running {
 		for _, user := range Users {
-			user.checkSpeed()
-			user.limitSpeed()
+			user.CheckSpeed()
+			user.LimitSpeed()
 		}
 
-		LocalUser.checkSpeed()
-		LocalUser.limitSpeed()
+		LocalUser.CheckSpeed()
+		LocalUser.LimitSpeed()
 
 		time.Sleep(time.Second)
 	}

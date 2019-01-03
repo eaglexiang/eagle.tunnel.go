@@ -22,7 +22,7 @@ func Test_EagleUser_Parse(t *testing.T) {
 	compareEagleUser(t, "ABC:P1::haha", errors.New("unknown user type"), "", "", 0, 0)
 }
 
-func compareEagleUser(t *testing.T, input string, theErr error, id string, password string, speedlimit int64, theType int) {
+func compareEagleUser(t *testing.T, input string, theErr error, id string, password string, speedlimit uint64, theType int) {
 	t.Log("开始检查：", input)
 	user, err := ParseEagleUser(input)
 	if err == nil {
@@ -51,9 +51,6 @@ func compareEagleUser(t *testing.T, input string, theErr error, id string, passw
 			output := user.toString()
 			if output != id+":"+password {
 				t.Error("错误的输出：", output)
-			}
-			if user.bytes != 0 {
-				t.Error("bytes应该初始化为0")
 			}
 		}
 	} else {

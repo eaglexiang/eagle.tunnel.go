@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 16:19:58
+ * @LastEditTime: 2019-01-03 18:04:41
  */
 
 package main
@@ -34,7 +34,7 @@ func main() {
 	default:
 		if Init(args) {
 			fmt.Println(eagletunnel.SprintConfig())
-			go relayer.Start()
+			go core()
 		}
 	}
 
@@ -65,4 +65,11 @@ func quit(relayer *eagletunnel.Relayer) {
 	relayer.Close()
 	time.Sleep(time.Second)
 	os.Exit(0)
+}
+
+func core() {
+	err := relayer.Start()
+	if err != nil {
+		fmt.Println("error: ", err)
+	}
 }
