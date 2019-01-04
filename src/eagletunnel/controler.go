@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 18:35:55
+ * @LastEditTime: 2019-01-04 18:42:34
  */
 
 package eagletunnel
@@ -56,6 +56,7 @@ func InitConfig(filePath string) error {
 	addDefaultArg("http", "off")
 	addDefaultArg("socks", "off")
 	addDefaultArg("et", "off")
+	addDefaultArg("debug", "off")
 	if ConfigPath != "" {
 		addDefaultArg("config-dir", filepath.Dir(ConfigPath))
 	}

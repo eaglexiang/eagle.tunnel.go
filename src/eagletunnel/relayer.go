@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 18:35:07
+ * @LastEditTime: 2019-01-04 18:42:21
  */
 
 package eagletunnel
@@ -106,7 +106,9 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 	if err != nil {
 		tunnel.Close()
 		if err.Error() != "no need to continue" {
-			fmt.Println(err.Error())
+			if ConfigKeyValues["debug"] == "on" {
+				fmt.Println(err.Error())
+			}
 		}
 		return
 	}
