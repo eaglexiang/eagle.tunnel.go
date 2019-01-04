@@ -3,8 +3,8 @@
 ## 基本使用
 
 - [Linux](./guides/linux.md)
-- Windows 同Linux
-- Mac 同Linux
+- Windows 请参考Linux
+- Mac 请参考Linux
 
 ## 高级使用
 

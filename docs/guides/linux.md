@@ -135,7 +135,7 @@ sudo systemctl status eagle-tunnel-client
 配置完成后也许有验证服务是否正在运行的需求，可在客户端处执行以下指令：
 
 ```shell
-etask ping
+et check ping
 ```
 
 如果服务正常，应该会返回类似以下结果：
