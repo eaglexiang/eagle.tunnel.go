@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 19:17:53
+ * @LastEditTime: 2019-01-04 14:00:23
  */
 
 package eagletunnel
@@ -18,6 +18,7 @@ import (
 )
 
 var dnsRemoteCache = eaglelib.CreateDNSCache()
+var dnsLocalCache = eaglelib.CreateDNSCache()
 var hostsCache = make(map[string]string)
 
 // ETDNS ET-DNS子协议的实现
@@ -30,7 +31,7 @@ func (ed *ETDNS) Handle(req Request, tunnel *eaglelib.Tunnel) {
 	if len(reqs) >= 2 {
 		domain := reqs[1]
 		e := NetArg{domain: domain}
-		err := resolvDNSByLocal(&e, false)
+		err := resolvDNSByLocalServer(&e)
 		if err == nil {
 			tunnel.WriteLeft([]byte(e.IP))
 		}
@@ -50,7 +51,7 @@ func (ed *ETDNS) Send(e *NetArg) bool {
 		if white {
 			result = resolvDNSByProxy(e) == nil
 		} else {
-			result = resolvDNSByLocal(e, true) == nil
+			result = resolvDNSByLocalClient(e) == nil
 		}
 	case ProxyENABLE:
 		result = resolvDNSByProxy(e) == nil
@@ -62,10 +63,9 @@ func (ed *ETDNS) Send(e *NetArg) bool {
 
 func resolvDNSByProxy(e *NetArg) error {
 	var err error
-	ok := dnsRemoteCache.Exsit(e.domain)
-	if ok {
+	if dnsRemoteCache.Exsit(e.domain) {
 		e.IP, err = dnsRemoteCache.Wait4IP(e.domain)
-		return nil
+		return err
 	}
 	dnsRemoteCache.Add(e.domain)
 	err = _resolvDNSByProxy(e)
@@ -103,8 +103,23 @@ func _resolvDNSByProxy(e *NetArg) error {
 	return err
 }
 
-// resolvDNSByLocal 本地解析DNS，recursive表明是否递归使用上一级relayer，如无ip-type配置，优先返回IPv4
-func resolvDNSByLocal(e *NetArg, recursive bool) error {
+// resolvDNSByLocalClient 本地解析DNS，如无ip-type配置，优先返回IPv4
+func resolvDNSByLocalClient(e *NetArg) (err error) {
+	if dnsLocalCache.Exsit(e.domain) {
+		e.IP, err = dnsLocalCache.Wait4IP(e.domain)
+		return err
+	}
+	dnsLocalCache.Add(e.domain)
+	err = _resolvDNSByLocalClient(e)
+	if err != nil {
+		dnsLocalCache.Delete(e.domain)
+		return err
+	}
+	dnsLocalCache.Update(e.domain, e.IP)
+	return nil
+}
+
+func _resolvDNSByLocalClient(e *NetArg) error {
 	var firstIPResolver func(*NetArg) error
 	var secondIPResolver func(*NetArg) error
 	if ConfigKeyValues["ip-type"] == "4" {
@@ -128,9 +143,6 @@ func resolvDNSByLocal(e *NetArg, recursive bool) error {
 		return errors.New("fail to resolv DNS by local")
 	}
 
-	if !recursive {
-		return nil
-	}
 	// 判断IP所在位置是否适合代理
 	el := ETLocation{}
 	el.Send(e)
@@ -145,4 +157,42 @@ func resolvDNSByLocal(e *NetArg, recursive bool) error {
 	}
 
 	return nil
+}
+
+// resolvDNSByLocalServer 本地解析DNS，如无ip-type配置，优先返回IPv4
+func resolvDNSByLocalServer(e *NetArg) (err error) {
+	if dnsLocalCache.Exsit(e.domain) {
+		e.IP, err = dnsLocalCache.Wait4IP(e.domain)
+		return err
+	}
+	dnsLocalCache.Add(e.domain)
+	err = _resolvDNSByLocalServer(e)
+	if err != nil {
+		dnsLocalCache.Delete(e.domain)
+		return err
+	}
+	dnsLocalCache.Update(e.domain, e.IP)
+	return nil
+}
+
+func _resolvDNSByLocalServer(e *NetArg) error {
+	var firstIPResolver func(*NetArg) error
+	var secondIPResolver func(*NetArg) error
+	if ConfigKeyValues["ip-type"] == "4" {
+		firstIPResolver = ResolvIPv4ByLocal
+		secondIPResolver = ResolvIPv4ByLocal
+	} else if ConfigKeyValues["ip-type"] == "6" {
+		firstIPResolver = ResolvIPv6ByLocal
+		secondIPResolver = ResolvIPv6ByLocal
+	} else {
+		firstIPResolver = ResolvIPv4ByLocal
+		secondIPResolver = ResolvIPv6ByLocal
+	}
+
+	err := firstIPResolver(e)
+	if err != nil {
+		err = secondIPResolver(e)
+	}
+
+	return err
 }
