@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 18:06:14
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 19:41:05
+ * @LastEditTime: 2019-01-04 19:49:40
  */
 
 package eagletunnel
@@ -31,8 +31,10 @@ type LoginStatus struct {
 func CreateLoginStatus(cap int) *LoginStatus {
 	log := eaglelib.CreateCache(time.Minute * time.Duration(3)) // 3min
 	ls := LoginStatus{log: log, Cap: cap}
-	log.DeleteCaller = func() {
+	log.DeleteCaller = func(_ip interface{}) {
+		ip := _ip.(string)
 		ls.lock.Lock()
+		fmt.Println("Logout: " + ip)
 		ls.count--
 		ls.lock.Unlock()
 	}
