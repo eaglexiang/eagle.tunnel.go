@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 18:06:14
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 18:36:59
+ * @LastEditTime: 2019-01-04 19:41:05
  */
 
 package eagletunnel
@@ -31,6 +31,11 @@ type LoginStatus struct {
 func CreateLoginStatus(cap int) *LoginStatus {
 	log := eaglelib.CreateCache(time.Minute * time.Duration(3)) // 3min
 	ls := LoginStatus{log: log, Cap: cap}
+	log.DeleteCaller = func() {
+		ls.lock.Lock()
+		ls.count--
+		ls.lock.Unlock()
+	}
 	return &ls
 }
 
