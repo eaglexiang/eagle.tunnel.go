@@ -135,10 +135,10 @@ sudo systemctl status eagle-tunnel-client
 配置完成后也许有验证服务是否正在运行的需求，可在客户端处执行以下指令：
 
 ```shell
-et check ping
+et check ping -c [配置文件]
 ```
 
-如果服务正常，应该会返回类似以下结果：
+配置文件的默认安装位置为`/etc/eagle-tunnel.d`，如果服务正常，应该会返回类似以下结果：
 
 > ping to x.x.x.x:8080 time=99ms
 
