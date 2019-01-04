@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 20:47:02
+ * @LastEditTime: 2019-01-04 18:07:56
  */
 
 package eagletunnel
@@ -19,11 +19,11 @@ import (
 
 // ET请求的类型
 const (
-	EtTCP = iota
+	EtUNKNOWN = iota
+	EtTCP
 	EtDNS
 	EtLOCATION
 	EtCHECK
-	EtUNKNOWN
 )
 
 // 代理的状态
@@ -46,7 +46,7 @@ type EagleTunnel struct {
 }
 
 // Handle 处理ET请求
-func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (keepAlive bool) {
+func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (err error) {
 	args := strings.Split(request.RequestMsgStr, " ")
 	_, cipherType := et.checkHeaderOfReq(args, tunnel)
 	var c Cipher
@@ -55,19 +55,19 @@ func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (keepAli
 		c = new(SimpleCipher)
 		c.SetPassword(ConfigKeyValues["data-key"])
 	default:
-		return false
+		return errors.New("EagleTunnel.Handle -> invalid cipher type")
 	}
 	tunnel.Encrypt = c.Encrypt
 	tunnel.Decrypt = c.Decrypt
 	tunnel.EncryptLeft = true
-	isUserOk := checkUserOfReq(tunnel)
-	if !isUserOk {
-		return false
+	err = checkUserOfReq(tunnel)
+	if err != nil {
+		return errors.New("EagleTunnel.Handle -> " + err.Error())
 	}
 	buffer := make([]byte, 1024)
 	count, err := tunnel.ReadLeft(buffer)
 	if err != nil {
-		return false
+		return errors.New("EagleTunnel.Handle -> " + err.Error())
 	}
 	req := string(buffer[:count])
 	args = strings.Split(req, " ")
@@ -77,36 +77,55 @@ func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (keepAli
 	case EtDNS:
 		ed := ETDNS{}
 		ed.Handle(etReq, tunnel)
+		return errors.New("no need to continue")
 	case EtTCP:
+		// 只有TCP请求有可能需要保持连接
 		ett := ETTCP{}
-		return ett.Handle(etReq, tunnel) // 只有TCP请求有可能需要保持连接
+		err = ett.Handle(etReq, tunnel)
+		return err
 	case EtLOCATION:
 		el := ETLocation{}
-		el.Handle(etReq, tunnel)
+		err = el.Handle(etReq, tunnel)
+		if err != nil {
+			return errors.New("EagleTunnel.Handle -> " + err.Error())
+		}
+		return errors.New("no need to continue")
 	case EtCHECK:
 		ec := ETCheck{}
 		ec.Handle(etReq, tunnel)
+		return errors.New("no need to continue")
 	default:
+		return errors.New("EagleTunnel.Handle -> invalid et req type, user-check may be wrong")
 	}
-	return false
 }
 
 // Send 发送ET请求
-func (et *EagleTunnel) Send(e *NetArg) (succeed bool) {
-	var result bool
+func (et *EagleTunnel) Send(e *NetArg) error {
 	switch e.TheType {
 	case EtDNS:
 		ed := ETDNS{}
-		result = ed.Send(e)
+		err := ed.Send(e)
+		if err != nil {
+			return errors.New("EagleTunnel.Send -> " + err.Error())
+		}
+		return nil
 	case EtTCP:
 		ett := ETTCP{}
-		result = ett.Send(e)
+		err := ett.Send(e)
+		if err != nil {
+			return errors.New("EagleTunnel.Send -> " + err.Error())
+		}
+		return nil
 	case EtLOCATION:
 		el := ETLocation{}
-		el.Send(e)
+		err := el.Send(e)
+		if err != nil {
+			return errors.New("EagleTunnel.Send -> " + err.Error())
+		}
+		return nil
 	default:
+		return errors.New("EagleTunnel.Send -> invalid et req type")
 	}
-	return result
 }
 
 // connect2Relayer 连接到下一个Relayer，完成版本校验和用户校验两个步骤
@@ -115,12 +134,12 @@ func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 	// conn, err := net.DialTimeout("tcp", remoteIpe, 5*time.Second)
 	conn, err := net.Dial("tcp", remoteIpe)
 	if err != nil {
-		return err
+		return errors.New("connect2Relayer -> " + err.Error())
 	}
 	tunnel.Right = &conn
 	err = checkVersionOfRelayer(tunnel)
 	if err != nil {
-		return err
+		return errors.New("connect2Relayer -> " + err.Error())
 	}
 	var c Cipher
 	switch LocalCipherType {
@@ -132,17 +151,17 @@ func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 		}
 		err = c.SetPassword(key)
 		if err != nil {
-			return err
+			return errors.New("connect2Relayer -> " + err.Error())
 		}
 	default:
-		return errors.New("unknown cipher type")
+		return errors.New("connect2Relayer -> unknown cipher type")
 	}
 	tunnel.Encrypt = c.Encrypt
 	tunnel.Decrypt = c.Decrypt
 	tunnel.EncryptRight = true
 	err = checkUserOfLocal(tunnel)
 	if err != nil {
-		return err
+		return errors.New("connect2Relayer -> " + err.Error())
 	}
 	LocalUser.addTunnel(tunnel)
 	return nil
@@ -152,23 +171,18 @@ func checkVersionOfRelayer(tunnel *eaglelib.Tunnel) error {
 	req := ConfigKeyValues["head"] + " " + ProtocolVersion.Raw + " simple"
 	count, err := tunnel.WriteRight([]byte(req))
 	if err != nil {
-		return err
+		return errors.New("checkVersionOfRelayer -> " + err.Error())
 	}
 	var buffer = make([]byte, 1024)
 	count, err = tunnel.ReadRight(buffer)
 	if err != nil {
-		return err
+		return errors.New("checkVersionOfRelayer -> " + err.Error())
 	}
 	reply := string(buffer[0:count])
 	if reply != "valid valid valid" {
-		replys := strings.Split(reply, " ")
-		reply = ""
-		for _, item := range replys {
-			reply += " \"" + item + "\""
-		}
-		return errors.New(reply)
+		return errors.New("checkVersionOfRelayer -> " + reply)
 	}
-	return err
+	return nil
 }
 
 func (et *EagleTunnel) checkHeaderOfReq(
@@ -205,29 +219,29 @@ func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
 	var count int
 	count, err = tunnel.WriteRight([]byte(user))
 	if err != nil {
-		return err
+		return errors.New("checkUserOfLocal -> " + err.Error())
 	}
 	buffer := make([]byte, 1024)
 	count, err = tunnel.ReadRight(buffer)
 	if err != nil {
-		return err
+		return errors.New("checkUserOfLocal -> " + err.Error())
 	}
 	reply := string(buffer[:count])
 	if reply != "valid" {
-		err = errors.New(reply)
+		return errors.New("checkUserOfLocal -> " + reply)
 	}
 	return nil
 }
 
-func checkUserOfReq(tunnel *eaglelib.Tunnel) (isValid bool) {
+func checkUserOfReq(tunnel *eaglelib.Tunnel) error {
 	if !EnableUserCheck {
-		return true
+		return nil
 	}
 	// 接收用户信息
 	buffer := make([]byte, 1024)
 	count, err := tunnel.ReadLeft(buffer)
 	if err != nil {
-		return false
+		return errors.New("checkUserOfReq -> " + err.Error())
 	}
 	userStr := string(buffer[:count])
 	addr := (*tunnel.Left).RemoteAddr()
@@ -235,33 +249,37 @@ func checkUserOfReq(tunnel *eaglelib.Tunnel) (isValid bool) {
 	user2Check, err := ParseReqUser(userStr, ip)
 	if err != nil {
 		tunnel.WriteLeft([]byte(err.Error()))
-		return false
+		return errors.New("checkUserOfReq -> " + err.Error())
 	}
 	if user2Check.ID == "root" {
-		tunnel.WriteLeft([]byte("username shouldn't be 'root'"))
-		return false
+		reply := "username shouldn't be 'root'"
+		tunnel.WriteLeft([]byte(reply))
+		return errors.New("checkUserOfReq -> " + reply)
 	}
 	validUser, ok := Users[user2Check.ID]
 	if !ok {
 		// 找不到该用户
-		tunnel.WriteLeft([]byte("incorrent username or password"))
-		return false
+		reply := "incorrent username or password"
+		tunnel.WriteLeft([]byte(reply))
+		return errors.New("checkUserOfReq -> username not found: " + user2Check.ID)
 	}
 	err = validUser.CheckAuth(user2Check)
 	if err != nil {
 		reply := err.Error()
 		tunnel.WriteLeft([]byte(reply))
-		return false
+		return errors.New("checkUserOfReq -> " + err.Error())
 	}
 	reply := "valid"
-	count, _ = tunnel.WriteLeft([]byte(reply))
-	ok = count == 5
-	if !ok {
+	count, err = tunnel.WriteLeft([]byte(reply))
+	if err != nil {
+		return errors.New("checkUserOfReq -> " + err.Error())
+	}
+	if count != 5 {
 		// 发送响应失败
-		return false
+		return errors.New("checkUserOfReq -> wrong reply")
 	}
 	validUser.addTunnel(tunnel)
-	return true
+	return nil
 }
 
 // ParseEtType 得到字符串对应的ET请求类型

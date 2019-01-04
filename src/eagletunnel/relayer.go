@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 19:19:25
+ * @LastEditTime: 2019-01-04 18:35:07
  */
 
 package eagletunnel
@@ -98,24 +98,24 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 	default:
 		handler = nil
 	}
-	if handler != nil {
-		result := handler.Handle(request, tunnel)
-		if result {
-			tunnel.Flow()
-		} else {
-			tunnel.Close()
-		}
-	} else {
+	if handler == nil {
 		tunnel.Close()
+		return
 	}
+	err = handler.Handle(request, tunnel)
+	if err != nil {
+		tunnel.Close()
+		if err.Error() != "no need to continue" {
+			fmt.Println(err.Error())
+		}
+		return
+	}
+	tunnel.Flow()
 }
 
 // checkSpeedOfUsers 轮询所有用户的速度，并根据配置选择是否进行限速
 func (relayer *Relayer) checkSpeedOfUsers() {
-	v, ok := ConfigKeyValues["speed-check"]
-	if !ok {
-		return
-	}
+	v := ConfigKeyValues["speed-check"]
 	if v != "on" {
 		return
 	}

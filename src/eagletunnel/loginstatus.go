@@ -4,13 +4,14 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 18:06:14
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 23:14:42
+ * @LastEditTime: 2019-01-04 18:36:59
  */
 
 package eagletunnel
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -41,23 +42,32 @@ func (ls *LoginStatus) Login(ip string) error {
 	}
 	if ls.log.Exsit(ip) {
 		// 已登录
+		ls.log.Update(ip, "")
 		return nil
 	}
-	return ls.newLogin(ip)
+	ls.lock.Lock()
+	defer ls.lock.Unlock()
+	if ls.log.Exsit(ip) {
+		// 已登录
+		ls.log.Update(ip, "")
+		return nil
+	}
+	err := ls.newLogin(ip)
+	if err != nil {
+		return errors.New("LoginStatus.Login -> " + err.Error())
+	}
+	return nil
 }
 
 func (ls *LoginStatus) newLogin(ip string) error {
 	if ls.count == ls.Cap {
-		return errors.New("too much login reqs")
-	}
-	ls.lock.Lock()
-	defer ls.lock.Unlock()
-	if ls.count == ls.Cap {
-		return errors.New("too much login reqs")
+		errStr := "LoginStatus.newLogin -> too much login reqs " +
+			ls.Count()
+		return errors.New(errStr)
 	}
 	ls.count++
 	ls.log.Add(ip)
-	ls.log.Update(ip, "")
+	fmt.Println("New Login: " + ip)
 	return nil
 }
 
@@ -71,4 +81,11 @@ func parseLoginCount(arg string) (int, error) {
 		value, err := strconv.ParseInt(arg, 10, 32)
 		return int(value), err
 	}
+}
+
+// Count 以比例的格式输出当前登录地占用状况，如 2/5
+func (ls *LoginStatus) Count() string {
+	value := strconv.FormatInt(int64(ls.count), 10) + "/" +
+		strconv.FormatInt(int64(ls.Cap), 10)
+	return value
 }

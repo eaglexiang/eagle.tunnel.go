@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-10-08 10:51:05
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 23:51:43
+ * @LastEditTime: 2019-01-04 17:14:57
  */
 
 package eagletunnel
@@ -95,10 +95,13 @@ func (user *EagleUser) toString() string {
 func (user *EagleUser) CheckAuth(user2Check *ReqUser) error {
 	valid := user.Password == user2Check.Password
 	if !valid {
-		return errors.New("incorrent username or password")
+		return errors.New("EagleUser.CheckAuth -> incorrent username or password")
 	}
 	if user.loginlog != nil {
-		return user.loginlog.Login(user2Check.IP)
+		err := user.loginlog.Login(user2Check.IP)
+		if err != nil {
+			return errors.New("EagleUser.CheckAuth -> " + err.Error())
+		}
 	}
 	return nil
 }

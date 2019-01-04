@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 20:50:30
+ * @LastEditTime: 2019-01-04 18:34:40
  */
 
 package eagletunnel
@@ -194,12 +194,7 @@ func handleEtCheckVersionReq(tunnel *eaglelib.Tunnel, reqs []string) {
 }
 
 func handleEtCheckSpeedReq(tunnel *eaglelib.Tunnel) {
-	v, ok := ConfigKeyValues["speed-check"]
-	if !ok {
-		reply := "speed-check off"
-		tunnel.WriteLeft([]byte(reply))
-		return
-	}
+	v := ConfigKeyValues["speed-check"]
 	if v != "on" {
 		reply := "speed-check " + v
 		tunnel.WriteLeft([]byte(reply))

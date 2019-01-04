@@ -4,13 +4,13 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 19:18:08
+ * @LastEditTime: 2019-01-04 16:51:05
  */
 
 package eagletunnel
 
 import (
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -28,16 +28,15 @@ type ETLocation struct {
 }
 
 // Send 发送ET-LOCATION请求 解析IP的地理位置，结果存放于e.Reply
-func (el *ETLocation) Send(e *NetArg) {
+func (el *ETLocation) Send(e *NetArg) error {
 	if IPGeoCacheClient.Exsit(e.IP) {
 		// 读取缓存
 		location, err := IPGeoCacheClient.Wait4Proxy(e.IP)
 		if err != nil {
-			e.Reply = err.Error()
-			return
+			return errors.New("ETLocation.Send -> " + err.Error())
 		}
 		e.Reply = location
-		return
+		return nil
 	}
 
 	IPGeoCacheClient.Add(e.IP)
@@ -45,17 +44,17 @@ func (el *ETLocation) Send(e *NetArg) {
 		// 保留地址不适合代理
 		e.Reply = "1;ZZ;ZZZ;Reserved"
 		IPGeoCacheClient.Update(e.IP, e.Reply)
-		return
+		return nil
 	}
 	err := el.checkLocationByRemote(e)
 	if err != nil {
 		// 解析失败，尝试直连
-		println("fail to resolv location by remote: ", err.Error())
 		e.Reply = "0;;;WRONG INPUT"
 		IPGeoCacheClient.Delete(e.IP)
-		return
+		return errors.New("ETLocation.Send -> " + err.Error())
 	}
 	IPGeoCacheClient.Update(e.IP, e.Reply)
+	return nil
 }
 
 func (el *ETLocation) checkLocationByRemote(e *NetArg) error {
@@ -63,28 +62,28 @@ func (el *ETLocation) checkLocationByRemote(e *NetArg) error {
 	defer tunnel.Close()
 	err := connect2Relayer(tunnel)
 	if err != nil {
-		return err
+		return errors.New("ETLocation.checkLocationByRemote -> " + err.Error())
 	}
 	req := FormatEtType(EtLOCATION) + " " + e.IP
 	var count int
 	count, err = tunnel.WriteRight([]byte(req))
 	if err != nil {
-		return err
+		return errors.New("ETLocation.checkLocationByRemote -> " + err.Error())
 	}
 	buffer := make([]byte, 1024)
 	count, err = tunnel.ReadRight(buffer)
 	if err != nil {
-		return err
+		return errors.New("ETLocation.checkLocationByRemote -> " + err.Error())
 	}
 	e.Reply = string(buffer[:count])
 	return nil
 }
 
 // Handle 处理ET-LOCATION请求
-func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) {
+func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) error {
 	reqs := strings.Split(req.RequestMsgStr, " ")
 	if len(reqs) < 2 {
-		return
+		return errors.New("ETLocation.Handle -> req is too short")
 	}
 
 	// read cache
@@ -93,10 +92,13 @@ func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) {
 		location, err := IPGeoCacheServer.Wait4Proxy(ip)
 		if err != nil {
 			tunnel.WriteLeft([]byte(err.Error()))
-		} else {
-			tunnel.WriteLeft([]byte(location))
+			return errors.New("ETLocation.Handle -> " + err.Error())
 		}
-		return
+		_, err = tunnel.WriteLeft([]byte(location))
+		if err != nil {
+			return errors.New("ETLocation.Handle -> " + err.Error())
+		}
+		return nil
 	}
 
 	IPGeoCacheServer.Add(ip)
@@ -104,14 +106,16 @@ func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) {
 	// check location
 	location, err := CheckLocationByWeb(ip)
 	if err != nil {
-		fmt.Println("fail to resolv location by web: " + err.Error())
 		IPGeoCacheServer.Delete(ip)
 		tunnel.WriteLeft([]byte(err.Error()))
-	} else {
-		IPGeoCacheServer.Update(ip, location)
-		tunnel.WriteLeft([]byte(location))
+		return errors.New("ETLocation.Handle -> " + err.Error())
 	}
-
+	IPGeoCacheServer.Update(ip, location)
+	_, err = tunnel.WriteLeft([]byte(location))
+	if err != nil {
+		return errors.New("ETLocation.Handle -> " + err.Error())
+	}
+	return nil
 }
 
 // CheckProxyByLocation 本地解析IP是否需要使用代理
@@ -131,7 +135,7 @@ func CheckLocationByWeb(ip string) (string, error) {
 	req := "https://ip2c.org/" + ip
 	res, err := http.Get(req)
 	if err != nil {
-		return "", err
+		return "", errors.New("CheckLocationByWeb -> " + err.Error())
 	}
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)

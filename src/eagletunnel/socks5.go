@@ -1,9 +1,19 @@
+/*
+ * @Description:
+ * @Author: EagleXiang
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2019-01-04 17:56:15
+ * @LastEditors: EagleXiang
+ * @LastEditTime: 2019-01-04 18:40:17
+ */
+
 package eagletunnel
 
 import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"../eaglelib/src"
@@ -22,75 +32,98 @@ type Socks5 struct {
 }
 
 // Handle 处理SOCKS5请求
-func (conn *Socks5) Handle(request Request, tunnel *eaglelib.Tunnel) bool {
+func (conn *Socks5) Handle(request Request, tunnel *eaglelib.Tunnel) error {
 	ipOfReq := strings.Split((*tunnel.Left).RemoteAddr().String(), ":")[0]
 	if !CheckPrivateIPv4(ipOfReq) {
 		// 不接受来自公网IP的SOCKS5请求
-		return false
+		return errors.New("Socks5.Handle -> invalid source IP type: public " + ipOfReq)
 	}
 
-	var result bool
 	version := request.requestMsg[0]
-	if version == '\u0005' {
-		reply := "\u0005\u0000"
-		count, _ := tunnel.WriteLeft([]byte(reply))
-		if count > 0 {
-			var buffer = make([]byte, 1024)
-			count, _ = tunnel.ReadLeft(buffer)
-			if count >= 2 {
-				cmdType := buffer[1]
-				switch cmdType {
-				case SOCKSCONNECT:
-					return conn.handleTCPReq(buffer[:count], tunnel)
-				default:
-				}
-			}
-		}
+	if version != '\u0005' {
+		return errors.New("Socks5.Handle -> invalid socks version")
 	}
-	return result
+	reply := "\u0005\u0000"
+	count, err := tunnel.WriteLeft([]byte(reply))
+	if err != nil {
+		return errors.New("Socks5.Handle -> " + err.Error())
+	}
+	var buffer = make([]byte, 1024)
+	count, err = tunnel.ReadLeft(buffer)
+	if err != nil {
+		return errors.New("Socks5.Handle -> " + err.Error())
+	}
+	if count < 2 {
+		req := string(buffer[:count])
+		return errors.New("Scosk5.Handle -> invalid socks 2nd req: " + req)
+	}
+	cmdType := buffer[1]
+	switch cmdType {
+	case SOCKSCONNECT:
+		err := conn.handleTCPReq(buffer[:count], tunnel)
+		if err != nil {
+			return errors.New("Socks5.Handle -> " + err.Error())
+		}
+		return nil
+	default:
+		return errors.New("Socks5.Handle -> invalid socks req type")
+	}
 }
 
-func (conn *Socks5) handleTCPReq(req []byte, tunnel *eaglelib.Tunnel) bool {
-	var result bool
-	ip := conn.getIP(req)
+func (conn *Socks5) handleTCPReq(req []byte, tunnel *eaglelib.Tunnel) error {
+	ip, err := conn.getIP(req)
+	if err != nil {
+		return errors.New("Socks5.handleTCPReq -> " + err.Error())
+	}
 	port := conn.getPort(req)
-	if ip != "" && port > 0 {
-		var reply string
-		var e = NetArg{
-			IP:      ip,
-			Port:    port,
-			tunnel:  tunnel,
-			TheType: EtTCP,
-		}
-		conn := EagleTunnel{}
-		if conn.Send(&e) {
-			reply = "\u0005\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000"
-			_, err := tunnel.WriteLeft([]byte(reply))
-			result = err == nil
-		} else {
-			reply = "\u0005\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000"
-			tunnel.WriteLeft([]byte(reply))
-		}
+	if port <= 0 {
+		return errors.New("Socks5.handleTCPReq -> invalid des: " +
+			ip + ":" + strconv.FormatInt(int64(port), 10))
 	}
-	return result
+	var e = NetArg{
+		IP:      ip,
+		Port:    port,
+		tunnel:  tunnel,
+		TheType: EtTCP,
+	}
+	newConn := EagleTunnel{}
+	err = newConn.Send(&e)
+	if err != nil {
+		reply := "\u0005\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000"
+		tunnel.WriteLeft([]byte(reply))
+		return errors.New("Socks5.handleTCPReq -> " + err.Error())
+	}
+	reply := "\u0005\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000"
+	_, err = tunnel.WriteLeft([]byte(reply))
+	if err != nil {
+		return errors.New("Socks5.handleTCPReq -> " + err.Error())
+	}
+	return nil
 }
 
-func (conn *Socks5) getIP(request []byte) string {
-	var ip string
+func (conn *Socks5) getIP(request []byte) (string, error) {
 	var destype = request[3]
 	switch destype {
 	case 1:
-		ip = fmt.Sprintf("%d.%d.%d.%d", request[4], request[5], request[6], request[7])
+		ip := fmt.Sprintf("%d.%d.%d.%d", request[4], request[5], request[6], request[7])
+		return ip, nil
 	case 3:
 		len := request[4]
 		domain := string(request[5 : 5+len])
 		newConn := EagleTunnel{}
-		e := NetArg{domain: domain, TheType: EtDNS}
-		if newConn.Send(&e) {
-			ip = e.IP
+		e := NetArg{
+			domain:  domain,
+			TheType: EtDNS,
 		}
+		err := newConn.Send(&e)
+		if err != nil {
+			return "", errors.New("Socks5.getIP -> " + err.Error())
+		}
+		return e.IP, nil
+	default:
+		return "", errors.New("Socks5.getIP -> invalid socks req des type: " +
+			strconv.FormatInt(int64(destype), 10))
 	}
-	return ip
 }
 
 func (conn *Socks5) getPort(request []byte) int {

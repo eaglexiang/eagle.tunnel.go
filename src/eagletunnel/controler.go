@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 17:54:05
+ * @LastEditTime: 2019-01-04 18:35:55
  */
 
 package eagletunnel
@@ -50,6 +50,7 @@ func InitConfig(filePath string) error {
 	addDefaultArg("proxy-status", "enable")
 	addDefaultArg("user", "root:root")
 	addDefaultArg("user-check", "off")
+	addDefaultArg("speed-check", "off")
 	addDefaultArg("listen", "0.0.0.0")
 	addDefaultArg("relayer", "127.0.0.1")
 	addDefaultArg("http", "off")

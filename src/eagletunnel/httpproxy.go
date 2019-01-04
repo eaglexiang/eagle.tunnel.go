@@ -1,6 +1,16 @@
+/*
+ * @Description:
+ * @Author: EagleXiang
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2019-01-04 14:30:39
+ * @LastEditors: EagleXiang
+ * @LastEditTime: 2019-01-04 18:40:37
+ */
+
 package eagletunnel
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -22,47 +32,58 @@ type HTTPProxy struct {
 }
 
 // Handle 处理HTTPProxy请求
-func (conn *HTTPProxy) Handle(request Request, tunnel *eaglelib.Tunnel) bool {
+func (conn *HTTPProxy) Handle(request Request, tunnel *eaglelib.Tunnel) error {
 	ipOfReq := strings.Split((*tunnel.Left).RemoteAddr().String(), ":")[0]
 	if !CheckPrivateIPv4(ipOfReq) {
 		// 不接受来自公网IP的HTTP代理请求
-		return false
+		return errors.New("invalid source ip type: public " + ipOfReq)
 	}
 
-	var result bool
 	reqStr := request.RequestMsgStr
-	reqType, host, port := dismantle(reqStr)
-	_port, err := strconv.Atoi(port)
-	if err == nil {
-		if reqType != HTTPERROR && host != "" && _port > 0 {
-			sender := EagleTunnel{}
-			e := NetArg{domain: host, Port: _port, tunnel: tunnel}
-			// get ip
-			ip := net.ParseIP(host)
-			if ip == nil {
-				e.TheType = EtDNS
-				sender.Send(&e)
-			} else {
-				e.IP = e.domain
-			}
-			// dail tcp
-			if reqType == HTTPCONNECT {
-				e.TheType = EtTCP
-				if ok := sender.Send(&e); ok {
-					re443 := "HTTP/1.1 200 Connection Established\r\n\r\n"
-					_, err = tunnel.WriteLeft([]byte(re443))
-				}
-			} else {
-				e.TheType = EtTCP
-				if ok := sender.Send(&e); ok {
-					newReq := createNewRequest(reqStr)
-					_, err = tunnel.WriteRight([]byte(newReq))
-				}
-			}
-			result = err == nil
-		}
+	reqType, host, _port := dismantle(reqStr)
+	port, err := strconv.Atoi(_port)
+	if err != nil {
+		return err
 	}
-	return result
+	if host == "" || port <= 0 {
+		return errors.New("invalid des: " + host + ":" + _port)
+	}
+	sender := EagleTunnel{}
+	e := NetArg{domain: host, Port: port, tunnel: tunnel}
+	// get ip
+	ip := net.ParseIP(host)
+	if ip == nil {
+		e.TheType = EtDNS
+		err = sender.Send(&e)
+		if err != nil {
+			return err
+		}
+	} else {
+		e.IP = e.domain
+	}
+	// dail tcp
+	switch reqType {
+	case HTTPCONNECT:
+		e.TheType = EtTCP
+		err = sender.Send(&e)
+		if err != nil {
+			return err
+		}
+		re443 := "HTTP/1.1 200 Connection Established\r\n\r\n"
+		_, err = tunnel.WriteLeft([]byte(re443))
+		return err
+	case HTTPOTHERS:
+		e.TheType = EtTCP
+		err = sender.Send(&e)
+		if err != nil {
+			return err
+		}
+		newReq := createNewRequest(reqStr)
+		_, err = tunnel.WriteRight([]byte(newReq))
+		return err
+	default:
+		return errors.New("invalid HTTP type: " + reqStr)
+	}
 }
 
 func dismantle(request string) (int, string, string) {
