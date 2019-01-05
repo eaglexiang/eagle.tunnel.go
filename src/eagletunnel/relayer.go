@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 19:34:05
+ * @LastEditTime: 2019-01-05 17:57:11
  */
 
 package eagletunnel
@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"sync"
 	"time"
 
 	"../eaglelib/src"
@@ -31,14 +30,6 @@ var LocalUser *EagleUser
 
 // Users 需要鉴权的下级用户
 var Users map[string]*EagleUser
-
-var tunnelPool sync.Pool // *Tunnel
-
-func init() {
-	tunnelPool.New = func() interface{} {
-		return eaglelib.CreateTunnel()
-	}
-}
 
 // Relayer 网络入口，负责流量分发
 type Relayer struct {
@@ -88,8 +79,7 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 		return
 	}
 	request := Request{requestMsg: buffer[:count]}
-	tunnel := tunnelPool.Get().(*eaglelib.Tunnel)
-	tunnel.Clear()
+	tunnel := eaglelib.CreateTunnel()
 	tunnel.Left = &conn
 	var handler Handler
 	switch request.getType() {
@@ -110,7 +100,6 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 	}
 	if handler == nil {
 		tunnel.Close()
-		tunnelPool.Put(tunnel)
 		return
 	}
 	err = handler.Handle(request, tunnel)
@@ -121,7 +110,6 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 				fmt.Println(err.Error())
 			}
 		}
-		tunnelPool.Put(tunnel)
 		return
 	}
 	tunnel.Flow()
