@@ -4,24 +4,27 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-10-08 10:51:05
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-06 16:21:19
+ * @LastEditTime: 2019-01-06 19:25:11
  */
 
 package eagletunnel
 
 import (
 	"errors"
+	"go.uber.org/ratelimit"
 	"strconv"
 	"strings"
+
+	"../eaglelib/src"
 )
 
 // EagleUser 提供基本和轻量的账户系统
 // 必须使用 ParseEagleUser 函数进行构造
 type EagleUser struct {
-	ID         string
-	Password   string
-	loginlog   *LoginStatus
-	speedLimit uint64 // KB/s
+	ID           string
+	Password     string
+	loginlog     *LoginStatus
+	speedLimiter *ratelimit.Limiter
 }
 
 // 账户类型，PrivateUser的同时登录有限制，而SharedUser则没有
@@ -51,10 +54,13 @@ func ParseEagleUser(userStr string) (*EagleUser, error) {
 	}
 	// 设置限速
 	if items[2] != "" {
-		var err error
-		user.speedLimit, err = strconv.ParseUint(items[2], 10, 64)
+		speedLimit, err := strconv.ParseInt(items[2], 10, 64)
 		if err != nil {
 			return nil, errors.New("when parse EagleUser: " + err.Error())
+		}
+		if speedLimit > 0 {
+			limiter := ratelimit.New(int(speedLimit) * 1024 / eaglelib.TunnelBufferSize)
+			user.speedLimiter = &limiter
 		}
 	}
 	if len(items) < 4 {
@@ -90,4 +96,9 @@ func (user *EagleUser) CheckAuth(user2Check *ReqUser) error {
 		}
 	}
 	return nil
+}
+
+// SpeedLimiter 该用户的速度控制器
+func (user *EagleUser) SpeedLimiter() *ratelimit.Limiter {
+	return user.speedLimiter
 }

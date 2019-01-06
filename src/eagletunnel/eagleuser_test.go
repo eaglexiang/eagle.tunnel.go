@@ -1,3 +1,12 @@
+/*
+ * @Description:
+ * @Author: EagleXiang
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2019-01-06 18:13:57
+ * @LastEditors: EagleXiang
+ * @LastEditTime: 2019-01-06 19:08:27
+ */
+
 package eagletunnel
 
 import (
@@ -22,7 +31,7 @@ func Test_EagleUser_Parse(t *testing.T) {
 	compareEagleUser(t, "ABC:P1::haha", errors.New("unknown user type"), "", "", 0, 0)
 }
 
-func compareEagleUser(t *testing.T, input string, theErr error, id string, password string, speedlimit uint64, theType int) {
+func compareEagleUser(t *testing.T, input string, theErr error, id string, password string, speedlimit int, theType int) {
 	t.Log("开始检查：", input)
 	user, err := ParseEagleUser(input)
 	if err == nil {
@@ -34,9 +43,6 @@ func compareEagleUser(t *testing.T, input string, theErr error, id string, passw
 			}
 			if user.Password != password {
 				t.Error("密码为", password)
-			}
-			if user.speedLimit != speedlimit {
-				t.Error("限速不匹配")
 			}
 			output := user.toString()
 			if output != id+":"+password {

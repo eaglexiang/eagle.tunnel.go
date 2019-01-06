@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-06 17:39:38
+ * @LastEditTime: 2019-01-06 19:07:58
  */
 
 package eagletunnel
@@ -223,6 +223,7 @@ func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
 	if reply != "valid" {
 		return errors.New("checkUserOfLocal -> " + reply)
 	}
+	tunnel.SpeedLimiter = LocalUser.SpeedLimiter()
 	return nil
 }
 
@@ -271,6 +272,7 @@ func checkUserOfReq(tunnel *eaglelib.Tunnel) error {
 		// 发送响应失败
 		return errors.New("checkUserOfReq -> wrong reply")
 	}
+	tunnel.SpeedLimiter = validUser.SpeedLimiter()
 	return nil
 }
 

@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-06 17:06:57
+ * @LastEditTime: 2019-01-06 19:08:15
  */
 
 package eagletunnel
@@ -93,6 +93,7 @@ func (et *ETTCP) sendTCPReq2Server(e *NetArg) error {
 	e.tunnel.Right = &conn
 	e.tunnel.EncryptRight = nil
 	e.tunnel.DecryptRight = nil
+	e.tunnel.SpeedLimiter = LocalUser.SpeedLimiter()
 	return nil
 }
 
