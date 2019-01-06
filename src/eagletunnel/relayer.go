@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-05 17:57:11
+ * @LastEditTime: 2019-01-06 17:21:54
  */
 
 package eagletunnel
@@ -53,8 +53,6 @@ func (relayer *Relayer) Start() error {
 	}
 	fmt.Println("start to listen: ", ipe)
 
-	go relayer.checkSpeedOfUsers()
-
 	relayer.listen()
 	return nil
 }
@@ -68,6 +66,7 @@ func (relayer *Relayer) listen() {
 		} else {
 			go relayer.handleClient(conn)
 		}
+		time.Sleep(time.Millisecond)
 	}
 	fmt.Println("quit")
 }
@@ -113,26 +112,6 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 		return
 	}
 	tunnel.Flow()
-}
-
-// checkSpeedOfUsers 轮询所有用户的速度，并根据配置选择是否进行限速
-func (relayer *Relayer) checkSpeedOfUsers() {
-	v := ConfigKeyValues["speed-check"]
-	if v != "on" {
-		return
-	}
-
-	for relayer.running {
-		for _, user := range Users {
-			user.CheckSpeed()
-			user.LimitSpeed()
-		}
-
-		LocalUser.CheckSpeed()
-		LocalUser.LimitSpeed()
-
-		time.Sleep(time.Second)
-	}
 }
 
 // Close 关闭服务

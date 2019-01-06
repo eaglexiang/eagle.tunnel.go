@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 17:04:54
+ * @LastEditTime: 2019-01-06 17:06:57
  */
 
 package eagletunnel
@@ -91,7 +91,8 @@ func (et *ETTCP) sendTCPReq2Server(e *NetArg) error {
 		return errors.New("ETTCP.sendTCPReq2Server -> " + err.Error())
 	}
 	e.tunnel.Right = &conn
-	e.tunnel.EncryptRight = false
+	e.tunnel.EncryptRight = nil
+	e.tunnel.DecryptRight = nil
 	return nil
 }
 

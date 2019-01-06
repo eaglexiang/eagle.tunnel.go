@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 18:34:40
+ * @LastEditTime: 2019-01-06 16:24:40
  */
 
 package eagletunnel
@@ -23,7 +23,6 @@ const (
 	EtCheckAuth
 	EtCheckPING
 	EtCheckVERSION
-	EtCheckSPEED
 )
 
 // ETCheck ET-Check协议的实现
@@ -39,8 +38,6 @@ func ParseEtCheckType(src string) int {
 		return EtCheckPING
 	case "VERSION", "version":
 		return EtCheckVERSION
-	case "SPEED", "speed":
-		return EtCheckSPEED
 	default:
 		return EtCheckUNKNOWN
 	}
@@ -55,8 +52,6 @@ func formatEtCheckType(src int) string {
 		return "PING"
 	case EtCheckVERSION:
 		return "VERSION"
-	case EtCheckSPEED:
-		return "SPEED"
 	default:
 		return "UNKNOWN"
 	}
@@ -75,8 +70,6 @@ func (ec *ETCheck) Handle(req Request, tunnel *eaglelib.Tunnel) {
 		handleEtCheckPingReq(tunnel)
 	case EtCheckVERSION:
 		handleEtCheckVersionReq(tunnel, reqs)
-	case EtCheckSPEED:
-		handleEtCheckSpeedReq(tunnel)
 	default:
 	}
 }
@@ -191,41 +184,4 @@ func handleEtCheckVersionReq(tunnel *eaglelib.Tunnel, reqs []string) {
 	}
 	reply := "Protocol Version OK"
 	tunnel.WriteLeft([]byte(reply))
-}
-
-func handleEtCheckSpeedReq(tunnel *eaglelib.Tunnel) {
-	v := ConfigKeyValues["speed-check"]
-	if v != "on" {
-		reply := "speed-check " + v
-		tunnel.WriteLeft([]byte(reply))
-		return
-	}
-	speed := LocalUser.speed
-	reply := strconv.FormatUint(speed, 10)
-	tunnel.WriteLeft([]byte(reply))
-}
-
-// SendEtCheckSpeedReq 发射 ET-CHECK-SPEED 指令
-func SendEtCheckSpeedReq() string {
-	// 连接
-	tunnel := eaglelib.CreateTunnel()
-	defer tunnel.Close()
-	err := connect2Relayer(tunnel)
-	if err != nil {
-		return err.Error()
-	}
-	// 发送SPEED请求
-	req := FormatEtType(EtCHECK) + " " + formatEtCheckType(EtCheckSPEED)
-	_, err = tunnel.WriteRight([]byte(req))
-	if err != nil {
-		return err.Error()
-	}
-	// 接受反馈
-	buffer := make([]byte, 64)
-	count, err := tunnel.ReadRight(buffer)
-	if err != nil {
-		return err.Error()
-	}
-	reply := string(buffer[:count])
-	return reply
 }

@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 23:25:57
+ * @LastEditTime: 2019-01-06 16:27:15
  */
 
 package cmd
@@ -31,8 +31,6 @@ func Check(args []string) {
 		auth()
 	case eagletunnel.EtCheckVERSION:
 		version()
-	case eagletunnel.EtCheckSPEED:
-		speed()
 	default:
 		fmt.Println("invalid check command")
 	}
@@ -70,25 +68,4 @@ func auth() {
 func version() {
 	reply := eagletunnel.SendEtCheckVersionReq()
 	fmt.Println(reply)
-}
-
-func speed() {
-	reply := eagletunnel.SendEtCheckSpeedReq()
-	speed, err := strconv.ParseUint(reply, 10, 64)
-	if err != nil {
-		fmt.Println(reply)
-		return
-	}
-	if speed < 1024 {
-		fmt.Println(speed, "Byte/s")
-		return
-	}
-	speed /= 1024
-	if speed < 1024 {
-		fmt.Println(speed, "KB/s")
-		return
-	}
-	speed /= 1024
-	fmt.Println(speed, "MB/s")
-	return
 }

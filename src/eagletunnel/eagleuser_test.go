@@ -35,16 +35,6 @@ func compareEagleUser(t *testing.T, input string, theErr error, id string, passw
 			if user.Password != password {
 				t.Error("密码为", password)
 			}
-			if user.pause == nil {
-				t.Error("pause为nil")
-			} else {
-				if *user.pause == true {
-					t.Error("pause被初始化为true")
-				}
-			}
-			if user.speed != 0 {
-				t.Error("速度应该被初始化为0")
-			}
 			if user.speedLimit != speedlimit {
 				t.Error("限速不匹配")
 			}

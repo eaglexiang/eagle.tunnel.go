@@ -4,34 +4,24 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-10-08 10:51:05
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 17:14:57
+ * @LastEditTime: 2019-01-06 16:21:19
  */
 
 package eagletunnel
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
-	"time"
-
-	"../eaglelib/src"
 )
 
 // EagleUser 提供基本和轻量的账户系统
 // 必须使用 ParseEagleUser 函数进行构造
 type EagleUser struct {
-	ID                string
-	Password          string
-	loginlog          *LoginStatus
-	tunnels           *eaglelib.SyncList
-	pause             *bool
-	bytes             eaglelib.AsyncCounter // Byte
-	speed             uint64                // Byte/s
-	speedLimit        uint64                // KB/s
-	checkSpeedFrom    time.Time             // 从这个时间开始阻塞
-	currentCheckSpeed time.Time             // 上次检查速度的时间
+	ID         string
+	Password   string
+	loginlog   *LoginStatus
+	speedLimit uint64 // KB/s
 }
 
 // 账户类型，PrivateUser的同时登录有限制，而SharedUser则没有
@@ -55,11 +45,7 @@ func ParseEagleUser(userStr string) (*EagleUser, error) {
 	user := EagleUser{
 		ID:       items[0],
 		Password: items[1],
-		tunnels:  eaglelib.CreateSyncList(),
-		bytes:    eaglelib.CreateAsyncCounter(),
 	}
-	var pause bool
-	user.pause = &pause
 	if len(items) < 3 {
 		return &user, nil
 	}
@@ -104,72 +90,4 @@ func (user *EagleUser) CheckAuth(user2Check *ReqUser) error {
 		}
 	}
 	return nil
-}
-
-func (user *EagleUser) totalBytes() uint64 {
-	var totalBytes uint64
-
-	// 统计所有Tunnel的总Bytes
-	for e := user.tunnels.Front(); e != nil; e = e.Next() {
-		tunnel, ok := e.Value.(*eaglelib.Tunnel)
-		if !ok {
-			fmt.Println("error: invalid object found in EagleUser.tunnels!")
-			continue
-		}
-		bytesNew := tunnel.BytesFlowed()
-		totalBytes += bytesNew
-		if tunnel.Closed() {
-			user.tunnels.Remove(e)
-			continue
-		}
-	}
-
-	if totalBytes < 0 {
-		totalBytes = 0
-	}
-	return totalBytes
-}
-
-func (user *EagleUser) addTunnel(tunnel *eaglelib.Tunnel) {
-	tunnel.Pause = user.pause
-	user.tunnels.Push(tunnel)
-}
-
-// CheckSpeed 该User当前的速率（Byte/s）
-func (user *EagleUser) CheckSpeed() {
-	user.currentCheckSpeed = time.Now()
-	duration := user.currentCheckSpeed.Sub(user.checkSpeedFrom)
-	seconds := uint64(duration.Seconds())
-	user.bytes.Add(user.totalBytes())
-	if seconds > 0 {
-		user.speed = user.bytes.Value() / seconds
-	}
-}
-
-// ByteSpeed 获取User当前的速率（Byte/s）
-func (user *EagleUser) ByteSpeed() uint64 {
-	return user.speed
-}
-
-// KBSpeed 获取User当前的速率（KB/s）
-func (user *EagleUser) KBSpeed() uint64 {
-	return user.speed / 1024
-}
-
-// LimitSpeed 限速
-func (user *EagleUser) LimitSpeed() {
-	if user.speedLimit == 0 {
-		// 0表示不限速
-		*user.pause = false
-		user.checkSpeedFrom = user.currentCheckSpeed
-		user.bytes.Set(0)
-		return
-	}
-	if user.KBSpeed() > user.speedLimit {
-		*user.pause = true
-	} else {
-		*user.pause = false
-		user.checkSpeedFrom = user.currentCheckSpeed
-		user.bytes.Set(0)
-	}
 }

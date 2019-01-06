@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-05 22:52:52
+ * @LastEditTime: 2019-01-06 17:39:38
  */
 
 package eagletunnel
@@ -48,8 +48,12 @@ type EagleTunnel struct {
 // Handle 处理ET请求
 func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (err error) {
 	args := strings.Split(request.RequestMsgStr, " ")
-	_, cipherType := et.checkHeaderOfReq(args, tunnel)
+	err = checkHeaderOfReq(args, tunnel)
+	if err != nil {
+		return errors.New("EagleTunnel.Handle -> " + err.Error())
+	}
 	var c Cipher
+	cipherType := ParseCipherType(ConfigKeyValues["cipher"])
 	switch cipherType {
 	case SimpleCipherType:
 		c = new(SimpleCipher)
@@ -57,9 +61,8 @@ func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (err err
 	default:
 		return errors.New("EagleTunnel.Handle -> invalid cipher type")
 	}
-	tunnel.Encrypt = c.Encrypt
-	tunnel.Decrypt = c.Decrypt
-	tunnel.EncryptLeft = true
+	tunnel.EncryptLeft = c.Encrypt
+	tunnel.DecryptLeft = c.Decrypt
 	err = checkUserOfReq(tunnel)
 	if err != nil {
 		return errors.New("EagleTunnel.Handle -> " + err.Error())
@@ -156,19 +159,17 @@ func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 	default:
 		return errors.New("connect2Relayer -> unknown cipher type")
 	}
-	tunnel.Encrypt = c.Encrypt
-	tunnel.Decrypt = c.Decrypt
-	tunnel.EncryptRight = true
+	tunnel.EncryptRight = c.Encrypt
+	tunnel.DecryptRight = c.Decrypt
 	err = checkUserOfLocal(tunnel)
 	if err != nil {
 		return errors.New("connect2Relayer -> " + err.Error())
 	}
-	LocalUser.addTunnel(tunnel)
 	return nil
 }
 
 func checkVersionOfRelayer(tunnel *eaglelib.Tunnel) error {
-	req := ConfigKeyValues["head"] + " " + ProtocolVersion.Raw + " simple"
+	req := ConfigKeyValues["head"]
 	count, err := tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return errors.New("checkVersionOfRelayer -> " + err.Error())
@@ -185,22 +186,21 @@ func checkVersionOfRelayer(tunnel *eaglelib.Tunnel) error {
 	return nil
 }
 
-func (et *EagleTunnel) checkHeaderOfReq(
+func checkHeaderOfReq(
 	headers []string,
-	tunnel *eaglelib.Tunnel) (isValid bool, cipherType int) {
-	if len(headers) < 3 {
-		return false, UnknownCipherType
+	tunnel *eaglelib.Tunnel) error {
+	if len(headers) < 1 {
+		return errors.New("checkHeaderOfReq -> nil req")
 	}
 	if headers[0] != ConfigKeyValues["head"] {
-		return false, UnknownCipherType
-	}
-	theType := ParseCipherType(headers[2])
-	if theType == UnknownCipherType {
-		return false, UnknownCipherType
+		return errors.New("checkHeaderOfReq -> wrong head: " + headers[0])
 	}
 	reply := "valid valid valid"
 	count, _ := tunnel.WriteLeft([]byte(reply))
-	return count == 17, theType // length of "valid valid valid"
+	if count != 17 {
+		return errors.New("checkHeaderOfReq -> fail to reply")
+	}
+	return nil
 }
 
 func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
@@ -271,7 +271,6 @@ func checkUserOfReq(tunnel *eaglelib.Tunnel) error {
 		// 发送响应失败
 		return errors.New("checkUserOfReq -> wrong reply")
 	}
-	validUser.addTunnel(tunnel)
 	return nil
 }
 

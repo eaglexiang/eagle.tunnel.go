@@ -19,22 +19,17 @@ type Request struct {
 }
 
 func (request *Request) getType() int {
-	var result int
 	if request.requestMsg[0] == 5 {
-		result = SOCKSReq
-	} else {
-		request.RequestMsgStr = string(request.requestMsg[:])
-		args := strings.Split(request.RequestMsgStr, " ")
-		if len(args) >= 2 {
-			switch args[0] {
-			case "OPTIONS", "HEAD", "GET", "POST", "PUT", "DELETE", "TRACE", "CONNECT":
-				result = HTTPProxyReq
-			case ConfigKeyValues["head"]:
-				result = EagleTunnelReq
-			default:
-				result = UnknownReq
-			}
-		}
+		return SOCKSReq
 	}
-	return result
+	request.RequestMsgStr = string(request.requestMsg[:])
+	args := strings.Split(request.RequestMsgStr, " ")
+	switch args[0] {
+	case "OPTIONS", "HEAD", "GET", "POST", "PUT", "DELETE", "TRACE", "CONNECT":
+		return HTTPProxyReq
+	case ConfigKeyValues["head"]:
+		return EagleTunnelReq
+	default:
+		return UnknownReq
+	}
 }
