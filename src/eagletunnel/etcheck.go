@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-06 16:24:40
+ * @LastEditTime: 2019-01-07 21:14:00
  */
 
 package eagletunnel
@@ -77,8 +77,8 @@ func (ec *ETCheck) Handle(req Request, tunnel *eaglelib.Tunnel) {
 // SendEtCheckAuthReq 发射 ET-CHECK-AUTH 请求
 func SendEtCheckAuthReq() string {
 	// 当connect2Relayer成功，则说明鉴权成功
-	tunnel := eaglelib.CreateTunnel()
-	defer tunnel.Close()
+	tunnel := eaglelib.GetTunnel()
+	defer eaglelib.PutTunnel(tunnel)
 	err := connect2Relayer(tunnel)
 	if err != nil {
 		return err.Error()
@@ -92,8 +92,8 @@ func SendEtCheckAuthReq() string {
 
 // SendEtCheckVersionReq 发射 ET-CHECK-VERSION 请求
 func SendEtCheckVersionReq() string {
-	tunnel := eaglelib.CreateTunnel()
-	defer tunnel.Close()
+	tunnel := eaglelib.GetTunnel()
+	defer eaglelib.PutTunnel(tunnel)
 	err := connect2Relayer(tunnel)
 	if err != nil {
 		return err.Error()
@@ -124,8 +124,8 @@ func SendEtCheckPingReq(sig chan string) {
 	start := time.Now() // 开始计时
 
 	// 连接服务器
-	tunnel := eaglelib.CreateTunnel()
-	defer tunnel.Close()
+	tunnel := eaglelib.GetTunnel()
+	defer eaglelib.PutTunnel(tunnel)
 	err := connect2Relayer(tunnel)
 	if err != nil {
 		sig <- err.Error()

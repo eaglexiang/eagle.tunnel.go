@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 16:51:05
+ * @LastEditTime: 2019-01-07 21:14:24
  */
 
 package eagletunnel
@@ -58,8 +58,8 @@ func (el *ETLocation) Send(e *NetArg) error {
 }
 
 func (el *ETLocation) checkLocationByRemote(e *NetArg) error {
-	tunnel := eaglelib.CreateTunnel()
-	defer tunnel.Close()
+	tunnel := eaglelib.GetTunnel()
+	defer eaglelib.PutTunnel(tunnel)
 	err := connect2Relayer(tunnel)
 	if err != nil {
 		return errors.New("ETLocation.checkLocationByRemote -> " + err.Error())

@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 16:56:01
+ * @LastEditTime: 2019-01-07 21:14:15
  */
 
 package eagletunnel
@@ -97,8 +97,8 @@ func resolvDNSByProxy(e *NetArg) error {
 }
 
 func _resolvDNSByProxy(e *NetArg) error {
-	tunnel := eaglelib.CreateTunnel()
-	defer tunnel.Close()
+	tunnel := eaglelib.GetTunnel()
+	defer eaglelib.PutTunnel(tunnel)
 	err := connect2Relayer(tunnel)
 	if err != nil {
 		return errors.New("_resolvDNSByProxy -> " + err.Error())

@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-06 17:21:54
+ * @LastEditTime: 2019-01-07 21:14:47
  */
 
 package eagletunnel
@@ -78,7 +78,8 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 		return
 	}
 	request := Request{requestMsg: buffer[:count]}
-	tunnel := eaglelib.CreateTunnel()
+	tunnel := eaglelib.GetTunnel()
+	defer eaglelib.PutTunnel(tunnel)
 	tunnel.Left = &conn
 	var handler Handler
 	switch request.getType() {
@@ -98,12 +99,10 @@ func (relayer *Relayer) handleClient(conn net.Conn) {
 		handler = nil
 	}
 	if handler == nil {
-		tunnel.Close()
 		return
 	}
 	err = handler.Handle(request, tunnel)
 	if err != nil {
-		tunnel.Close()
 		if err.Error() != "no need to continue" {
 			if ConfigKeyValues["debug"] == "on" {
 				fmt.Println(err.Error())
