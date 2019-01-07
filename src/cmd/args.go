@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-06 20:06:31
+ * @LastEditTime: 2019-01-07 23:42:33
  */
 
 package cmd
@@ -47,7 +47,7 @@ func ImportArgs(argStrs []string) error {
 			return errors.New("no need to continue")
 		default:
 			var err error
-			err = setKeyValue(argStrs, i)
+			skip, err = importArg(argStrs, i)
 			if err != nil {
 				return err
 			}
@@ -120,5 +120,27 @@ func toLongArg(shortArg string) string {
 		return "--config"
 	default:
 		return shortArg
+	}
+}
+
+// importArg skip表示下个参数是否跳过
+func importArg(argStrs []string, indexOfArg int) (skip bool, err error) {
+	switch argStrs[indexOfArg] {
+	case "--listen",
+		"--relayer",
+		"--proxy-status",
+		"--user",
+		"--http",
+		"--socks",
+		"--et",
+		"--data-key",
+		"--head",
+		"--config-dir",
+		"--user-check",
+		"--speed-check",
+		"--debug":
+		return true, setKeyValue(argStrs, indexOfArg)
+	default:
+		return false, errors.New("invalid arg: " + argStrs[indexOfArg])
 	}
 }
