@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-07 21:14:15
+ * @LastEditTime: 2019-01-08 01:17:46
  */
 
 package eagletunnel
@@ -210,9 +210,14 @@ func _resolvDNSByLocalServer(e *NetArg) error {
 	} else if ConfigKeyValues["ip-type"] == "6" {
 		firstIPResolver = ResolvIPv6ByLocal
 		secondIPResolver = ResolvIPv6ByLocal
-	} else {
+	} else if ConfigKeyValues["ip-type"] == "46" {
 		firstIPResolver = ResolvIPv4ByLocal
 		secondIPResolver = ResolvIPv6ByLocal
+	} else if ConfigKeyValues["ip-type"] == "64" {
+		firstIPResolver = ResolvIPv6ByLocal
+		secondIPResolver = ResolvIPv4ByLocal
+	} else {
+		panic("invalid ip-type: " + ConfigKeyValues["ip-type"])
 	}
 
 	err := firstIPResolver(e)
