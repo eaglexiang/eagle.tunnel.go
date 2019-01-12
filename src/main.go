@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 06:08:38
+ * @LastEditTime: 2019-01-13 07:05:57
  */
 
 package main
@@ -13,13 +13,12 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"time"
 
 	"./cmd"
 	"./eagletunnel"
 )
 
-var relayer = eagletunnel.Relayer{}
+var service = eagletunnel.Service{}
 
 func main() {
 	args := os.Args
@@ -41,6 +40,7 @@ func main() {
 		}
 		fmt.Println(eagletunnel.SprintConfig())
 		go core()
+		fmt.Println("press Ctrl + C to quit")
 	}
 
 	checkSig()
@@ -51,8 +51,7 @@ func checkSig() {
 	signal.Notify(c, os.Interrupt)
 	<-c
 	fmt.Println("stoping...")
-	relayer.Close()
-	time.Sleep(time.Second)
+	service.Close()
 }
 
 // Init 初始化参数系统
@@ -62,7 +61,7 @@ func Init(args []string) error {
 }
 
 func core() {
-	err := relayer.Start()
+	err := service.Start()
 	if err != nil {
 		fmt.Println("error: ", err)
 	}
