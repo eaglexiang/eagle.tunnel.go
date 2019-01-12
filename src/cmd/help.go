@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 06:14:23
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-02 12:42:55
+ * @LastEditTime: 2019-01-13 06:11:56
  */
 
 package cmd
@@ -16,7 +16,7 @@ import (
 // PrintHelpMain 打印帮助信息主页
 func PrintHelpMain() {
 	text :=
-		`Usage: et [options...] <config file>
+		`Usage: et [options...]
 		-h	--help
 		-v	--version
 		-l	--listen		127.0.0.1:8080

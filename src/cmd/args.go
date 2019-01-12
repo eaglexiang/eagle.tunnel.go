@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 05:58:24
+ * @LastEditTime: 2019-01-13 06:11:10
  */
 
 package cmd
@@ -24,6 +24,7 @@ func ImportArgs(argStrs []string) error {
 			continue
 		}
 
+		argStrs[i] = toLongArg(argStrs[i])
 		switch argStrs[i] {
 		case "--help":
 			PrintHelpMain()
@@ -80,7 +81,6 @@ func toArgName(argStr string) (string, error) {
 
 func importArg(argStrs []string, indexOfArg int) (err error) {
 	key := argStrs[indexOfArg]
-	key = toLongArg(key)
 	key, err = toArgName(key)
 	if err != nil {
 		return errors.New("importArg -> " + err.Error())
