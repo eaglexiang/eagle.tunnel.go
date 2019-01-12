@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-07 21:14:00
+ * @LastEditTime: 2019-01-13 05:29:17
  */
 
 package eagletunnel
@@ -84,7 +84,7 @@ func SendEtCheckAuthReq() string {
 		return err.Error()
 	}
 
-	if LocalUser.ID == "root" {
+	if LocalUser.ID == "null" {
 		return "no local user"
 	}
 	return "AUTH OK with local user: " + LocalUser.ID

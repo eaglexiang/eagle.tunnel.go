@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-07 23:42:33
+ * @LastEditTime: 2019-01-13 05:27:30
  */
 
 package cmd
@@ -59,12 +59,12 @@ func ImportArgs(argStrs []string) error {
 		if err != nil {
 			return err
 		}
-		err = eagletunnel.InitConfig(argStrs[indexOfConfig+1])
+		err = eagletunnel.ReadConfig(argStrs[indexOfConfig+1])
 		if err != nil {
 			return err
 		}
 	} else {
-		eagletunnel.InitConfig("")
+		eagletunnel.ReadConfig("")
 	}
 
 	err := eagletunnel.ExecConfig()
@@ -137,7 +137,6 @@ func importArg(argStrs []string, indexOfArg int) (skip bool, err error) {
 		"--head",
 		"--config-dir",
 		"--user-check",
-		"--speed-check",
 		"--debug":
 		return true, setKeyValue(argStrs, indexOfArg)
 	default:

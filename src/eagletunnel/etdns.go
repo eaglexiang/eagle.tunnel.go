@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-08 01:17:46
+ * @LastEditTime: 2019-01-13 04:42:38
  */
 
 package eagletunnel
@@ -97,28 +97,32 @@ func resolvDNSByProxy(e *NetArg) error {
 }
 
 func _resolvDNSByProxy(e *NetArg) error {
+	// connect 2 relayer
 	tunnel := eaglelib.GetTunnel()
 	defer eaglelib.PutTunnel(tunnel)
 	err := connect2Relayer(tunnel)
 	if err != nil {
 		return errors.New("_resolvDNSByProxy -> " + err.Error())
 	}
+	// send req
 	req := FormatEtType(EtDNS) + " " + e.domain
 	count, err := tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return errors.New("_resolvDNSByProxy -> " + err.Error())
 	}
+	// get reply
 	buffer := make([]byte, 1024)
 	count, err = tunnel.ReadRight(buffer)
 	if err != nil {
 		return errors.New("_resolvDNSByProxy -> " + err.Error())
 	}
-	_ip := string(buffer[:count])
-	ip := net.ParseIP(_ip)
+	reply := string(buffer[:count])
+	ip := net.ParseIP(reply)
 	if ip == nil {
-		return errors.New("_resolvDNSByProxy -> failed to resolv by remote: " + _ip)
+		return errors.New("_resolvDNSByProxy -> failed to resolv by remote: " +
+			e.domain + " -> " + reply)
 	}
-	e.IP = _ip
+	e.IP = reply
 	return nil
 }
 
@@ -162,7 +166,7 @@ func _resolvDNSByLocalClient(e *NetArg) error {
 
 	// 本地解析失败应该让用户察觉，手动添加DNS白名单
 	if err != nil {
-		return errors.New("_resolvDNSByLocalClient -> fail to resolv DNS by local")
+		return errors.New("_resolvDNSByLocalClient -> fail to resolv DNS by local: " + e.domain)
 	}
 
 	// 判断IP所在位置是否适合代理

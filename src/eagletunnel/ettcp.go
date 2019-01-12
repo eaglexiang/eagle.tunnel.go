@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-06 19:08:15
+ * @LastEditTime: 2019-01-13 05:16:14
  */
 
 package eagletunnel
@@ -86,7 +86,7 @@ func (et *ETTCP) sendTCPReq2Server(e *NetArg) error {
 	} else {
 		ipe = "[" + e.IP + "]:" + strconv.Itoa(e.Port) // [ipv6]:port
 	}
-	conn, err := net.DialTimeout("tcp", ipe, 5*time.Second)
+	conn, err := net.DialTimeout("tcp", ipe, time.Second*time.Duration(Timeout))
 	if err != nil {
 		return errors.New("ETTCP.sendTCPReq2Server -> " + err.Error())
 	}

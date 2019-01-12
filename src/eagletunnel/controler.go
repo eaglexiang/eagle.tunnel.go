@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-06 16:58:05
+ * @LastEditTime: 2019-01-13 05:37:16
  */
 
 package eagletunnel
@@ -15,6 +15,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -39,30 +40,33 @@ var EnableET bool
 // ProxyStatus 代理的状态（全局/智能）
 var ProxyStatus int
 
-// InitConfig 根据给定的配置文件初始化参数
-func InitConfig(filePath string) error {
-	// 设定默认值
+// Timeout 超时时间（s）
+var Timeout int
+
+func init() {
+	// 设定参数默认值
+	ConfigKeyValues["timeout"] = "0"
+	ConfigKeyValues["location"] = "1;CN;CHN;China"
+	ConfigKeyValues["ip-type"] = "46"
+	ConfigKeyValues["data-key"] = "34"
+	ConfigKeyValues["head"] = "eagle_tunnel"
+	ConfigKeyValues["proxy-status"] = "enable"
+	ConfigKeyValues["user"] = "null:null"
+	ConfigKeyValues["user-check"] = "off"
+	ConfigKeyValues["listen"] = "0.0.0.0"
+	ConfigKeyValues["relayer"] = "127.0.0.1"
+	ConfigKeyValues["http"] = "off"
+	ConfigKeyValues["socks"] = "off"
+	ConfigKeyValues["et"] = "off"
+	ConfigKeyValues["debug"] = "off"
+	ConfigKeyValues["cipher"] = "simple"
+}
+
+// ReadConfig 读取根据给定的配置文件
+func ReadConfig(filePath string) error {
 	ConfigPath = filePath
-	addDefaultArg("location", "1;CN;CHN;China")
-	addDefaultArg("ip-type", "4")
-	addDefaultArg("data-key", "34")
-	addDefaultArg("head", "eagle_tunnel")
-	addDefaultArg("proxy-status", "enable")
-	addDefaultArg("user", "root:root")
-	addDefaultArg("user-check", "off")
-	addDefaultArg("speed-check", "off")
-	addDefaultArg("listen", "0.0.0.0")
-	addDefaultArg("relayer", "127.0.0.1")
-	addDefaultArg("http", "off")
-	addDefaultArg("socks", "off")
-	addDefaultArg("et", "off")
-	addDefaultArg("debug", "off")
-	addDefaultArg("cipher", "simple")
 	if ConfigPath != "" {
 		addDefaultArg("config-dir", filepath.Dir(ConfigPath))
-	}
-
-	if ConfigPath != "" {
 		// 读取配置文件
 		allConfLines, err := readLines(ConfigPath)
 		if err != nil {
@@ -73,7 +77,6 @@ func InitConfig(filePath string) error {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -85,6 +88,7 @@ func addDefaultArg(key, value string) {
 
 // ExecConfig 执行配置
 func ExecConfig() error {
+	// 读取用户列表
 	EnableUserCheck = ConfigKeyValues["user-check"] == "on"
 
 	if EnableUserCheck {
@@ -95,7 +99,7 @@ func ExecConfig() error {
 		}
 	}
 
-	err := SetUser(ConfigKeyValues["user"], "")
+	err := SetUser(ConfigKeyValues["user"])
 	if err != nil {
 		return err
 	}
@@ -129,11 +133,17 @@ func ExecConfig() error {
 		return err
 	}
 
+	timeout, err := strconv.ParseInt(ConfigKeyValues["timeout"], 10, 32)
+	if err != nil {
+		return err
+	}
+	Timeout = int(timeout)
+
 	return nil
 }
 
 //SetUser 设置本地用户
-func SetUser(user, ip string) error {
+func SetUser(user string) error {
 	localUser, err := ParseEagleUser(user)
 	if err != nil {
 		return err
@@ -300,7 +310,7 @@ func getHostsList(hostsDir string) []string {
 
 //SprintConfig 将配置输出为字符串
 func SprintConfig() string {
-	text := ""
+	var text string
 	for k, v := range ConfigKeyValues {
 		text = text + k + ": " + v + "\n"
 	}

@@ -90,7 +90,7 @@ user=wang:aaa
 
 ### 备注
 
-`root`作为保留账户名，被禁止使用（使用时会被忽略）
+`null`作为保留账户名，被禁止使用（使用时会被忽略）
 
 ### 验证
 
@@ -103,14 +103,6 @@ et check auth -c [配置文件]
 成功的返回应该类似下面的示例：
 
 > AUTH OK with local user: [客户端使用的用户名]
-
-### 速度检测
-
-上面提到了设置每个用户的限速，不过为了节约资源，默认情况下，对用户速度的检测是没有开启的，自然更不会有限速的操作。为了开启它需要设置以下参数：
-
-```shell
-speed-check = on
-```
 
 ## 代理模式
 
@@ -239,7 +231,7 @@ socks|on/off|on|off|SOCKS协议的开关。当值为on时，程序会接收SOCKS
 et|on/off|on|off|ET协议的开关。当值为on时，程序会接收ET协议的流量。这个参数通常被用于服务端中
 user|用户名:密码|username:password|空|客户端使用的登录账户。当它为空时，表示关闭用户检查（这需要服务端同时关闭用户检查）。
 user-check|on/off|on|off|服务端的用户检查开关，当它为on时，用户检查功能开启。所有被授权的用户应该被写在用户列表中。
-speed-check|on/off|on|off|控制是否开启用户速度检测，以及用户限速功能
 proxy-status|enable/smart|smart|enable|代理服务的模式状态，这个参数只对客户端生效。当为enable时，为全局代理，当为smart时，为只能代理。
-head|自定义协议头|helloworld|eagle_tunnel|自定义协议头
-config-dir|配置文件目录|/etc/eagle-tunnel.d|当使用配置文件，则为配置文件所在目录；当未使用配置文件，则为空|存放users.list等配置文件的目录
+head|字符串|helloworld|eagle_tunnel|自定义协议头
+config-dir|字符串|/etc/eagle-tunnel.d|当使用配置文件，则为配置文件所在目录；当未使用配置文件，则为空|存放users.list等配置文件的目录
+timeout|数字|10|0|超时时间（单位：秒），默认为0,表示不检查超时

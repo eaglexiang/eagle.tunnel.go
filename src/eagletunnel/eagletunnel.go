@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-06 19:07:58
+ * @LastEditTime: 2019-01-13 05:29:07
  */
 
 package eagletunnel
@@ -13,6 +13,7 @@ import (
 	"errors"
 	"net"
 	"strings"
+	"time"
 
 	"../eaglelib/src"
 )
@@ -134,8 +135,7 @@ func (et *EagleTunnel) Send(e *NetArg) error {
 // connect2Relayer 连接到下一个Relayer，完成版本校验和用户校验两个步骤
 func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 	remoteIpe := RemoteAddr + ":" + RemotePort
-	// conn, err := net.DialTimeout("tcp", remoteIpe, 5*time.Second)
-	conn, err := net.Dial("tcp", remoteIpe)
+	conn, err := net.DialTimeout("tcp", remoteIpe, time.Second*time.Duration(Timeout))
 	if err != nil {
 		return errors.New("connect2Relayer -> " + err.Error())
 	}
@@ -205,7 +205,7 @@ func checkHeaderOfReq(
 
 func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
 	var err error
-	if LocalUser.ID == "root" {
+	if LocalUser.ID == "null" {
 		return nil // no need to check
 	}
 	user := LocalUser.toString()
@@ -245,8 +245,8 @@ func checkUserOfReq(tunnel *eaglelib.Tunnel) error {
 		tunnel.WriteLeft([]byte(err.Error()))
 		return errors.New("checkUserOfReq -> " + err.Error())
 	}
-	if user2Check.ID == "root" {
-		reply := "username shouldn't be 'root'"
+	if user2Check.ID == "null" {
+		reply := "username shouldn't be 'null'"
 		tunnel.WriteLeft([]byte(reply))
 		return errors.New("checkUserOfReq -> " + reply)
 	}
