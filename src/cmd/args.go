@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 05:27:30
+ * @LastEditTime: 2019-01-13 05:58:24
  */
 
 package cmd
@@ -18,24 +18,13 @@ import (
 
 // ImportArgs 解析并导入参数
 func ImportArgs(argStrs []string) error {
-	indexOfConfig := findConfig(argStrs)
-
-	var skip bool
-	for i, v := range argStrs {
-		if skip {
-			skip = false
-			continue
-		}
-		if i == 0 {
+	for i := 1; i < len(argStrs); i++ {
+		if i%2 == 0 {
+			// 奇数为参数名，偶数为参数值
 			continue
 		}
 
-		v := toLongArg(v)
-		argStrs[i] = v
-		switch v {
-		case "--config":
-			skip = true
-			continue
+		switch argStrs[i] {
 		case "--help":
 			PrintHelpMain()
 			return errors.New("no need to continue")
@@ -46,25 +35,11 @@ func ImportArgs(argStrs []string) error {
 				eagletunnel.ProtocolCompatibleVersion.Raw)
 			return errors.New("no need to continue")
 		default:
-			var err error
-			skip, err = importArg(argStrs, i)
+			err := importArg(argStrs, i)
 			if err != nil {
 				return err
 			}
 		}
-	}
-
-	if indexOfConfig > 0 {
-		err := checkIndex(argStrs, indexOfConfig)
-		if err != nil {
-			return err
-		}
-		err = eagletunnel.ReadConfig(argStrs[indexOfConfig+1])
-		if err != nil {
-			return err
-		}
-	} else {
-		eagletunnel.ReadConfig("")
 	}
 
 	err := eagletunnel.ExecConfig()
@@ -73,33 +48,6 @@ func ImportArgs(argStrs []string) error {
 	}
 
 	return err
-}
-
-func checkIndex(argStrs []string, indexOfArg int) error {
-	if len(argStrs) == indexOfArg+1 {
-		return errors.New("no value for arg: " + argStrs[indexOfArg])
-	}
-	return nil
-}
-
-func setKeyValue(argStrs []string, indexOfArg int) error {
-	argName := argStrs[indexOfArg]
-	argName = strings.TrimPrefix(argName, "--")
-	err := checkIndex(argStrs, indexOfArg)
-	if err != nil {
-		return err
-	}
-	eagletunnel.ConfigKeyValues[argName] = argStrs[indexOfArg+1]
-	return nil
-}
-
-func findConfig(argStrs []string) int {
-	for i, v := range argStrs {
-		if v == "-c" || v == "--config" {
-			return i
-		}
-	}
-	return -1
 }
 
 func toLongArg(shortArg string) string {
@@ -123,23 +71,25 @@ func toLongArg(shortArg string) string {
 	}
 }
 
-// importArg skip表示下个参数是否跳过
-func importArg(argStrs []string, indexOfArg int) (skip bool, err error) {
-	switch argStrs[indexOfArg] {
-	case "--listen",
-		"--relayer",
-		"--proxy-status",
-		"--user",
-		"--http",
-		"--socks",
-		"--et",
-		"--data-key",
-		"--head",
-		"--config-dir",
-		"--user-check",
-		"--debug":
-		return true, setKeyValue(argStrs, indexOfArg)
-	default:
-		return false, errors.New("invalid arg: " + argStrs[indexOfArg])
+func toArgName(argStr string) (string, error) {
+	if !strings.HasPrefix(argStr, "--") {
+		return "", errors.New("toArgName -> invalid argStr: " + argStr)
 	}
+	return strings.TrimPrefix(argStr, "--"), nil
+}
+
+func importArg(argStrs []string, indexOfArg int) (err error) {
+	key := argStrs[indexOfArg]
+	key = toLongArg(key)
+	key, err = toArgName(key)
+	if err != nil {
+		return errors.New("importArg -> " + err.Error())
+	}
+	indexOfValue := indexOfArg + 1
+	if indexOfValue == len(argStrs) {
+		return errors.New("importArg -> no value for arg: " + key)
+	}
+	value := argStrs[indexOfValue]
+	eagletunnel.ConfigKeyValues[key] = value
+	return nil
 }

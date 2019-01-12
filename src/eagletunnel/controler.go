@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 05:37:16
+ * @LastEditTime: 2019-01-13 06:00:36
  */
 
 package eagletunnel
@@ -62,20 +62,18 @@ func init() {
 	ConfigKeyValues["cipher"] = "simple"
 }
 
-// ReadConfig 读取根据给定的配置文件
-func ReadConfig(filePath string) error {
+// readConfig 读取根据给定的配置文件
+func readConfig(filePath string) error {
 	ConfigPath = filePath
-	if ConfigPath != "" {
-		addDefaultArg("config-dir", filepath.Dir(ConfigPath))
-		// 读取配置文件
-		allConfLines, err := readLines(ConfigPath)
-		if err != nil {
-			return err
-		}
-		err = getKeyValues(ConfigKeyValues, allConfLines)
-		if err != nil {
-			return err
-		}
+	addDefaultArg("config-dir", filepath.Dir(ConfigPath))
+	// 读取配置文件
+	allConfLines, err := readLines(ConfigPath)
+	if err != nil {
+		return err
+	}
+	err = getKeyValues(ConfigKeyValues, allConfLines)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -88,6 +86,10 @@ func addDefaultArg(key, value string) {
 
 // ExecConfig 执行配置
 func ExecConfig() error {
+	// 读取配置文件
+	if value, ok := ConfigKeyValues["config"]; ok {
+		readConfig(value)
+	}
 	// 读取用户列表
 	EnableUserCheck = ConfigKeyValues["user-check"] == "on"
 

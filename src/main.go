@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 19:29:14
+ * @LastEditTime: 2019-01-13 06:08:38
  */
 
 package main
@@ -32,10 +32,15 @@ func main() {
 		Init(args[2:])
 		cmd.Check(args[:3])
 	default:
-		if Init(args) {
-			fmt.Println(eagletunnel.SprintConfig())
-			go core()
+		err := Init(args)
+		if err != nil {
+			if err.Error() != "no need to continue" {
+				fmt.Println(err)
+			}
+			return
 		}
+		fmt.Println(eagletunnel.SprintConfig())
+		go core()
 	}
 
 	checkSig()
@@ -51,15 +56,9 @@ func checkSig() {
 }
 
 // Init 初始化参数系统
-func Init(args []string) bool {
+func Init(args []string) error {
 	err := cmd.ImportArgs(args)
-	if err != nil {
-		if err.Error() == "no need to continue" {
-			return false
-		}
-		panic(err)
-	}
-	return true
+	return err
 }
 
 func core() {
