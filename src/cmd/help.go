@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 06:14:23
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 06:11:56
+ * @LastEditTime: 2019-01-13 06:30:15
  */
 
 package cmd
@@ -16,28 +16,25 @@ import (
 // PrintHelpMain 打印帮助信息主页
 func PrintHelpMain() {
 	text :=
-		`Usage: et [options...]
-		-h	--help
-		-v	--version
-		-l	--listen		127.0.0.1:8080
-		-r	--relayer		127.0.0.1:8080
-		-s	--proxy-status	smart/enable
-		-u	--user			username:password
-			--user-check	on/off
-			--http			on/off
-			--socks			on/off
-			--et			on/off
-			--data-key		34
-			--head			eagle_tunnel
-		-c	--config		/etc/eagle-tunnel.d/client.conf
-			--config-dir	/etc/eagle-tunnel.d`
-	fmt.Println(text)
-}
+		`Normal Usage: et [options...]
+		
+	-c	--config	path of config file
+	-h	--help		print this info
+	-l	--listen	ip(:port)
+	-r	--relayer	ip(:port)
+	-s	--proxy-status	smart/enable
+	-u	--user		username:password
+	-v	--version	print version of this program
+		--config-dir	directory of extension config files
+		--data-key	default:34
+		--et		on/off
+		--head		default:eagle_tunnel
+		--http		on/off
+		--socks		on/off
+		--user-check	on/off
 
-func printHelpAsk() {
-	fmt.Println(
-		"Usage: et ask [options] <config file>\n",
-		"\tauth\tcheck you local user\n",
-		"\tping\tcheck your ping to remote relayer",
-	)
+Command Usage: et [command...]
+
+	check	run et check --help to get more information`
+	fmt.Println(text)
 }
