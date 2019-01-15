@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-07 21:14:24
+ * @LastEditTime: 2019-01-15 15:16:02
  */
 
 package eagletunnel
@@ -12,6 +12,7 @@ package eagletunnel
 import (
 	"errors"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
 
@@ -40,6 +41,15 @@ func (el *ETLocation) Send(e *NetArg) error {
 	}
 
 	IPGeoCacheClient.Add(e.IP)
+	ip := net.ParseIP(e.IP)
+	if ip != nil {
+		if ip.To4() == nil {
+			// IPv6 默认代理
+			e.Reply = "Ipv6"
+			IPGeoCacheClient.Update(e.IP, e.Reply)
+			return nil
+		}
+	}
 	if CheckPrivateIPv4(e.IP) {
 		// 保留地址不适合代理
 		e.Reply = "1;ZZ;ZZZ;Reserved"
