@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 07:03:55
+ * @LastEditTime: 2019-01-13 07:26:25
  */
 
 package eagletunnel
@@ -31,7 +31,7 @@ func (s *Service) Start() (err error) {
 	s.Lock()
 	defer s.Unlock()
 	if s.running {
-		return errors.New("Service.Start -> one another ET is running")
+		return errors.New("Service.Start -> the service is already started")
 	}
 
 	// disable tls check for ip-inside cache
