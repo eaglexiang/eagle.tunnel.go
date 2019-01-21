@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-15 15:10:48
+ * @LastEditTime: 2019-01-21 17:36:10
  */
 
 package eagletunnel
@@ -14,11 +14,12 @@ import (
 	"net"
 	"strings"
 
-	"../eaglelib/src"
+	dnscache "github.com/eaglexiang/go-dnscache"
+	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
-var dnsRemoteCache = eaglelib.CreateDNSCache()
-var dnsLocalCache = eaglelib.CreateDNSCache()
+var dnsRemoteCache = dnscache.CreateDNSCache()
+var dnsLocalCache = dnscache.CreateDNSCache()
 var hostsCache = make(map[string]string)
 
 // ETDNS ET-DNS子协议的实现
@@ -26,7 +27,7 @@ type ETDNS struct {
 }
 
 // Handle 处理ET-DNS请求
-func (ed *ETDNS) Handle(req Request, tunnel *eaglelib.Tunnel) error {
+func (ed *ETDNS) Handle(req Request, tunnel *mytunnel.Tunnel) error {
 	reqs := strings.Split(req.RequestMsgStr, " ")
 	if len(reqs) < 2 {
 		return errors.New("ETDNS.Handle -> req is too short")
@@ -98,8 +99,8 @@ func resolvDNSByProxy(e *NetArg) error {
 
 func _resolvDNSByProxy(e *NetArg) error {
 	// connect 2 relayer
-	tunnel := eaglelib.GetTunnel()
-	defer eaglelib.PutTunnel(tunnel)
+	tunnel := mytunnel.GetTunnel()
+	defer mytunnel.PutTunnel(tunnel)
 	err := connect2Relayer(tunnel)
 	if err != nil {
 		return errors.New("_resolvDNSByProxy -> " + err.Error())

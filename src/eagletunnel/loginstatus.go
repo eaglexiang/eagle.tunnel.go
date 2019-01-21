@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 18:06:14
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 19:49:40
+ * @LastEditTime: 2019-01-21 17:32:42
  */
 
 package eagletunnel
@@ -16,12 +16,12 @@ import (
 	"sync"
 	"time"
 
-	"../eaglelib/src"
+	"github.com/eaglexiang/go-cache"
 )
 
 // LoginStatus 用户的登录记录
 type LoginStatus struct {
-	log   *eaglelib.Cache
+	log   *eaglecache.Cache
 	count int
 	Cap   int
 	lock  sync.Mutex
@@ -29,7 +29,7 @@ type LoginStatus struct {
 
 // CreateLoginStatus 创建LoginStatus，ttl：登录记录的生存时间
 func CreateLoginStatus(cap int) *LoginStatus {
-	log := eaglelib.CreateCache(time.Minute * time.Duration(3)) // 3min
+	log := eaglecache.CreateCache(time.Minute * time.Duration(3)) // 3min
 	ls := LoginStatus{log: log, Cap: cap}
 	log.DeleteCaller = func(_ip interface{}) {
 		ip := _ip.(string)

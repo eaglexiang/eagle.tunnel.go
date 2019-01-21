@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 18:40:37
+ * @LastEditTime: 2019-01-21 17:37:06
  */
 
 package eagletunnel
@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"strings"
 
-	"../eaglelib/src"
+	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
 // HTTP请求的类型
@@ -32,7 +32,7 @@ type HTTPProxy struct {
 }
 
 // Handle 处理HTTPProxy请求
-func (conn *HTTPProxy) Handle(request Request, tunnel *eaglelib.Tunnel) error {
+func (conn *HTTPProxy) Handle(request Request, tunnel *mytunnel.Tunnel) error {
 	ipOfReq := strings.Split((*tunnel.Left).RemoteAddr().String(), ":")[0]
 	if !CheckPrivateIPv4(ipOfReq) {
 		// 不接受来自公网IP的HTTP代理请求

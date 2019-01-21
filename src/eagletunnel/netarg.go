@@ -1,15 +1,22 @@
+/*
+ * @Author: EagleXiang
+ * @LastEditors: EagleXiang
+ * @Email: eagle.xiang@outlook.com
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2019-01-21 17:22:18
+ * @LastEditTime: 2019-01-21 17:37:55
+ */
+
 package eagletunnel
 
-import (
-	"../eaglelib/src"
-)
+import mytunnel "github.com/eaglexiang/go-tunnel"
 
 // NetArg 服务内部需要的参数集合
 type NetArg struct {
 	domain  string
 	IP      string
 	Port    int
-	tunnel  *eaglelib.Tunnel
+	tunnel  *mytunnel.Tunnel
 	user    *EagleUser
 	boolObj bool
 	TheType int

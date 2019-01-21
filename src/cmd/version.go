@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 09:42:11
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 07:22:08
+ * @LastEditTime: 2019-01-21 17:40:39
  */
 
 package cmd
@@ -12,11 +12,11 @@ package cmd
 import (
 	"fmt"
 
-	"../eaglelib/src"
+	myversion "github.com/eaglexiang/go-version"
 )
 
 // ProgramVersion 程序版本
-var ProgramVersion, _ = eaglelib.CreateVersion("0.8")
+var ProgramVersion, _ = myversion.CreateVersion("0.8")
 
 // PrintVersion 打印版本信息
 func PrintVersion(programVersion, protocolVersion, ProtocolCompatibleVersion string) {

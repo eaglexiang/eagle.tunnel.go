@@ -4,23 +4,23 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 15:40:22
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-03 14:29:36
+ * @LastEditTime: 2019-01-21 17:32:33
  */
 
 package eagletunnel
 
 import (
-	"../eaglelib/src"
+	"github.com/eaglexiang/go-cache"
 )
 
 // LocationCache IP-GEO缓存
 type LocationCache struct {
-	data *eaglelib.Cache
+	data *eaglecache.Cache
 }
 
 // CreateLocationCache 创建LocationCache
 func CreateLocationCache() *LocationCache {
-	data := eaglelib.CreateCache(0) // 记录不过期，不进行过期检查
+	data := eaglecache.CreateCache(0) // 记录不过期，不进行过期检查
 	cache := LocationCache{data: data}
 	return &cache
 }

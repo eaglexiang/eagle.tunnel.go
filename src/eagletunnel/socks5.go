@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-04 18:40:17
+ * @LastEditTime: 2019-01-21 17:33:04
  */
 
 package eagletunnel
@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 
-	"../eaglelib/src"
+	eagletunnel "github.com/eaglexiang/go-tunnel"
 )
 
 // SOCKS请求的类型
@@ -32,7 +32,7 @@ type Socks5 struct {
 }
 
 // Handle 处理SOCKS5请求
-func (conn *Socks5) Handle(request Request, tunnel *eaglelib.Tunnel) error {
+func (conn *Socks5) Handle(request Request, tunnel *eagletunnel.Tunnel) error {
 	ipOfReq := strings.Split((*tunnel.Left).RemoteAddr().String(), ":")[0]
 	if !CheckPrivateIPv4(ipOfReq) {
 		// 不接受来自公网IP的SOCKS5请求
@@ -70,7 +70,7 @@ func (conn *Socks5) Handle(request Request, tunnel *eaglelib.Tunnel) error {
 	}
 }
 
-func (conn *Socks5) handleTCPReq(req []byte, tunnel *eaglelib.Tunnel) error {
+func (conn *Socks5) handleTCPReq(req []byte, tunnel *eagletunnel.Tunnel) error {
 	ip, err := conn.getIP(req)
 	if err != nil {
 		return errors.New("Socks5.handleTCPReq -> " + err.Error())

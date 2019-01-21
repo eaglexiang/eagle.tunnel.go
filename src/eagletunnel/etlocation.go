@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-15 15:16:02
+ * @LastEditTime: 2019-01-21 17:36:28
  */
 
 package eagletunnel
@@ -16,7 +16,7 @@ import (
 	"net/http"
 	"strings"
 
-	"../eaglelib/src"
+	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
 // IPGeoCacheClient Client持有的IP-Geo数据缓存
@@ -68,8 +68,8 @@ func (el *ETLocation) Send(e *NetArg) error {
 }
 
 func (el *ETLocation) checkLocationByRemote(e *NetArg) error {
-	tunnel := eaglelib.GetTunnel()
-	defer eaglelib.PutTunnel(tunnel)
+	tunnel := mytunnel.GetTunnel()
+	defer mytunnel.PutTunnel(tunnel)
 	err := connect2Relayer(tunnel)
 	if err != nil {
 		return errors.New("ETLocation.checkLocationByRemote -> " + err.Error())
@@ -90,7 +90,7 @@ func (el *ETLocation) checkLocationByRemote(e *NetArg) error {
 }
 
 // Handle 处理ET-LOCATION请求
-func (el *ETLocation) Handle(req Request, tunnel *eaglelib.Tunnel) error {
+func (el *ETLocation) Handle(req Request, tunnel *mytunnel.Tunnel) error {
 	reqs := strings.Split(req.RequestMsgStr, " ")
 	if len(reqs) < 2 {
 		return errors.New("ETLocation.Handle -> req is too short")

@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 05:29:07
+ * @LastEditTime: 2019-01-21 17:34:41
  */
 
 package eagletunnel
@@ -15,7 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"../eaglelib/src"
+	mytunnel "github.com/eaglexiang/go-tunnel"
+	version "github.com/eaglexiang/go-version"
 )
 
 // ET请求的类型
@@ -34,10 +35,10 @@ const (
 )
 
 // ProtocolVersion 作为Sender使用的协议版本号
-var ProtocolVersion, _ = eaglelib.CreateVersion("1.3")
+var ProtocolVersion, _ = version.CreateVersion("1.3")
 
 // ProtocolCompatibleVersion 作为Handler可兼容的最低协议版本号
-var ProtocolCompatibleVersion, _ = eaglelib.CreateVersion("1.3")
+var ProtocolCompatibleVersion, _ = version.CreateVersion("1.3")
 
 // LocalCipherType 本地使用的加密方式
 var LocalCipherType = SimpleCipherType
@@ -47,7 +48,7 @@ type EagleTunnel struct {
 }
 
 // Handle 处理ET请求
-func (et *EagleTunnel) Handle(request Request, tunnel *eaglelib.Tunnel) (err error) {
+func (et *EagleTunnel) Handle(request Request, tunnel *mytunnel.Tunnel) (err error) {
 	args := strings.Split(request.RequestMsgStr, " ")
 	err = checkHeaderOfReq(args, tunnel)
 	if err != nil {
@@ -133,7 +134,7 @@ func (et *EagleTunnel) Send(e *NetArg) error {
 }
 
 // connect2Relayer 连接到下一个Relayer，完成版本校验和用户校验两个步骤
-func connect2Relayer(tunnel *eaglelib.Tunnel) error {
+func connect2Relayer(tunnel *mytunnel.Tunnel) error {
 	remoteIpe := RemoteAddr + ":" + RemotePort
 	conn, err := net.DialTimeout("tcp", remoteIpe, time.Second*time.Duration(Timeout))
 	if err != nil {
@@ -168,7 +169,7 @@ func connect2Relayer(tunnel *eaglelib.Tunnel) error {
 	return nil
 }
 
-func checkVersionOfRelayer(tunnel *eaglelib.Tunnel) error {
+func checkVersionOfRelayer(tunnel *mytunnel.Tunnel) error {
 	req := ConfigKeyValues["head"]
 	count, err := tunnel.WriteRight([]byte(req))
 	if err != nil {
@@ -188,7 +189,7 @@ func checkVersionOfRelayer(tunnel *eaglelib.Tunnel) error {
 
 func checkHeaderOfReq(
 	headers []string,
-	tunnel *eaglelib.Tunnel) error {
+	tunnel *mytunnel.Tunnel) error {
 	if len(headers) < 1 {
 		return errors.New("checkHeaderOfReq -> nil req")
 	}
@@ -203,7 +204,7 @@ func checkHeaderOfReq(
 	return nil
 }
 
-func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
+func checkUserOfLocal(tunnel *mytunnel.Tunnel) error {
 	var err error
 	if LocalUser.ID == "null" {
 		return nil // no need to check
@@ -227,7 +228,7 @@ func checkUserOfLocal(tunnel *eaglelib.Tunnel) error {
 	return nil
 }
 
-func checkUserOfReq(tunnel *eaglelib.Tunnel) error {
+func checkUserOfReq(tunnel *mytunnel.Tunnel) error {
 	if !EnableUserCheck {
 		return nil
 	}

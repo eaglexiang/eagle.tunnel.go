@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 05:29:17
+ * @LastEditTime: 2019-01-21 17:35:50
  */
 
 package eagletunnel
@@ -14,7 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"../eaglelib/src"
+	mytunnel "github.com/eaglexiang/go-tunnel"
+	version "github.com/eaglexiang/go-version"
 )
 
 // EtASK请求的类型
@@ -58,7 +59,7 @@ func formatEtCheckType(src int) string {
 }
 
 // Handle 处理ET-Check请求
-func (ec *ETCheck) Handle(req Request, tunnel *eaglelib.Tunnel) {
+func (ec *ETCheck) Handle(req Request, tunnel *mytunnel.Tunnel) {
 	reqs := strings.Split(req.RequestMsgStr, " ")
 	if len(reqs) < 2 {
 		// 没有具体的Check请求内容
@@ -77,8 +78,8 @@ func (ec *ETCheck) Handle(req Request, tunnel *eaglelib.Tunnel) {
 // SendEtCheckAuthReq 发射 ET-CHECK-AUTH 请求
 func SendEtCheckAuthReq() string {
 	// 当connect2Relayer成功，则说明鉴权成功
-	tunnel := eaglelib.GetTunnel()
-	defer eaglelib.PutTunnel(tunnel)
+	tunnel := mytunnel.GetTunnel()
+	defer mytunnel.PutTunnel(tunnel)
 	err := connect2Relayer(tunnel)
 	if err != nil {
 		return err.Error()
@@ -92,8 +93,8 @@ func SendEtCheckAuthReq() string {
 
 // SendEtCheckVersionReq 发射 ET-CHECK-VERSION 请求
 func SendEtCheckVersionReq() string {
-	tunnel := eaglelib.GetTunnel()
-	defer eaglelib.PutTunnel(tunnel)
+	tunnel := mytunnel.GetTunnel()
+	defer mytunnel.PutTunnel(tunnel)
 	err := connect2Relayer(tunnel)
 	if err != nil {
 		return err.Error()
@@ -124,8 +125,8 @@ func SendEtCheckPingReq(sig chan string) {
 	start := time.Now() // 开始计时
 
 	// 连接服务器
-	tunnel := eaglelib.GetTunnel()
-	defer eaglelib.PutTunnel(tunnel)
+	tunnel := mytunnel.GetTunnel()
+	defer mytunnel.PutTunnel(tunnel)
 	err := connect2Relayer(tunnel)
 	if err != nil {
 		sig <- err.Error()
@@ -160,18 +161,18 @@ func SendEtCheckPingReq(sig chan string) {
 	return
 }
 
-func handleEtCheckPingReq(tunnel *eaglelib.Tunnel) {
+func handleEtCheckPingReq(tunnel *mytunnel.Tunnel) {
 	reply := "ok"
 	tunnel.WriteLeft([]byte(reply))
 }
 
-func handleEtCheckVersionReq(tunnel *eaglelib.Tunnel, reqs []string) {
+func handleEtCheckVersionReq(tunnel *mytunnel.Tunnel, reqs []string) {
 	if len(reqs) < 3 {
 		reply := "no protocol version value"
 		tunnel.WriteLeft([]byte(reply))
 		return
 	}
-	versionOfReq, err := eaglelib.CreateVersion(reqs[2])
+	versionOfReq, err := version.CreateVersion(reqs[2])
 	if err != nil {
 		reply := err.Error()
 		tunnel.WriteLeft([]byte(reply))

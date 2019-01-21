@@ -4,18 +4,18 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-10-08 10:51:05
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-06 19:25:11
+ * @LastEditTime: 2019-01-21 17:35:05
  */
 
 package eagletunnel
 
 import (
 	"errors"
-	"go.uber.org/ratelimit"
 	"strconv"
 	"strings"
 
-	"../eaglelib/src"
+	mytunnel "github.com/eaglexiang/go-tunnel"
+	"go.uber.org/ratelimit"
 )
 
 // EagleUser 提供基本和轻量的账户系统
@@ -59,7 +59,7 @@ func ParseEagleUser(userStr string) (*EagleUser, error) {
 			return nil, errors.New("when parse EagleUser: " + err.Error())
 		}
 		if speedLimit > 0 {
-			limiter := ratelimit.New(int(speedLimit) * 1024 / eaglelib.TunnelBufferSize)
+			limiter := ratelimit.New(int(speedLimit) * 1024 / mytunnel.TunnelBufferSize)
 			user.speedLimiter = &limiter
 		}
 	}

@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 05:16:14
+ * @LastEditTime: 2019-01-21 17:36:43
  */
 
 package eagletunnel
@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"../eaglelib/src"
+	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
 // ETTCP ET-TCP子协议的实现
@@ -98,7 +98,7 @@ func (et *ETTCP) sendTCPReq2Server(e *NetArg) error {
 }
 
 // Handle 处理ET-TCP请求
-func (et *ETTCP) Handle(req Request, tunnel *eaglelib.Tunnel) error {
+func (et *ETTCP) Handle(req Request, tunnel *mytunnel.Tunnel) error {
 	reqs := strings.Split(req.RequestMsgStr, " ")
 	if len(reqs) < 3 {
 		return errors.New("ETTCP.Handle -> no des ip for tcp req")

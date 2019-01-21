@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 06:53:57
+ * @LastEditTime: 2019-01-21 17:37:31
  */
 
 package eagletunnel
@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"net"
 
-	"../eaglelib/src"
+	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
 // LocalAddr 本地监听地址
@@ -40,8 +40,8 @@ func (relayer *Relayer) Handle(conn net.Conn) {
 		return
 	}
 	request := Request{requestMsg: buffer[:count]}
-	tunnel := eaglelib.GetTunnel()
-	defer eaglelib.PutTunnel(tunnel)
+	tunnel := mytunnel.GetTunnel()
+	defer mytunnel.PutTunnel(tunnel)
 	tunnel.Left = &conn
 	var handler Handler
 	switch request.getType() {
