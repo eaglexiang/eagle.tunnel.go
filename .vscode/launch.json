@@ -16,18 +16,19 @@
             "program": "${workspaceFolder}/src/main.go",
             "env": {},
             // "args": ["ask","local","ping","../tmp/t.conf"],
-            // "args": [
-            //     "-c",
-            //     "../tmp/t.conf"
-            // ],
             "args": [
-                "-l","0.0.0.0:8082",
-                "-r","127.0.0.1:8082",
-                "--http","on",
-                "--socks","on",
-                "--et","on",
-                "-s","smart",
+                "-c",
+                // "../tmp/t.conf"
+                "/etc/eagle-tunnel.d/client.conf"
             ],
+            // "args": [
+            //     "-l","0.0.0.0:8082",
+            //     "-r","127.0.0.1:8082",
+            //     "--http","on",
+            //     "--socks","on",
+            //     "--et","on",
+            //     "-s","smart",
+            // ],
             "showLog": false
         }
     ]
