@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-22 20:12:07
+ * @LastEditTime: 2019-01-22 20:41:17
  */
 
 package service
@@ -120,10 +120,7 @@ func ExecConfig() error {
 
 	// DNS解析白名单
 	whiteDomainsPath := ConfigKeyValues["config-dir"] + "/whitelist_domain.txt"
-	myet.WhitelistDomains, err = readLines(whiteDomainsPath)
-	if err != nil {
-		return err
-	}
+	myet.WhitelistDomains, _ = readLines(whiteDomainsPath)
 
 	// hosts文件
 	err = readHosts(ConfigKeyValues["config-dir"] + "/hosts")
