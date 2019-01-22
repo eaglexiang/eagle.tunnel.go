@@ -4,10 +4,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 06:00:36
+ * @LastEditTime: 2019-01-22 20:12:07
  */
 
-package eagletunnel
+package service
 
 import (
 	"bufio"
@@ -17,6 +17,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	myet "github.com/eaglexiang/go-et"
+	myuser "github.com/eaglexiang/go-user"
 )
 
 // ConfigPath 主配置文件的路径
@@ -24,9 +27,6 @@ var ConfigPath string
 
 // ConfigKeyValues 主配置文件的所有键值对参数
 var ConfigKeyValues = make(map[string]string)
-
-// EnableUserCheck 启用用户检查特性
-var EnableUserCheck bool
 
 // EnableSOCKS5 启用relayer对SOCKS5协议的接收
 var EnableSOCKS5 bool
@@ -91,17 +91,13 @@ func ExecConfig() error {
 		readConfig(value)
 	}
 	// 读取用户列表
-	EnableUserCheck = ConfigKeyValues["user-check"] == "on"
-
-	if EnableUserCheck {
-		usersPath := ConfigKeyValues["config-dir"] + "/users.list"
-		err := importUsers(usersPath)
-		if err != nil {
-			return err
-		}
+	usersPath := ConfigKeyValues["config-dir"] + "/users.list"
+	err := importUsers(usersPath)
+	if err != nil {
+		return err
 	}
 
-	err := SetUser(ConfigKeyValues["user"])
+	err = SetUser(ConfigKeyValues["user"])
 	if err != nil {
 		return err
 	}
@@ -124,7 +120,7 @@ func ExecConfig() error {
 
 	// DNS解析白名单
 	whiteDomainsPath := ConfigKeyValues["config-dir"] + "/whitelist_domain.txt"
-	WhitelistDomains, err = readLines(whiteDomainsPath)
+	myet.WhitelistDomains, err = readLines(whiteDomainsPath)
 	if err != nil {
 		return err
 	}
@@ -141,12 +137,14 @@ func ExecConfig() error {
 	}
 	Timeout = int(timeout)
 
+	SetDebug(ConfigKeyValues["debug"])
+
 	return nil
 }
 
 //SetUser 设置本地用户
 func SetUser(user string) error {
-	localUser, err := ParseEagleUser(user)
+	localUser, err := myuser.ParseUser(user)
 	if err != nil {
 		return err
 	}
@@ -156,16 +154,20 @@ func SetUser(user string) error {
 
 //SetProxyStatus 设置Proxy-Status，enable/smart
 func SetProxyStatus(status string) error {
-	switch status {
-	case "enable":
-		ProxyStatus = ProxyENABLE
-		return nil
-	case "smart":
-		ProxyStatus = ProxySMART
-		return nil
-	default:
-		return errors.New("invalid value for proxy-status: " + status)
+	ProxyStatus = myet.ParseProxyStatus(status)
+	if ProxyStatus == myet.ErrorProxyStatus {
+		return errors.New("SetProxyStatus -> invalid proxy-status")
 	}
+	ConfigKeyValues["proxy-status"] = status
+	return nil
+}
+
+// SetDebug 设置Debug
+func SetDebug(debug string) {
+	if debug == "on" {
+		Debug = true
+	}
+	ConfigKeyValues["debug"] = debug
 }
 
 func readLines(filePath string) ([]string, error) {
@@ -191,18 +193,19 @@ func readLines(filePath string) ([]string, error) {
 }
 
 func importUsers(usersPath string) error {
-	Users = make(map[string]*EagleUser)
+	users := make(map[string]*myuser.User)
+	Users = &users
 	userLines, err := readLines(usersPath)
 	if err != nil {
-		return err
+		return nil
 	}
-	var user *EagleUser
+	var user *myuser.User
 	for _, line := range userLines {
-		user, err = ParseEagleUser(line)
+		user, err = myuser.ParseUser(line)
 		if err != nil {
 			return err
 		}
-		Users[user.ID] = user
+		(*Users)[user.ID] = user
 	}
 	return err
 }
@@ -234,24 +237,18 @@ func exportKeyValues(keyValues *map[string]string, keys []string) string {
 
 // SetRelayer 设置relayer地址
 func SetRelayer(remoteIpe string) {
-	items := strings.Split(remoteIpe, ":")
-	RemoteAddr = strings.TrimSpace(items[0])
-	if len(items) >= 2 {
-		RemotePort = strings.TrimSpace(items[1])
-	} else {
-		RemotePort = "8080"
+	if strings.Index(remoteIpe, ":") == -1 {
+		remoteIpe += ":8080"
 	}
+	ConfigKeyValues["relayer"] = remoteIpe
 }
 
 // SetListen 设定本地监听地址
 func SetListen(localIpe string) {
-	items := strings.Split(localIpe, ":")
-	LocalAddr = items[0]
-	if len(items) >= 2 {
-		LocalPort = items[1]
-	} else {
-		LocalPort = "8080"
+	if strings.Index(localIpe, ":") == -1 {
+		localIpe += ":8080"
 	}
+	ConfigKeyValues["listen"] = localIpe
 }
 
 func readHosts(hostsDir string) error {
@@ -284,7 +281,7 @@ func readHosts(hostsDir string) error {
 		ip := strings.TrimSpace(items[0])
 		domain := strings.TrimSpace(items[1])
 		if domain != "" && ip != "" {
-			hostsCache[domain] = ip
+			myet.HostsCache[domain] = ip
 		} else {
 			return errors.New("invalid hosts line: " + host)
 		}

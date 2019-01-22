@@ -4,13 +4,14 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 06:11:10
+ * @LastEditTime: 2019-01-22 20:15:46
  */
 
 package cmd
 
 import (
-	"../eagletunnel"
+	"../service"
+	et "github.com/eaglexiang/go-et"
 
 	"errors"
 	"strings"
@@ -32,8 +33,8 @@ func ImportArgs(argStrs []string) error {
 		case "--version":
 			PrintVersion(
 				ProgramVersion.Raw,
-				eagletunnel.ProtocolVersion.Raw,
-				eagletunnel.ProtocolCompatibleVersion.Raw)
+				et.ProtocolVersion.Raw,
+				et.ProtocolCompatibleVersion.Raw)
 			return errors.New("no need to continue")
 		default:
 			err := importArg(argStrs, i)
@@ -43,7 +44,7 @@ func ImportArgs(argStrs []string) error {
 		}
 	}
 
-	err := eagletunnel.ExecConfig()
+	err := service.ExecConfig()
 	if err != nil {
 		return err
 	}
@@ -90,6 +91,6 @@ func importArg(argStrs []string, indexOfArg int) (err error) {
 		return errors.New("importArg -> no value for arg: " + key)
 	}
 	value := argStrs[indexOfValue]
-	eagletunnel.ConfigKeyValues[key] = value
+	service.ConfigKeyValues[key] = value
 	return nil
 }

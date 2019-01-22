@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-06 16:27:15
+ * @LastEditTime: 2019-01-22 20:16:04
  */
 
 package cmd
@@ -13,8 +13,11 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
-	"../eagletunnel"
+	"../service"
+	cipher "github.com/eaglexiang/go-cipher"
+	myet "github.com/eaglexiang/go-et"
 )
 
 // Check check命令
@@ -23,13 +26,13 @@ func Check(args []string) {
 		fmt.Println("no cmd for et-check")
 		return
 	}
-	theType := eagletunnel.ParseEtCheckType(args[2])
+	theType := myet.ParseEtCheckType(args[2])
 	switch theType {
-	case eagletunnel.EtCheckPING:
+	case myet.EtCheckPING:
 		ping()
-	case eagletunnel.EtCheckAuth:
+	case myet.EtCheckAuth:
 		auth()
-	case eagletunnel.EtCheckVERSION:
+	case myet.EtCheckVERSION:
 		version()
 	default:
 		fmt.Println("invalid check command")
@@ -39,11 +42,12 @@ func Check(args []string) {
 
 // ping 发送Ping请求并打印结果
 func ping() {
+	et := createET()
 	var time int
 	var success int
 	timeSig := make(chan string)
 	for i := 0; i < 10; i++ {
-		go eagletunnel.SendEtCheckPingReq(timeSig)
+		go myet.SendEtCheckPingReq(et, timeSig)
 	}
 	for i := 0; i < 10; i++ {
 		timeStr := <-timeSig
@@ -61,11 +65,31 @@ func ping() {
 }
 
 func auth() {
-	reply := eagletunnel.SendEtCheckAuthReq()
+	et := createET()
+	reply := myet.SendEtCheckAuthReq(et)
 	fmt.Println(reply)
 }
 
 func version() {
-	reply := eagletunnel.SendEtCheckVersionReq()
+	et := createET()
+	reply := myet.SendEtCheckVersionReq(et)
 	fmt.Println(reply)
+}
+
+func createET() *myet.ET {
+	_cipherType := service.ConfigKeyValues["cipher"]
+	cipherType := cipher.ParseCipherType(_cipherType)
+	et := myet.CreateET(
+		myet.ProxyENABLE,
+		service.ConfigKeyValues["ip-type"],
+		service.ConfigKeyValues["head"],
+		cipherType,
+		service.ConfigKeyValues["data-key"],
+		service.ConfigKeyValues["relayer"],
+		service.ConfigKeyValues["location"],
+		service.LocalUser,
+		service.Users,
+		time.Second*time.Duration(service.Timeout),
+	)
+	return et
 }

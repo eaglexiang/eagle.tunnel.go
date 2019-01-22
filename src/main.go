@@ -1,10 +1,9 @@
 /*
- * @Description:
  * @Author: EagleXiang
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-13 07:05:57
+ * @LastEditTime: 2019-01-22 20:17:53
  */
 
 package main
@@ -15,10 +14,10 @@ import (
 	"os/signal"
 
 	"./cmd"
-	"./eagletunnel"
+	myservice "./service/"
 )
 
-var service = eagletunnel.Service{}
+var service *myservice.Service
 
 func main() {
 	args := os.Args
@@ -38,12 +37,12 @@ func main() {
 			}
 			return
 		}
-		fmt.Println(eagletunnel.SprintConfig())
+		fmt.Println(myservice.SprintConfig())
+		service = myservice.CreateService()
 		go core()
 		fmt.Println("press Ctrl + C to quit")
+		checkSig()
 	}
-
-	checkSig()
 }
 
 func checkSig() {
