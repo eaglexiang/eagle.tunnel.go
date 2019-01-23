@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-22 20:41:17
+ * @LastEditTime: 2019-01-23 22:27:06
  */
 
 package service
@@ -13,6 +13,7 @@ import (
 	"bufio"
 	"errors"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -234,16 +235,36 @@ func exportKeyValues(keyValues *map[string]string, keys []string) string {
 
 // SetRelayer 设置relayer地址
 func SetRelayer(remoteIpe string) {
-	if strings.Index(remoteIpe, ":") == -1 {
-		remoteIpe += ":8080"
+	if strings.HasPrefix(remoteIpe, "[") {
+		// IPv6
+		if strings.HasSuffix(remoteIpe, "]") {
+			// 不包含端口号
+			remoteIpe += ":8080"
+		}
+	} else {
+		ip := net.ParseIP(remoteIpe)
+		if ip != nil {
+			// 不包含端口号
+			remoteIpe += ":8080"
+		}
 	}
 	ConfigKeyValues["relayer"] = remoteIpe
 }
 
 // SetListen 设定本地监听地址
 func SetListen(localIpe string) {
-	if strings.Index(localIpe, ":") == -1 {
-		localIpe += ":8080"
+	if strings.HasPrefix(localIpe, "[") {
+		// IPv6
+		if strings.HasSuffix(localIpe, "]") {
+			// 不包含端口号
+			localIpe += ":8080"
+		}
+	} else {
+		ip := net.ParseIP(localIpe)
+		if ip != nil {
+			// 不包含端口号
+			localIpe += ":8080"
+		}
 	}
 	ConfigKeyValues["listen"] = localIpe
 }
