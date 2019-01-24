@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-23 11:40:59
+ * @LastEditTime: 2019-01-24 21:55:07
  */
 
 package service
@@ -67,9 +67,15 @@ func CreateService() *Service {
 	}
 
 	// 添加后端协议Handler
-	service.relayer.AddHandler(et)
-	service.relayer.AddHandler(httpproxy.HTTPProxy{})
-	service.relayer.AddHandler(socks5.Socks5{})
+	if ConfigKeyValues["et"] == "on" {
+		service.relayer.AddHandler(et)
+	}
+	if ConfigKeyValues["http"] == "on" {
+		service.relayer.AddHandler(httpproxy.HTTPProxy{})
+	}
+	if ConfigKeyValues["socks"] == "on" {
+		service.relayer.AddHandler(socks5.Socks5{})
+	}
 
 	// 设置后端协议Sender
 	service.relayer.SetSender(et)
