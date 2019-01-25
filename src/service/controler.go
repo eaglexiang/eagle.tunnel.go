@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-25 13:24:08
+ * @LastEditTime: 2019-01-25 14:01:50
  */
 
 package service
@@ -12,6 +12,7 @@ package service
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -125,9 +126,12 @@ func ExecConfig() error {
 	myet.WhitelistDomains, _ = readLines(whiteDomainsPath)
 
 	// hosts文件
-	err = readHosts(ConfigKeyValues["config-dir"] + "/hosts")
-	if err != nil {
-		return err
+	if hostsDir, ok := ConfigKeyValues["config-dir"]; ok {
+		hostsDir += "/hosts"
+		err = readHosts(hostsDir)
+		if err != nil {
+			return errors.New("ExecConfig -> " + err.Error())
+		}
 	}
 
 	timeout, err := strconv.ParseInt(ConfigKeyValues["timeout"], 10, 32)
@@ -192,7 +196,6 @@ func readLines(filePath string) ([]string, error) {
 		line = strings.TrimSpace(items[0])
 		if line != "" {
 			line = strings.Replace(line, "\t", " ", -1)
-			line = strings.ToLower(line)
 			lines = append(lines, line)
 		}
 	}
@@ -280,7 +283,11 @@ func SetListen(localIpe string) {
 
 func readHosts(hostsDir string) error {
 
-	hostsFiles := getHostsList(hostsDir)
+	hostsFiles, err := getHostsList(hostsDir)
+	if err != nil {
+		return errors.New("readHosts -> " +
+			err.Error())
+	}
 
 	var hosts []string
 	for _, file := range hostsFiles {
@@ -316,10 +323,11 @@ func readHosts(hostsDir string) error {
 	return nil
 }
 
-func getHostsList(hostsDir string) []string {
+func getHostsList(hostsDir string) ([]string, error) {
 	files, err := ioutil.ReadDir(hostsDir)
 	if err != nil {
-		return nil
+		return nil, errors.New("getHostsList -> " +
+			err.Error())
 	}
 	var hosts []string
 	for _, file := range files {
@@ -331,7 +339,7 @@ func getHostsList(hostsDir string) []string {
 			hosts = append(hosts, filename)
 		}
 	}
-	return hosts
+	return hosts, nil
 }
 
 // SprintConfig 将配置输出为字符串
@@ -355,8 +363,12 @@ func ImportMods(modsDir string) error {
 			continue
 		}
 		filename := file.Name()
-		if strings.HasSuffix(filename, ".mod") {
-			plugin.Open(filename)
+		filename = modsDir + "/" + filename
+		if strings.HasSuffix(filename, ".so") {
+			_, err := plugin.Open(filename)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}
 	return nil
