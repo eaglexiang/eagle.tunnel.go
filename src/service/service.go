@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-25 13:16:18
+ * @LastEditTime: 2019-01-25 14:09:09
  */
 
 package service
@@ -93,8 +93,8 @@ func CreateService() *Service {
 	if ConfigKeyValues["socks"] == "on" {
 		service.relayer.AddHandler(&socks5.Socks5{})
 	}
-	for _, h := range handler.AllHandlers {
-		v, ok := ConfigKeyValues[h.Name()]
+	for name, h := range handler.AllHandlers {
+		v, ok := ConfigKeyValues[name]
 		if !ok {
 			continue
 		}
