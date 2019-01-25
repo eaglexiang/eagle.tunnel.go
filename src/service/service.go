@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-24 21:55:07
+ * @LastEditTime: 2019-01-25 13:16:18
  */
 
 package service
@@ -18,11 +18,19 @@ import (
 	"sync"
 	"time"
 
+	"github.com/eaglexiang/go-socks5"
+
+	"github.com/eaglexiang/go-httpproxy"
+
+	"github.com/eaglexiang/go-sender"
+
+	"github.com/eaglexiang/go-handler"
+
+	"github.com/eaglexiang/go-simplecipher"
+
 	mycipher "github.com/eaglexiang/go-cipher"
 	myet "github.com/eaglexiang/go-et"
-	httpproxy "github.com/eaglexiang/go-httpproxy"
 	relayer "github.com/eaglexiang/go-relayer"
-	socks5 "github.com/eaglexiang/go-socks5"
 	myuser "github.com/eaglexiang/go-user"
 )
 
@@ -47,13 +55,27 @@ type Service struct {
 
 // CreateService 构造Service
 func CreateService() *Service {
-	cipherType := mycipher.ParseCipherType(ConfigKeyValues["cipher"])
+	mycipher.DefaultCipher = func() mycipher.Cipher {
+		cipherType := mycipher.ParseCipherType(ConfigKeyValues["cipher"])
+		switch cipherType {
+		case mycipher.SimpleCipherType:
+			c := simplecipher.SimpleCipher{}
+			c.SetKey(ConfigKeyValues["data-key"])
+			return &c
+		default:
+			return nil
+		}
+	}
+
+	service := Service{
+		reqs:    make(chan net.Conn),
+		relayer: relayer.CreateRelayer(Debug),
+	}
+
 	et := myet.CreateET(
 		ProxyStatus,
 		ConfigKeyValues["ip-type"],
 		ConfigKeyValues["head"],
-		cipherType,
-		ConfigKeyValues["data-key"],
 		ConfigKeyValues["relayer"],
 		ConfigKeyValues["location"],
 		LocalUser,
@@ -61,24 +83,31 @@ func CreateService() *Service {
 		time.Second*time.Duration(Timeout),
 	)
 
-	service := Service{
-		reqs:    make(chan net.Conn),
-		relayer: relayer.CreateRelayer(Debug),
-	}
-
 	// 添加后端协议Handler
 	if ConfigKeyValues["et"] == "on" {
 		service.relayer.AddHandler(et)
 	}
 	if ConfigKeyValues["http"] == "on" {
-		service.relayer.AddHandler(httpproxy.HTTPProxy{})
+		service.relayer.AddHandler(&httpproxy.HTTPProxy{})
 	}
 	if ConfigKeyValues["socks"] == "on" {
-		service.relayer.AddHandler(socks5.Socks5{})
+		service.relayer.AddHandler(&socks5.Socks5{})
+	}
+	for _, h := range handler.AllHandlers {
+		v, ok := ConfigKeyValues[h.Name()]
+		if !ok {
+			continue
+		}
+		if v == "on" {
+			service.relayer.AddHandler(h)
+		}
 	}
 
 	// 设置后端协议Sender
 	service.relayer.SetSender(et)
+	if sender.DefaultSender != nil {
+		service.relayer.SetSender(sender.DefaultSender)
+	}
 	return &service
 }
 

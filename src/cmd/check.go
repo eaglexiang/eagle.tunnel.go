@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-22 20:16:04
+ * @LastEditTime: 2019-01-25 13:16:26
  */
 
 package cmd
@@ -18,6 +18,7 @@ import (
 	"../service"
 	cipher "github.com/eaglexiang/go-cipher"
 	myet "github.com/eaglexiang/go-et"
+	simplecipher "github.com/eaglexiang/go-simplecipher"
 )
 
 // Check check命令
@@ -77,14 +78,21 @@ func version() {
 }
 
 func createET() *myet.ET {
-	_cipherType := service.ConfigKeyValues["cipher"]
-	cipherType := cipher.ParseCipherType(_cipherType)
+	cipher.DefaultCipher = func() cipher.Cipher {
+		cipherType := cipher.ParseCipherType(service.ConfigKeyValues["cipher"])
+		switch cipherType {
+		case cipher.SimpleCipherType:
+			c := simplecipher.SimpleCipher{}
+			c.SetKey(service.ConfigKeyValues["data-key"])
+			return &c
+		default:
+			return nil
+		}
+	}
 	et := myet.CreateET(
 		myet.ProxyENABLE,
 		service.ConfigKeyValues["ip-type"],
 		service.ConfigKeyValues["head"],
-		cipherType,
-		service.ConfigKeyValues["data-key"],
 		service.ConfigKeyValues["relayer"],
 		service.ConfigKeyValues["location"],
 		service.LocalUser,

@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-23 22:27:06
+ * @LastEditTime: 2019-01-25 13:24:08
  */
 
 package service
@@ -16,6 +16,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"plugin"
 	"strconv"
 	"strings"
 
@@ -136,6 +137,14 @@ func ExecConfig() error {
 	Timeout = int(timeout)
 
 	SetDebug(ConfigKeyValues["debug"])
+
+	// 导入Mods
+	if modsDir, ok := ConfigKeyValues["mod-dir"]; ok {
+		err = ImportMods(modsDir)
+		if err != nil {
+			return errors.New("ExecConfig -> " + err.Error())
+		}
+	}
 
 	return nil
 }
@@ -325,11 +334,30 @@ func getHostsList(hostsDir string) []string {
 	return hosts
 }
 
-//SprintConfig 将配置输出为字符串
+// SprintConfig 将配置输出为字符串
 func SprintConfig() string {
 	var text string
 	for k, v := range ConfigKeyValues {
 		text = text + k + ": " + v + "\n"
 	}
 	return text
+}
+
+// ImportMods 导入Mods
+func ImportMods(modsDir string) error {
+	files, err := ioutil.ReadDir(modsDir)
+	if err != nil {
+		return errors.New("ImportMods -> " +
+			err.Error())
+	}
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		filename := file.Name()
+		if strings.HasSuffix(filename, ".mod") {
+			plugin.Open(filename)
+		}
+	}
+	return nil
 }
