@@ -4,10 +4,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-25 14:01:50
+ * @LastEditTime: 2019-01-31 21:09:34
  */
 
-package service
+package etcore
 
 import (
 	"bufio"

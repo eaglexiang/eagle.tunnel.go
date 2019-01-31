@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-22 20:17:53
+ * @LastEditTime: 2019-01-31 21:13:01
  */
 
 package main
@@ -14,10 +14,10 @@ import (
 	"os/signal"
 
 	"./cmd"
-	myservice "./service/"
+	"./etcore"
 )
 
-var service *myservice.Service
+var service *etcore.Service
 
 func main() {
 	args := os.Args
@@ -37,8 +37,8 @@ func main() {
 			}
 			return
 		}
-		fmt.Println(myservice.SprintConfig())
-		service = myservice.CreateService()
+		fmt.Println(etcore.SprintConfig())
+		service = etcore.CreateService()
 		go core()
 		fmt.Println("press Ctrl + C to quit")
 		checkSig()

@@ -4,10 +4,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-25 14:09:09
+ * @LastEditTime: 2019-01-31 21:09:50
  */
 
-package service
+package etcore
 
 import (
 	"crypto/tls"
@@ -18,19 +18,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eaglexiang/go-socks5"
-
-	"github.com/eaglexiang/go-httpproxy"
-
-	"github.com/eaglexiang/go-sender"
-
-	"github.com/eaglexiang/go-handler"
-
 	"github.com/eaglexiang/go-simplecipher"
 
 	mycipher "github.com/eaglexiang/go-cipher"
 	myet "github.com/eaglexiang/go-et"
-	relayer "github.com/eaglexiang/go-relayer"
 	myuser "github.com/eaglexiang/go-user"
 )
 
@@ -50,7 +41,7 @@ type Service struct {
 	listener net.Listener
 	running  bool
 	reqs     chan net.Conn
-	relayer  *relayer.Relayer
+	relayer  *Relayer
 }
 
 // CreateService 构造Service
@@ -69,7 +60,7 @@ func CreateService() *Service {
 
 	service := Service{
 		reqs:    make(chan net.Conn),
-		relayer: relayer.CreateRelayer(Debug),
+		relayer: CreateRelayer(Debug),
 	}
 
 	et := myet.CreateET(
@@ -88,12 +79,12 @@ func CreateService() *Service {
 		service.relayer.AddHandler(et)
 	}
 	if ConfigKeyValues["http"] == "on" {
-		service.relayer.AddHandler(&httpproxy.HTTPProxy{})
+		service.relayer.AddHandler(&HTTPProxy{})
 	}
 	if ConfigKeyValues["socks"] == "on" {
-		service.relayer.AddHandler(&socks5.Socks5{})
+		service.relayer.AddHandler(&Socks5{})
 	}
-	for name, h := range handler.AllHandlers {
+	for name, h := range AllHandlers {
 		v, ok := ConfigKeyValues[name]
 		if !ok {
 			continue
@@ -105,8 +96,8 @@ func CreateService() *Service {
 
 	// 设置后端协议Sender
 	service.relayer.SetSender(et)
-	if sender.DefaultSender != nil {
-		service.relayer.SetSender(sender.DefaultSender)
+	if DefaultSender != nil {
+		service.relayer.SetSender(DefaultSender)
 	}
 	return &service
 }

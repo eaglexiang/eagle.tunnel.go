@@ -1,3 +1,11 @@
+<!--
+ * @Author: EagleXiang
+ * @LastEditors: EagleXiang
+ * @Email: eagle.xiang@outlook.com
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2019-01-29 15:00:05
+ * @LastEditTime: 2019-01-29 15:02:07
+ -->
 # Eagle Tunnel Go
 
 ## 什么是ET
@@ -44,6 +52,6 @@ et --listen 0.0.0.0 --http on --relayer [服务端IP]
 
 [最新发布](https://github.com/eaglexiang/eagle.tunnel.go/releases/latest)
 
-## 使用说明
+## 详细
 
-参照[使用指南](./docs/guide.md)一文。
+参照[指南](./docs/guide.md)一文。

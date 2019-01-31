@@ -4,13 +4,13 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-22 20:15:46
+ * @LastEditTime: 2019-01-31 21:11:13
  */
 
 package cmd
 
 import (
-	"../service"
+	"../etcore"
 	et "github.com/eaglexiang/go-et"
 
 	"errors"
@@ -44,7 +44,7 @@ func ImportArgs(argStrs []string) error {
 		}
 	}
 
-	err := service.ExecConfig()
+	err := etcore.ExecConfig()
 	if err != nil {
 		return err
 	}
@@ -91,6 +91,6 @@ func importArg(argStrs []string, indexOfArg int) (err error) {
 		return errors.New("importArg -> no value for arg: " + key)
 	}
 	value := argStrs[indexOfValue]
-	service.ConfigKeyValues[key] = value
+	etcore.ConfigKeyValues[key] = value
 	return nil
 }
