@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-31 21:09:53
+ * @LastEditTime: 2019-01-31 23:27:20
  */
 
 package etcore
@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/eaglexiang/go-bytebuffer"
-
 	mynet "github.com/eaglexiang/go-net"
 )
 

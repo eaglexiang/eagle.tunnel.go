@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-31 21:09:34
+ * @LastEditTime: 2019-02-01 12:31:55
  */
 
 package etcore
@@ -21,8 +21,9 @@ import (
 	"strconv"
 	"strings"
 
-	myet "github.com/eaglexiang/go-et"
 	myuser "github.com/eaglexiang/go-user"
+
+	myet "./et"
 )
 
 // ConfigPath 主配置文件的路径

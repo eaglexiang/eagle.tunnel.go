@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-31 21:09:50
+ * @LastEditTime: 2019-02-01 12:32:28
  */
 
 package etcore
@@ -18,11 +18,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eaglexiang/go-simplecipher"
-
 	mycipher "github.com/eaglexiang/go-cipher"
-	myet "github.com/eaglexiang/go-et"
+	"github.com/eaglexiang/go-simplecipher"
 	myuser "github.com/eaglexiang/go-user"
+
+	myet "./et"
 )
 
 // LocalUser 本地用户

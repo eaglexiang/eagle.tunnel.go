@@ -15,10 +15,11 @@ import (
 	"strconv"
 	"time"
 
-	"../etcore"
 	cipher "github.com/eaglexiang/go-cipher"
-	myet "github.com/eaglexiang/go-et"
 	simplecipher "github.com/eaglexiang/go-simplecipher"
+
+	"../etcore"
+	myet "../etcore/et"
 )
 
 // Check check命令

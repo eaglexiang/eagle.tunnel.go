@@ -4,14 +4,14 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-31 21:11:13
+ * @LastEditTime: 2019-02-01 12:33:00
  */
 
 package cmd
 
 import (
 	"../etcore"
-	et "github.com/eaglexiang/go-et"
+	"../etcore/et"
 
 	"errors"
 	"strings"
