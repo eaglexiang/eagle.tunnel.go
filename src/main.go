@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-31 21:13:01
+ * @LastEditTime: 2019-02-07 00:06:17
  */
 
 package main
@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+
+	"github.com/eaglexiang/go-settings"
 
 	"./cmd"
 	"./etcore"
@@ -37,7 +39,7 @@ func main() {
 			}
 			return
 		}
-		fmt.Println(etcore.SprintConfig())
+		fmt.Println(settings.ToString())
 		service = etcore.CreateService()
 		go core()
 		fmt.Println("press Ctrl + C to quit")

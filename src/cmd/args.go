@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-01 12:33:00
+ * @LastEditTime: 2019-02-07 00:01:18
  */
 
 package cmd
@@ -12,6 +12,7 @@ package cmd
 import (
 	"../etcore"
 	"../etcore/et"
+	"github.com/eaglexiang/go-settings"
 
 	"errors"
 	"strings"
@@ -91,6 +92,6 @@ func importArg(argStrs []string, indexOfArg int) (err error) {
 		return errors.New("importArg -> no value for arg: " + key)
 	}
 	value := argStrs[indexOfValue]
-	etcore.ConfigKeyValues[key] = value
+	settings.Set(key, value)
 	return nil
 }

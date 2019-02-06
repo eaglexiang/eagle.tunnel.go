@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-01 12:32:28
+ * @LastEditTime: 2019-02-06 23:59:54
  */
 
 package etcore
@@ -19,6 +19,7 @@ import (
 	"time"
 
 	mycipher "github.com/eaglexiang/go-cipher"
+	settings "github.com/eaglexiang/go-settings"
 	"github.com/eaglexiang/go-simplecipher"
 	myuser "github.com/eaglexiang/go-user"
 
@@ -47,11 +48,11 @@ type Service struct {
 // CreateService 构造Service
 func CreateService() *Service {
 	mycipher.DefaultCipher = func() mycipher.Cipher {
-		cipherType := mycipher.ParseCipherType(ConfigKeyValues["cipher"])
+		cipherType := mycipher.ParseCipherType(settings.Get("cipher"))
 		switch cipherType {
 		case mycipher.SimpleCipherType:
 			c := simplecipher.SimpleCipher{}
-			c.SetKey(ConfigKeyValues["data-key"])
+			c.SetKey(settings.Get("data-key"))
 			return &c
 		default:
 			return nil
@@ -65,31 +66,30 @@ func CreateService() *Service {
 
 	et := myet.CreateET(
 		ProxyStatus,
-		ConfigKeyValues["ip-type"],
-		ConfigKeyValues["head"],
-		ConfigKeyValues["relayer"],
-		ConfigKeyValues["location"],
+		settings.Get("ip-type"),
+		settings.Get("head"),
+		settings.Get("relayer"),
+		settings.Get("location"),
 		LocalUser,
 		Users,
 		time.Second*time.Duration(Timeout),
 	)
 
 	// 添加后端协议Handler
-	if ConfigKeyValues["et"] == "on" {
+	if settings.Get("et") == "on" {
 		service.relayer.AddHandler(et)
 	}
-	if ConfigKeyValues["http"] == "on" {
+	if settings.Get("http") == "on" {
 		service.relayer.AddHandler(&HTTPProxy{})
 	}
-	if ConfigKeyValues["socks"] == "on" {
+	if settings.Get("socks") == "on" {
 		service.relayer.AddHandler(&Socks5{})
 	}
 	for name, h := range AllHandlers {
-		v, ok := ConfigKeyValues[name]
-		if !ok {
+		if !settings.Exsit(name) {
 			continue
 		}
-		if v == "on" {
+		if settings.Get(name) == "on" {
 			service.relayer.AddHandler(h)
 		}
 	}
@@ -114,7 +114,7 @@ func (s *Service) Start() (err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig =
 		&tls.Config{InsecureSkipVerify: true}
 
-	ipe := ConfigKeyValues["listen"]
+	ipe := settings.Get("listen")
 	s.listener, err = net.Listen("tcp", ipe)
 	if err != nil {
 		return errors.New("Service.Start -> " + err.Error())

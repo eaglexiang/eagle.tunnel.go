@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-01 12:31:55
+ * @LastEditTime: 2019-02-07 00:19:39
  */
 
 package etcore
@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/eaglexiang/go-settings"
 	myuser "github.com/eaglexiang/go-user"
 
 	myet "./et"
@@ -28,9 +29,6 @@ import (
 
 // ConfigPath 主配置文件的路径
 var ConfigPath string
-
-// ConfigKeyValues 主配置文件的所有键值对参数
-var ConfigKeyValues = make(map[string]string)
 
 // EnableSOCKS5 启用relayer对SOCKS5协议的接收
 var EnableSOCKS5 bool
@@ -49,102 +47,100 @@ var Timeout int
 
 func init() {
 	// 设定参数默认值
-	ConfigKeyValues["timeout"] = "0"
-	ConfigKeyValues["location"] = "1;CN;CHN;China"
-	ConfigKeyValues["ip-type"] = "46"
-	ConfigKeyValues["data-key"] = "34"
-	ConfigKeyValues["head"] = "eagle_tunnel"
-	ConfigKeyValues["proxy-status"] = "enable"
-	ConfigKeyValues["user"] = "null:null"
-	ConfigKeyValues["user-check"] = "off"
-	ConfigKeyValues["listen"] = "0.0.0.0"
-	ConfigKeyValues["relayer"] = "127.0.0.1"
-	ConfigKeyValues["http"] = "off"
-	ConfigKeyValues["socks"] = "off"
-	ConfigKeyValues["et"] = "off"
-	ConfigKeyValues["debug"] = "off"
-	ConfigKeyValues["cipher"] = "simple"
+	settings.SetDefault("timeout", "0")
+	settings.SetDefault("location", "1;CN;CHN;China")
+	settings.SetDefault("ip-type", "46")
+	settings.SetDefault("data-key", "34")
+	settings.SetDefault("head", "eagle_tunnel")
+	settings.SetDefault("proxy-status", "enable")
+	settings.SetDefault("user", "null:null")
+	settings.SetDefault("user-check", "off")
+	settings.SetDefault("listen", "0.0.0.0")
+	settings.SetDefault("relayer", "127.0.0.1")
+	settings.SetDefault("http", "off")
+	settings.SetDefault("socks", "off")
+	settings.SetDefault("et", "off")
+	settings.SetDefault("debug", "off")
+	settings.SetDefault("cipher", "simple")
 }
 
 // readConfig 读取根据给定的配置文件
 func readConfig(filePath string) error {
 	ConfigPath = filePath
-	addDefaultArg("config-dir", filepath.Dir(ConfigPath))
+	settings.SetDefault("config-dir", filepath.Dir(ConfigPath))
 	// 读取配置文件
 	allConfLines, err := readLines(ConfigPath)
 	if err != nil {
 		return err
 	}
-	err = getKeyValues(ConfigKeyValues, allConfLines)
+	err = settings.ImportLines(allConfLines)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func addDefaultArg(key, value string) {
-	if _, ok := ConfigKeyValues[key]; !ok {
-		ConfigKeyValues[key] = value
-	}
-}
-
 // ExecConfig 执行配置
 func ExecConfig() error {
 	// 读取配置文件
-	if value, ok := ConfigKeyValues["config"]; ok {
-		readConfig(value)
+	if settings.Exsit("config") {
+		readConfig(settings.Get("config"))
 	}
 	// 读取用户列表
-	usersPath := ConfigKeyValues["config-dir"] + "/users.list"
+	usersPath := settings.Get("config-dir") + "/users.list"
 	err := importUsers(usersPath)
 	if err != nil {
 		return err
 	}
 
-	err = SetUser(ConfigKeyValues["user"])
+	err = SetUser(settings.Get("user"))
 	if err != nil {
 		return err
 	}
 
-	EnableSOCKS5 = ConfigKeyValues["socks"] == "on"
-	EnableHTTP = ConfigKeyValues["http"] == "on"
-	EnableET = ConfigKeyValues["et"] == "on"
+	EnableSOCKS5 = settings.Get("socks") == "on"
+	EnableHTTP = settings.Get("http") == "on"
+	EnableET = settings.Get("et") == "on"
 
-	SetListen(ConfigKeyValues["listen"])
-	SetRelayer(ConfigKeyValues["relayer"])
+	SetListen(settings.Get("listen"))
+	SetRelayer(settings.Get("relayer"))
 
-	err = SetProxyStatus(ConfigKeyValues["proxy-status"])
+	err = SetProxyStatus(settings.Get("proxy-status"))
 	if err != nil {
 		return err
 	}
 
-	if _, ok := ConfigKeyValues["config-dir"]; !ok {
+	if !settings.Exsit("config-dir") {
 		return nil
 	}
 
 	// DNS解析白名单
-	whiteDomainsPath := ConfigKeyValues["config-dir"] + "/whitelist_domain.txt"
+	whiteDomainsPath := settings.Get("config-dir") + "/whitelist_domain.txt"
 	myet.WhitelistDomains, _ = readLines(whiteDomainsPath)
 
 	// hosts文件
-	if hostsDir, ok := ConfigKeyValues["config-dir"]; ok {
-		hostsDir += "/hosts"
+	if settings.Exsit("config-dir") {
+		hostsDir := settings.Get("config-dir") + "/hosts"
 		err = readHosts(hostsDir)
 		if err != nil {
 			return errors.New("ExecConfig -> " + err.Error())
 		}
 	}
 
-	timeout, err := strconv.ParseInt(ConfigKeyValues["timeout"], 10, 32)
+	timeout, err := strconv.ParseInt(
+		settings.Get("timeout"),
+		10,
+		32)
 	if err != nil {
-		return err
+		return errors.New("ExecConfig -> " + err.Error())
 	}
 	Timeout = int(timeout)
 
-	SetDebug(ConfigKeyValues["debug"])
+	SetDebug(settings.Get("debug"))
 
 	// 导入Mods
-	if modsDir, ok := ConfigKeyValues["mod-dir"]; ok {
+	if settings.Exsit("mod-dir") {
+		modsDir := settings.Get("mod-dir")
 		err = ImportMods(modsDir)
 		if err != nil {
 			return errors.New("ExecConfig -> " + err.Error())
@@ -170,7 +166,7 @@ func SetProxyStatus(status string) error {
 	if ProxyStatus == myet.ErrorProxyStatus {
 		return errors.New("SetProxyStatus -> invalid proxy-status")
 	}
-	ConfigKeyValues["proxy-status"] = status
+	settings.Set("proxy-status", status)
 	return nil
 }
 
@@ -179,7 +175,7 @@ func SetDebug(debug string) {
 	if debug == "on" {
 		Debug = true
 	}
-	ConfigKeyValues["debug"] = debug
+	settings.Set("debug", debug)
 }
 
 func readLines(filePath string) ([]string, error) {
@@ -221,23 +217,6 @@ func importUsers(usersPath string) error {
 	return err
 }
 
-func getKeyValues(keyValues map[string]string, lines []string) error {
-	for _, line := range lines {
-		keyValue := strings.Split(line, "=")
-		if len(keyValue) < 2 {
-			return errors.New("invalid line: " + line)
-		}
-		value := keyValue[1]
-		for _, item := range keyValue[2:] {
-			value += "=" + item
-		}
-		key := strings.TrimSpace(keyValue[0])
-		value = strings.TrimSpace(value)
-		keyValues[key] = value
-	}
-	return nil
-}
-
 func exportKeyValues(keyValues *map[string]string, keys []string) string {
 	var result string
 	for _, key := range keys {
@@ -261,7 +240,7 @@ func SetRelayer(remoteIpe string) {
 			remoteIpe += ":8080"
 		}
 	}
-	ConfigKeyValues["relayer"] = remoteIpe
+	settings.Set("relayer", remoteIpe)
 }
 
 // SetListen 设定本地监听地址
@@ -279,7 +258,7 @@ func SetListen(localIpe string) {
 			localIpe += ":8080"
 		}
 	}
-	ConfigKeyValues["listen"] = localIpe
+	settings.Set("listen", localIpe)
 }
 
 func readHosts(hostsDir string) error {
@@ -341,15 +320,6 @@ func getHostsList(hostsDir string) ([]string, error) {
 		}
 	}
 	return hosts, nil
-}
-
-// SprintConfig 将配置输出为字符串
-func SprintConfig() string {
-	var text string
-	for k, v := range ConfigKeyValues {
-		text = text + k + ": " + v + "\n"
-	}
-	return text
 }
 
 // ImportMods 导入Mods

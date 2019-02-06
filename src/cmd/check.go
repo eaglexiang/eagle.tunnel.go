@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-31 21:11:36
+ * @LastEditTime: 2019-02-07 00:02:36
  */
 
 package cmd
@@ -14,6 +14,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/eaglexiang/go-settings"
 
 	cipher "github.com/eaglexiang/go-cipher"
 	simplecipher "github.com/eaglexiang/go-simplecipher"
@@ -80,11 +82,11 @@ func version() {
 
 func createET() *myet.ET {
 	cipher.DefaultCipher = func() cipher.Cipher {
-		cipherType := cipher.ParseCipherType(etcore.ConfigKeyValues["cipher"])
+		cipherType := cipher.ParseCipherType(settings.Get("cipher"))
 		switch cipherType {
 		case cipher.SimpleCipherType:
 			c := simplecipher.SimpleCipher{}
-			c.SetKey(etcore.ConfigKeyValues["data-key"])
+			c.SetKey(settings.Get("data-key"))
 			return &c
 		default:
 			return nil
@@ -92,10 +94,10 @@ func createET() *myet.ET {
 	}
 	et := myet.CreateET(
 		myet.ProxyENABLE,
-		etcore.ConfigKeyValues["ip-type"],
-		etcore.ConfigKeyValues["head"],
-		etcore.ConfigKeyValues["relayer"],
-		etcore.ConfigKeyValues["location"],
+		settings.Get("ip-type"),
+		settings.Get("head"),
+		settings.Get("relayer"),
+		settings.Get("location"),
 		etcore.LocalUser,
 		etcore.Users,
 		time.Second*time.Duration(etcore.Timeout),
