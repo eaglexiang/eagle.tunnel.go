@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-22 19:34:51
+ * @LastEditTime: 2019-02-07 18:26:53
  */
 
 package et
@@ -81,7 +81,7 @@ func (c Check) Handle(req string, tunnel *mytunnel.Tunnel) error {
 // Match 判断是否匹配
 func (c Check) Match(req string) bool {
 	args := strings.Split(req, " ")
-	if args[0] == "TCP" {
+	if args[0] == "CHECK" {
 		return true
 	}
 	return false
@@ -142,7 +142,7 @@ func SendEtCheckPingReq(et *ET, sig chan string) {
 	defer mytunnel.PutTunnel(tunnel)
 	err := et.connect2Relayer(tunnel)
 	if err != nil {
-		sig <- err.Error()
+		sig <- "SendEtCheckPingReq-> " + err.Error()
 		return
 	}
 
@@ -150,7 +150,7 @@ func SendEtCheckPingReq(et *ET, sig chan string) {
 	req := FormatEtType(EtCHECK) + " " + formatEtCheckType(EtCheckPING)
 	_, err = tunnel.WriteRight([]byte(req))
 	if err != nil {
-		sig <- err.Error()
+		sig <- "SendEtCheckPingReq-> " + err.Error()
 		return
 	}
 
@@ -165,7 +165,7 @@ func SendEtCheckPingReq(et *ET, sig chan string) {
 	}
 	reply := buffer.String()
 	if reply != "ok" {
-		sig <- "invalid ping reply: " + reply
+		sig <- "SendEtCheckPingReq-> " + "invalid ping reply: " + reply
 		return
 	}
 	duration := end.Sub(start)
