@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-25 12:56:39
+ * @LastEditTime: 2019-02-09 22:40:17
  */
 
 package et
@@ -35,7 +35,6 @@ var ProtocolCompatibleVersion, _ = version.CreateVersion("1.3")
 // 必须使用CreateET来构造该结构
 type ET struct {
 	proxyStatus   int
-	ipType        string
 	head          string
 	remoteET      string
 	localLocation string
@@ -59,7 +58,6 @@ func CreateET(
 ) *ET {
 	et := ET{
 		proxyStatus:   proxyStatus,
-		ipType:        ipType,
 		head:          head,
 		remoteET:      remoteET,
 		localLocation: localLocation,
@@ -67,17 +65,23 @@ func CreateET(
 		validUsers:    validUsers,
 		timeout:       timeout,
 	}
+
+	dns := DNS{ProxyStatus: et.proxyStatus}
+	dns6 := DNS6{ProxyStatus: et.proxyStatus}
 	tcp := createTCP(
 		et.proxyStatus,
 		localUser,
 		timeout,
+		ipType,
+		dns,
+		dns6,
 	)
-	dns := createDNS(et.proxyStatus, et.ipType)
 	location := createLocation(et.localLocation)
 
 	// 添加子协议的handler
 	et.AddSubHandler(tcp)
 	et.AddSubHandler(dns)
+	et.AddSubHandler(dns6)
 	et.AddSubHandler(location)
 	et.AddSubHandler(Check{})
 
@@ -85,6 +89,7 @@ func CreateET(
 	et.subSenders = make(map[int]Sender)
 	et.AddSubSender(tcp)
 	et.AddSubSender(dns)
+	et.AddSubSender(dns6)
 	et.AddSubSender(location)
 	return &et
 }

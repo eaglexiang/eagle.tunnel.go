@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-22 10:28:46
- * @LastEditTime: 2019-01-22 20:47:21
+ * @LastEditTime: 2019-02-09 21:00:46
  */
 
 package et
@@ -23,15 +23,16 @@ const (
 	EtUNKNOWN = iota
 	EtTCP
 	EtDNS
+	EtDNS6
 	EtLOCATION
 	EtCHECK
 )
 
 // 代理的状态
 const (
-	ErrorProxyStatus = iota
-	ProxyENABLE
+	ProxyENABLE = iota
 	ProxySMART
+	ErrorProxyStatus
 )
 
 // NetArg ET协议工作需要的参数集
@@ -95,36 +96,36 @@ func FormatProxyStatus(status int) string {
 
 // ParseEtType 得到字符串对应的ET请求类型
 func ParseEtType(src string) int {
-	var result int
 	switch src {
 	case "DNS":
-		result = EtDNS
+		return EtDNS
+	case "DNS6":
+		return EtDNS6
 	case "TCP":
-		result = EtTCP
+		return EtTCP
 	case "LOCATION":
-		result = EtLOCATION
+		return EtLOCATION
 	case "CHECK":
-		result = EtCHECK
+		return EtCHECK
 	default:
-		result = EtUNKNOWN
+		return EtUNKNOWN
 	}
-	return result
 }
 
 // FormatEtType 得到ET请求类型对应的字符串
 func FormatEtType(src int) string {
-	var result string
 	switch src {
 	case EtDNS:
-		result = "DNS"
+		return "DNS"
+	case EtDNS6:
+		return "DNS6"
 	case EtTCP:
-		result = "TCP"
+		return "TCP"
 	case EtLOCATION:
-		result = "LOCATION"
+		return "LOCATION"
 	case EtCHECK:
-		result = "CHECK"
+		return "CHECK"
 	default:
-		result = "UNKNOWN"
+		return "UNKNOWN"
 	}
-	return result
 }

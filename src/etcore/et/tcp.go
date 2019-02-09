@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-22 19:34:00
+ * @LastEditTime: 2019-02-09 22:46:07
  */
 
 package et
@@ -20,11 +20,15 @@ import (
 	myuser "github.com/eaglexiang/go-user"
 )
 
-// TCP ET-TCP子协议的实现 必须使用createTCP进行构造
+// TCP ET-TCP子协议的实现
+// 必须使用createTCP进行构造
 type TCP struct {
 	proxyStatus int
+	ipType      string
 	localUser   *myuser.User
 	timeout     time.Duration
+	dns         DNS
+	dns6        DNS6
 }
 
 // createTCP 构造TCP
@@ -32,13 +36,18 @@ func createTCP(
 	proxyStatus int,
 	localUser *myuser.User,
 	timeout time.Duration,
+	ipType string,
+	dns DNS,
+	dns6 DNS6,
 ) TCP {
-	t := TCP{
+	return TCP{
 		proxyStatus: proxyStatus,
 		localUser:   localUser,
 		timeout:     timeout,
+		ipType:      ipType,
+		dns:         dns,
+		dns6:        dns6,
 	}
-	return t
 }
 
 // Send 发送请求
@@ -48,16 +57,42 @@ func (t TCP) Send(et *ET, e *NetArg) (err error) {
 		if e.Domain == "" {
 			return errors.New("TCP.Send -> no des host")
 		}
-		// 调用DNS解析Domain为IP
-		_dns, ok := et.subSenders[EtDNS]
-		if !ok {
-			return errors.New("TCP.Send -> no dns sender")
-		}
-		dns := _dns.(DNS)
-		err = dns.Send(et, e)
-		if err != nil {
-			return errors.New("TCP.Send -> " +
-				err.Error())
+
+		// 调用DNS Sender解析Domain为IP
+		switch t.ipType {
+		case "4":
+			err = t.dns.Send(et, e)
+			if err != nil {
+				return errors.New("TCP.Send -> " +
+					err.Error())
+			}
+		case "6":
+			err = t.dns6.Send(et, e)
+			if err != nil {
+				return errors.New("TCP.Send -> " +
+					err.Error())
+			}
+		case "46":
+			err = t.dns.Send(et, e)
+			if err != nil {
+				err = t.dns6.Send(et, e)
+				if err != nil {
+					return errors.New("TCP.Send -> " +
+						err.Error())
+				}
+			}
+		case "64":
+			err = t.dns6.Send(et, e)
+			if err != nil {
+				err = t.dns.Send(et, e)
+				if err != nil {
+					return errors.New("TCP.Send -> " +
+						err.Error())
+				}
+			}
+		default:
+			return errors.New("TCP.Send -> invalid ip-type: " +
+				t.ipType)
 		}
 	}
 
@@ -136,6 +171,13 @@ func (t *TCP) sendTCPReq2Remote(et *ET, e *NetArg) error {
 }
 
 func (t *TCP) sendTCPReq2Server(e *NetArg) error {
+	if e.IP == "0.0.0.0" {
+		return nil
+	}
+	if e.IP == "::" {
+		return nil
+	}
+
 	var ipe string
 	ip := net.ParseIP(e.IP)
 	if ip.To4() != nil {

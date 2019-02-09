@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-09 22:10:50
+ * @LastEditTime: 2019-02-09 22:13:28
  */
 
 package et
@@ -20,130 +20,129 @@ import (
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
-var dnsRemoteCache = dnscache.CreateDNSCache()
-var dnsLocalCache = dnscache.CreateDNSCache()
+var dns6RemoteCache = dnscache.CreateDNSCache()
+var dns6LocalCache = dnscache.CreateDNSCache()
 
-// HostsCache 本地Hosts
-var HostsCache = make(map[string]string)
-
-// WhitelistDomains 需要被智能解析的DNS域名列表
-var WhitelistDomains []string
-
-// DNS ET-DNS子协议的实现
-type DNS struct {
+// DNS6 ET-DNS6子协议的实现
+type DNS6 struct {
 	ProxyStatus int
 }
 
-// Handle 处理ET-DNS请求
-func (d DNS) Handle(req string, tunnel *mytunnel.Tunnel) error {
+// Handle 处理ET-DNS6请求
+func (d DNS6) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
-		return errors.New("ETDNS.Handle -> req is too short")
+		return errors.New("DNS6.Handle -> req is too short")
 	}
 	domain := reqs[1]
 	e := NetArg{Domain: domain}
 	err := d.resolvDNSByLocalServer(&e)
 	if err != nil {
-		return errors.New("ETDNS.Handle -> " + err.Error())
+		return errors.New("DNS6.Handle -> " + err.Error())
 	}
 	_, err = tunnel.WriteLeft([]byte(e.IP))
 	if err != nil {
-		return errors.New("ETDNS.Handle -> " + err.Error())
+		return errors.New("DNS6.Handle -> " + err.Error())
 	}
 	return nil
 }
 
 // Match 判断是否匹配
-func (d DNS) Match(req string) bool {
+func (d DNS6) Match(req string) bool {
 	args := strings.Split(req, " ")
-	if args[0] == "DNS" {
+	if args[0] == "DNS6" {
 		return true
 	}
 	return false
 }
 
-// Send 发送ET-DNS请求
-func (d DNS) Send(et *ET, e *NetArg) (err error) {
+// Send 发送ET-DNS6请求
+func (d DNS6) Send(et *ET, e *NetArg) (err error) {
 	ip, result := HostsCache[e.Domain]
 	if result {
 		e.IP = ip
 		return nil
 	}
-	switch d.ProxyStatus {
-	case ProxySMART:
-		err = d.smartSend(et, e)
-		if err != nil {
-			return errors.New("DNS.Send -> " +
-				err.Error())
-		}
-	case ProxyENABLE:
-		err = d.proxySend(et, e)
-		if err != nil {
-			return errors.New("DNS.Send -> " +
-				err.Error())
-		}
-	default:
-		err = errors.New("DNS.Send -> invalid proxy-status")
-	}
+	// 暂时全部使用Proxy模式，
+	// 这是因为LOCATION指令暂不支持IPv6
+
+	// switch d.ProxyStatus {
+	// case ProxySMART:
+	// 	err = d.smartSend(et, e)
+	// 	if err != nil {
+	// 		return errors.New("DNS6.Send -> " +
+	// 			err.Error())
+	// 	}
+	// case ProxyENABLE:
+	// 	err = d.proxySend(et, e)
+	// 	if err != nil {
+	// 		return errors.New("DNS6.Send -> " +
+	// 			err.Error())
+	// 	}
+	// default:
+	// 	err = errors.New("DNS6.Send -> invalid proxy-status")
+	// }
+
+	err = d.proxySend(et, e)
 
 	if err != nil {
-		return errors.New("DNS.Send -> " +
+		return errors.New("DNS6.Send -> " +
 			err.Error())
 	}
 	return nil
 }
 
 // smartSend 智能模式
-func (d DNS) smartSend(et *ET, e *NetArg) error {
+func (d DNS6) smartSend(et *ET, e *NetArg) error {
 	white := IsWhiteDomain(e.Domain)
 	if white {
 		err := d.resolvDNSByProxy(et, e)
 		if err != nil {
-			return errors.New("DNS.smartSend -> " + err.Error())
+			return errors.New("DNS6.smartSend -> " + err.Error())
 		}
 		return nil
 	}
 	err := d.resolvDNSByLocalClient(et, e)
 	if err != nil {
-		return errors.New("DNS.smartSend -> " + err.Error())
+		return errors.New("DNS6.smartSend -> " + err.Error())
 	}
 	return nil
 }
 
 // proxySend 强制代理模式
-func (d DNS) proxySend(et *ET, e *NetArg) error {
+func (d DNS6) proxySend(et *ET, e *NetArg) error {
 	err := d.resolvDNSByProxy(et, e)
 	if err != nil {
-		return errors.New("DNS.proxySend -> " + err.Error())
+		return errors.New("DNS6.proxySend -> " + err.Error())
 	}
 	return nil
 }
 
 // ETType ET子协议类型
-func (d DNS) ETType() int {
-	return EtDNS
+func (d DNS6) ETType() int {
+	return EtDNS6
 }
 
-func (d DNS) resolvDNSByProxy(et *ET, e *NetArg) error {
+func (d DNS6) resolvDNSByProxy(et *ET, e *NetArg) error {
 	var err error
-	if dnsRemoteCache.Exsit(e.Domain) {
-		e.IP, err = dnsRemoteCache.Wait4IP(e.Domain)
+	if dns6RemoteCache.Exsit(e.Domain) {
+		e.IP, err = dns6RemoteCache.Wait4IP(e.Domain)
 		if err != nil {
 			return errors.New("resolvDNSByProxy -> " + err.Error())
 		}
 		return nil
 	}
-	dnsRemoteCache.Add(e.Domain)
+	dns6RemoteCache.Add(e.Domain)
 	err = d._resolvDNSByProxy(et, e)
 	if err != nil {
-		dnsRemoteCache.Delete(e.Domain)
+		dns6RemoteCache.Delete(e.Domain)
 		return errors.New("resolvDNSByProxy -> " + err.Error())
 	}
-	dnsRemoteCache.Update(e.Domain, e.IP)
+	dns6RemoteCache.Update(e.Domain, e.IP)
 	return nil
 }
 
-func (d DNS) _resolvDNSByProxy(et *ET, e *NetArg) error {
+func (d DNS6) _resolvDNSByProxy(et *ET, e *NetArg) error {
 	// connect 2 relayer
 	tunnel := mytunnel.GetTunnel()
 	defer mytunnel.PutTunnel(tunnel)
@@ -152,7 +151,7 @@ func (d DNS) _resolvDNSByProxy(et *ET, e *NetArg) error {
 		return errors.New("_resolvDNSByProxy -> " + err.Error())
 	}
 	// send req
-	req := FormatEtType(EtDNS) + " " + e.Domain
+	req := FormatEtType(EtDNS6) + " " + e.Domain
 	_, err = tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return errors.New("_resolvDNSByProxy -> " + err.Error())
@@ -175,29 +174,29 @@ func (d DNS) _resolvDNSByProxy(et *ET, e *NetArg) error {
 }
 
 // resolvDNSByLocalClient 本地解析DNS
-func (d DNS) resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
-	if dnsLocalCache.Exsit(e.Domain) {
-		e.IP, err = dnsLocalCache.Wait4IP(e.Domain)
+func (d DNS6) resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
+	if dns6LocalCache.Exsit(e.Domain) {
+		e.IP, err = dns6LocalCache.Wait4IP(e.Domain)
 		if err != nil {
 			return errors.New("resolvDNSByLocalClient -> " + err.Error())
 		}
 		return nil
 	}
-	dnsLocalCache.Add(e.Domain)
+	dns6LocalCache.Add(e.Domain)
 	err = d._resolvDNSByLocalClient(et, e)
 	if err != nil {
-		dnsLocalCache.Delete(e.Domain)
+		dns6LocalCache.Delete(e.Domain)
 		return errors.New("resolvDNSByLocalClient -> " + err.Error())
 	}
-	dnsLocalCache.Update(e.Domain, e.IP)
+	dns6LocalCache.Update(e.Domain, e.IP)
 	return nil
 }
 
-func (d DNS) _resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
-	e.IP, err = mynet.ResolvIPv4(e.Domain)
+func (d DNS6) _resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
+	e.IP, err = mynet.ResolvIPv6(e.Domain)
 	// 本地解析失败应该让用户察觉，手动添加DNS白名单
 	if err != nil {
-		return errors.New("_resolvDNSByLocalClient -> fail to resolv DNS by local: " + e.Domain +
+		return errors.New("_resolvDNSByLocalClient -> fail to resolv DNS6 by local: " + e.Domain +
 			" , consider adding this domain to your whitelist_domain.txt")
 	}
 
@@ -218,39 +217,29 @@ func (d DNS) _resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
 	return nil
 }
 
-// resolvDNSByLocalServer 本地解析DNS
-func (d DNS) resolvDNSByLocalServer(e *NetArg) (err error) {
-	if dnsLocalCache.Exsit(e.Domain) {
-		e.IP, err = dnsLocalCache.Wait4IP(e.Domain)
+// resolvDNSByLocalServer 本地解析DNS6
+func (d DNS6) resolvDNSByLocalServer(e *NetArg) (err error) {
+	if dns6LocalCache.Exsit(e.Domain) {
+		e.IP, err = dns6LocalCache.Wait4IP(e.Domain)
 		if err != nil {
 			return errors.New("resolvDNSByLocalServer -> " + err.Error())
 		}
 		return nil
 	}
-	dnsLocalCache.Add(e.Domain)
+	dns6LocalCache.Add(e.Domain)
 	err = d._resolvDNSByLocalServer(e)
 	if err != nil {
-		dnsLocalCache.Delete(e.Domain)
+		dns6LocalCache.Delete(e.Domain)
 		return errors.New("resolvDNSByLocalServer -> " + err.Error())
 	}
-	dnsLocalCache.Update(e.Domain, e.IP)
+	dns6LocalCache.Update(e.Domain, e.IP)
 	return nil
 }
 
-func (d DNS) _resolvDNSByLocalServer(e *NetArg) (err error) {
+func (d DNS6) _resolvDNSByLocalServer(e *NetArg) (err error) {
 	e.IP, err = mynet.ResolvIPv4(e.Domain)
 	if err != nil {
 		return errors.New("_resolvDNSByLocalServer -> " + err.Error())
 	}
 	return nil
-}
-
-// IsWhiteDomain 判断域名是否是白名域名
-func IsWhiteDomain(host string) (isWhite bool) {
-	for _, line := range WhitelistDomains {
-		if strings.HasSuffix(host, line) {
-			return true
-		}
-	}
-	return false
 }
