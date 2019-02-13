@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-13 23:16:59
+ * @LastEditTime: 2019-02-13 23:39:13
  */
 
 package etcore
@@ -216,14 +216,6 @@ func importUsers(usersPath string) error {
 		Users[user.ID] = user
 	}
 	return err
-}
-
-func exportKeyValues(keyValues *map[string]string, keys []string) string {
-	var result string
-	for _, key := range keys {
-		result += key + " = " + (*keyValues)[key] + "\r\n"
-	}
-	return result
 }
 
 // SetRelayer 设置relayer地址
