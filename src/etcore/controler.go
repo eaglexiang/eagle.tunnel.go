@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-13 23:39:13
+ * @LastEditTime: 2019-02-13 23:54:44
  */
 
 package etcore
@@ -202,7 +202,7 @@ func readLines(filePath string) ([]string, error) {
 }
 
 func importUsers(usersPath string) error {
-	Users := make(map[string]*myuser.User)
+	Users = make(map[string]*myuser.User)
 	userLines, err := readLines(usersPath)
 	if err != nil {
 		return nil
