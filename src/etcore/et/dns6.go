@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-09 22:13:28
+ * @LastEditTime: 2019-02-13 23:58:58
  */
 
 package et
@@ -237,7 +237,7 @@ func (d DNS6) resolvDNSByLocalServer(e *NetArg) (err error) {
 }
 
 func (d DNS6) _resolvDNSByLocalServer(e *NetArg) (err error) {
-	e.IP, err = mynet.ResolvIPv4(e.Domain)
+	e.IP, err = mynet.ResolvIPv6(e.Domain)
 	if err != nil {
 		return errors.New("_resolvDNSByLocalServer -> " + err.Error())
 	}
