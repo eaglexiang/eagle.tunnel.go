@@ -1,10 +1,9 @@
 /*
- * @Description:
  * @Author: EagleXiang
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-06 23:59:54
+ * @LastEditTime: 2019-02-13 23:33:28
  */
 
 package etcore
@@ -30,7 +29,7 @@ import (
 var LocalUser *myuser.User
 
 // Users 所有授权用户
-var Users *map[string]*myuser.User
+var Users map[string]*myuser.User
 
 // Debug 开启Debug
 var Debug bool

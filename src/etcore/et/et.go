@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-09 22:40:17
+ * @LastEditTime: 2019-02-13 23:34:49
  */
 
 package et
@@ -26,7 +26,7 @@ import (
 )
 
 // ProtocolVersion 作为Sender使用的协议版本号
-var ProtocolVersion, _ = version.CreateVersion("1.3")
+var ProtocolVersion, _ = version.CreateVersion("1.4")
 
 // ProtocolCompatibleVersion 作为Handler可兼容的最低协议版本号
 var ProtocolCompatibleVersion, _ = version.CreateVersion("1.3")
@@ -39,7 +39,7 @@ type ET struct {
 	remoteET      string
 	localLocation string
 	localUser     *myuser.User
-	validUsers    *map[string]*myuser.User
+	validUsers    map[string]*myuser.User
 	subHandlers   []Handler
 	subSenders    map[int]Sender
 	timeout       time.Duration
@@ -53,7 +53,7 @@ func CreateET(
 	remoteET string,
 	localLocation string,
 	localUser *myuser.User,
-	validUsers *map[string]*myuser.User,
+	validUsers map[string]*myuser.User,
 	timeout time.Duration,
 ) *ET {
 	et := ET{
@@ -70,7 +70,7 @@ func CreateET(
 	dns6 := DNS6{ProxyStatus: et.proxyStatus}
 	tcp := createTCP(
 		et.proxyStatus,
-		localUser,
+		localUser.SpeedLimiter(),
 		timeout,
 		ipType,
 		dns,
@@ -86,7 +86,6 @@ func CreateET(
 	et.AddSubHandler(Check{})
 
 	// 添加子协议的sender
-	et.subSenders = make(map[int]Sender)
 	et.AddSubSender(tcp)
 	et.AddSubSender(dns)
 	et.AddSubSender(dns6)
@@ -101,6 +100,9 @@ func (et *ET) AddSubHandler(handler Handler) {
 
 // AddSubSender 添加子协议Sender
 func (et *ET) AddSubSender(sender Sender) {
+	if et.subSenders == nil {
+		et.subSenders = make(map[int]Sender)
+	}
 	et.subSenders[sender.ETType()] = sender
 }
 
@@ -125,7 +127,7 @@ func (et *ET) Handle(e *mynet.Arg) error {
 	e.Tunnel.EncryptLeft = c.Encrypt
 	e.Tunnel.DecryptLeft = c.Decrypt
 
-	err = et.checkUserOfReq(e.Tunnel) // 检查本地用户
+	err = et.checkUserOfReq(e.Tunnel) // 检查请求用户
 	if err != nil {
 		return errors.New("ET.Handle -> " + err.Error())
 	}
@@ -248,8 +250,7 @@ func (et *ET) checkHeaderOfReq(
 	return nil
 }
 
-func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) error {
-	var err error
+func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
 	if et.localUser.ID == "null" {
 		return nil // no need to check
 	}
@@ -296,7 +297,7 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 		tunnel.WriteLeft([]byte(reply))
 		return errors.New("checkUserOfReq -> " + reply)
 	}
-	validUser, ok := (*et.validUsers)[user2Check.ID]
+	validUser, ok := et.validUsers[user2Check.ID]
 	if !ok {
 		// 找不到该用户
 		reply := "incorrent username or password"

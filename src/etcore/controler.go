@@ -1,10 +1,9 @@
 /*
- * @Description:
  * @Author: EagleXiang
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-07 00:19:39
+ * @LastEditTime: 2019-02-13 23:16:59
  */
 
 package etcore
@@ -87,13 +86,16 @@ func ExecConfig() error {
 		readConfig(settings.Get("config"))
 	}
 	// 读取用户列表
-	usersPath := settings.Get("config-dir") + "/users.list"
-	err := importUsers(usersPath)
-	if err != nil {
-		return err
+	if settings.Get("user-check") == "on" {
+		usersPath := settings.Get("config-dir") + "/users.list"
+		err := importUsers(usersPath)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = SetUser(settings.Get("user"))
+	// 读取本地用户
+	err := SetUser(settings.Get("user"))
 	if err != nil {
 		return err
 	}
@@ -200,8 +202,7 @@ func readLines(filePath string) ([]string, error) {
 }
 
 func importUsers(usersPath string) error {
-	users := make(map[string]*myuser.User)
-	Users = &users
+	Users := make(map[string]*myuser.User)
 	userLines, err := readLines(usersPath)
 	if err != nil {
 		return nil
@@ -212,7 +213,7 @@ func importUsers(usersPath string) error {
 		if err != nil {
 			return err
 		}
-		(*Users)[user.ID] = user
+		Users[user.ID] = user
 	}
 	return err
 }

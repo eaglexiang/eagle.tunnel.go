@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-09 22:46:07
+ * @LastEditTime: 2019-02-13 23:25:49
  */
 
 package et
@@ -14,10 +14,11 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/ratelimit"
+
 	"github.com/eaglexiang/go-bytebuffer"
 
 	mytunnel "github.com/eaglexiang/go-tunnel"
-	myuser "github.com/eaglexiang/go-user"
 )
 
 // TCP ET-TCP子协议的实现
@@ -25,7 +26,7 @@ import (
 type TCP struct {
 	proxyStatus int
 	ipType      string
-	localUser   *myuser.User
+	limiter     *ratelimit.Limiter
 	timeout     time.Duration
 	dns         DNS
 	dns6        DNS6
@@ -34,7 +35,7 @@ type TCP struct {
 // createTCP 构造TCP
 func createTCP(
 	proxyStatus int,
-	localUser *myuser.User,
+	limiter *ratelimit.Limiter,
 	timeout time.Duration,
 	ipType string,
 	dns DNS,
@@ -42,7 +43,7 @@ func createTCP(
 ) TCP {
 	return TCP{
 		proxyStatus: proxyStatus,
-		localUser:   localUser,
+		limiter:     limiter,
 		timeout:     timeout,
 		ipType:      ipType,
 		dns:         dns,
@@ -54,7 +55,9 @@ func createTCP(
 func (t TCP) Send(et *ET, e *NetArg) (err error) {
 	// 检查目的地址是否合法
 	if e.IP == "" {
+		// 不存在可供连接的IP
 		if e.Domain == "" {
+			// 也不存在可供解析的域名
 			return errors.New("TCP.Send -> no des host")
 		}
 
@@ -192,7 +195,7 @@ func (t *TCP) sendTCPReq2Server(e *NetArg) error {
 	e.Tunnel.Right = &conn
 	e.Tunnel.EncryptRight = nil
 	e.Tunnel.DecryptRight = nil
-	e.Tunnel.SpeedLimiter = t.localUser.SpeedLimiter()
+	e.Tunnel.SpeedLimiter = t.limiter
 	return nil
 }
 
