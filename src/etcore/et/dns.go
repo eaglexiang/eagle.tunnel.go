@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-14 12:27:45
+ * @LastEditTime: 2019-02-14 12:28:47
  */
 
 package et
@@ -253,7 +253,7 @@ func (d DNS) resolvDNSByLocalServer(e *NetArg) (err error) {
 }
 
 // _resolvDNSByLocalServer 本地解析DNS
-// 实际完成DNS的解析动作
+// 实际完成DNS的解析动作修改为
 func (d DNS) _resolvDNSByLocalServer(e *NetArg) (err error) {
 	e.IP, err = mynet.ResolvIPv4(e.Domain)
 	if err != nil {
