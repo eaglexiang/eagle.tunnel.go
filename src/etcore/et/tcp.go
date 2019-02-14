@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-13 23:25:49
+ * @LastEditTime: 2019-02-14 12:21:35
  */
 
 package et
@@ -145,8 +145,8 @@ func (t *TCP) proxySend(et *ET, e *NetArg) error {
 	return nil
 }
 
-// ETType ET子协议的类型
-func (t TCP) ETType() int {
+// Type ET子协议的类型
+func (t TCP) Type() int {
 	return EtTCP
 }
 

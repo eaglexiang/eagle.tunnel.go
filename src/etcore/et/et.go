@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-13 23:34:49
+ * @LastEditTime: 2019-02-14 12:21:15
  */
 
 package et
@@ -103,7 +103,7 @@ func (et *ET) AddSubSender(sender Sender) {
 	if et.subSenders == nil {
 		et.subSenders = make(map[int]Sender)
 	}
-	et.subSenders[sender.ETType()] = sender
+	et.subSenders[sender.Type()] = sender
 }
 
 // Match 判断请求消息是否匹配该业务

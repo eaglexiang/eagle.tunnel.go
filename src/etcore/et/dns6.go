@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-13 23:58:58
+ * @LastEditTime: 2019-02-14 12:21:01
  */
 
 package et
@@ -93,6 +93,8 @@ func (d DNS6) Send(et *ET, e *NetArg) (err error) {
 }
 
 // smartSend 智能模式
+// 智能模式会先检查域名是否存在于白名单
+// 白名单内域名将转入强制代理模式
 func (d DNS6) smartSend(et *ET, e *NetArg) error {
 	white := IsWhiteDomain(e.Domain)
 	if white {
@@ -118,11 +120,14 @@ func (d DNS6) proxySend(et *ET, e *NetArg) error {
 	return nil
 }
 
-// ETType ET子协议类型
-func (d DNS6) ETType() int {
+// Type ET子协议类型
+func (d DNS6) Type() int {
 	return EtDNS6
 }
 
+// resolvDNSByProxy 使用代理服务器进行DNS6的解析
+// 此函数主要完成缓存功能
+// 当缓存不命中则调用 DNS6._resolvDNSByProxy
 func (d DNS6) resolvDNSByProxy(et *ET, e *NetArg) error {
 	var err error
 	if dns6RemoteCache.Exsit(e.Domain) {
@@ -142,6 +147,8 @@ func (d DNS6) resolvDNSByProxy(et *ET, e *NetArg) error {
 	return nil
 }
 
+// _resolvDNSByProxy 使用代理服务器进行DNS6的解析
+// 实际完成DNS查询操作
 func (d DNS6) _resolvDNSByProxy(et *ET, e *NetArg) error {
 	// connect 2 relayer
 	tunnel := mytunnel.GetTunnel()
@@ -173,7 +180,10 @@ func (d DNS6) _resolvDNSByProxy(et *ET, e *NetArg) error {
 	return nil
 }
 
-// resolvDNSByLocalClient 本地解析DNS
+// resolvDNSByLocalClient 本地解析DNS6
+// 此函数由客户端使用
+// 此函数主要完成缓存功能
+// 当缓存不命中则进一步调用 DNS6._resolvDNSByLocalClient
 func (d DNS6) resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
 	if dns6LocalCache.Exsit(e.Domain) {
 		e.IP, err = dns6LocalCache.Wait4IP(e.Domain)
@@ -192,6 +202,8 @@ func (d DNS6) resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
 	return nil
 }
 
+// _resolvDNSByLocalClient 本地解析DNS6
+// 实际完成DNS6的解析动作
 func (d DNS6) _resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
 	e.IP, err = mynet.ResolvIPv6(e.Domain)
 	// 本地解析失败应该让用户察觉，手动添加DNS白名单
@@ -218,6 +230,9 @@ func (d DNS6) _resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
 }
 
 // resolvDNSByLocalServer 本地解析DNS6
+// 此函数由服务端使用
+// 此函数完成缓存相关的工作
+// 当缓存不命中则进一步调用 DNS6._resolvDNSByLocalServer
 func (d DNS6) resolvDNSByLocalServer(e *NetArg) (err error) {
 	if dns6LocalCache.Exsit(e.Domain) {
 		e.IP, err = dns6LocalCache.Wait4IP(e.Domain)
@@ -236,6 +251,8 @@ func (d DNS6) resolvDNSByLocalServer(e *NetArg) (err error) {
 	return nil
 }
 
+// _resolvDNSByLocalServer 本地解析DNS6
+// 实际完成DNS6的解析动作
 func (d DNS6) _resolvDNSByLocalServer(e *NetArg) (err error) {
 	e.IP, err = mynet.ResolvIPv6(e.Domain)
 	if err != nil {

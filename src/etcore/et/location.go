@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-22 18:22:24
+ * @LastEditTime: 2019-02-14 12:21:59
  */
 
 package et
@@ -76,8 +76,8 @@ func (l Location) Send(et *ET, e *NetArg) error {
 	return nil
 }
 
-// ETType ET子协议的类型
-func (l Location) ETType() int {
+// Type ET子协议的类型
+func (l Location) Type() int {
 	return EtLOCATION
 }
 

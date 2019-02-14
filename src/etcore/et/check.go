@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-07 18:26:53
+ * @LastEditTime: 2019-02-14 12:22:41
  */
 
 package et
@@ -199,4 +199,9 @@ func handleEtCheckVersionReq(tunnel *mytunnel.Tunnel, reqs []string) {
 	}
 	reply := "Protocol Version OK"
 	tunnel.WriteLeft([]byte(reply))
+}
+
+// Type ET子协议的类型
+func (c Check) Type() int {
+	return EtCHECK
 }
