@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-14 12:22:41
+ * @LastEditTime: 2019-02-17 00:53:56
  */
 
 package et
@@ -97,10 +97,10 @@ func SendEtCheckAuthReq(et *ET) string {
 		return err.Error()
 	}
 
-	if et.localUser.ID == "null" {
+	if et.localUser.ID() == "null" {
 		return "no local user"
 	}
-	return "AUTH OK with local user: " + et.localUser.ID
+	return "AUTH OK with local user: " + et.localUser.ID()
 }
 
 // SendEtCheckVersionReq 发射 ET-CHECK-VERSION 请求

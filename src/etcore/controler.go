@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-13 23:54:44
+ * @LastEditTime: 2019-02-17 00:58:06
  */
 
 package etcore
@@ -213,7 +213,7 @@ func importUsers(usersPath string) error {
 		if err != nil {
 			return err
 		}
-		Users[user.ID] = user
+		Users[user.ID()] = user
 	}
 	return err
 }

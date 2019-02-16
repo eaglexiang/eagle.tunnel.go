@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-14 12:21:15
+ * @LastEditTime: 2019-02-17 00:53:49
  */
 
 package et
@@ -251,7 +251,7 @@ func (et *ET) checkHeaderOfReq(
 }
 
 func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
-	if et.localUser.ID == "null" {
+	if et.localUser.ID() == "null" {
 		return nil // no need to check
 	}
 	user := et.localUser.ToString()
