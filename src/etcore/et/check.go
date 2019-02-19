@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-17 00:53:56
+ * @LastEditTime: 2019-02-19 16:26:17
  */
 
 package et
@@ -192,7 +192,7 @@ func handleEtCheckVersionReq(tunnel *mytunnel.Tunnel, reqs []string) {
 		tunnel.WriteLeft([]byte(reply))
 		return
 	}
-	if versionOfReq.IsLessThan(&ProtocolCompatibleVersion) {
+	if versionOfReq.IsLessThan(ProtocolCompatibleVersion) {
 		reply := "the version of protocol may be incompatible"
 		tunnel.WriteLeft([]byte(reply))
 		return
