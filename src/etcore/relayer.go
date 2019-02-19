@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-31 21:09:41
+ * @LastEditTime: 2019-02-17 23:59:45
  */
 
 package etcore
@@ -64,7 +64,9 @@ func (relayer *Relayer) Handle(conn net.Conn) (err error) {
 		}
 	}
 	if handler == nil {
-		return errors.New("Relayer.Handle -> no matched handler: " +
+		ip := conn.RemoteAddr().String()
+		return errors.New("Relayer.Handle -> no matched handler from " +
+			ip + ": " +
 			string(firstMsg))
 	}
 
