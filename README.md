@@ -4,11 +4,11 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-29 15:00:05
- * @LastEditTime: 2019-02-21 17:39:02
+ * @LastEditTime: 2019-02-21 17:56:00
  -->
 # Eagle Tunnel Go
 
-![build](https://travis-ci.org/eaglexiang/eagle.tunnel.go.svg?branch=master) ![platforms](https://img.shields.io/badge/platform-Linux|Windows|macOS-lightgrey.svg) ![](https://img.shields.io/badge/language-go-blue.svg) ![license](https://img.shields.io/badge/license-MIT-green.svg)
+![build](https://travis-ci.org/eaglexiang/eagle.tunnel.go.svg?branch=master) ![platforms](https://img.shields.io/badge/platform-Linux|Windows|macOS-lightgrey.svg) ![](https://img.shields.io/badge/language-go-blue.svg) [![codebeat badge](https://codebeat.co/badges/cab6956f-534d-48e5-b751-35c14c777ec2)](https://codebeat.co/projects/github-com-eaglexiang-eagle-tunnel-go-master) ![license](https://img.shields.io/badge/license-MIT-black.svg)
 
 ## 什么是ET
 
