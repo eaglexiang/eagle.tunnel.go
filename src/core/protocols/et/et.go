@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 23:08:49
+ * @LastEditTime: 2019-02-22 00:35:01
  */
 
 package et
@@ -250,13 +250,12 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 		return nil
 	}
 	// 接收用户信息
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = tunnel.ReadLeft(buffer.Buf())
+	userStr, err := tunnel.ReadLeftStr()
 	if err != nil {
-		return errors.New("checkUserOfReq -> " + err.Error())
+		return errors.New("ET.checkUserOfReq -> " +
+			err.Error())
 	}
-	userStr := buffer.String()
+	// 获取用户IP
 	addr := (*tunnel.Left).RemoteAddr()
 	ip := strings.Split(addr.String(), ":")[0]
 	user2Check, err := myuser.ParseReqUser(userStr, ip)
@@ -265,16 +264,16 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 		return errors.New("checkUserOfReq -> " + err.Error())
 	}
 	if user2Check.ID == "null" {
-		reply := "username shouldn't be 'null'"
-		tunnel.WriteLeft([]byte(reply))
-		return errors.New("checkUserOfReq -> " + reply)
+		return errors.New("checkUserOfReq -> " +
+			"username shouldn't be 'null'")
 	}
 	validUser, ok := et.arg.Users.ValidUsers[user2Check.ID]
 	if !ok {
 		// 找不到该用户
 		reply := "incorrent username or password"
 		tunnel.WriteLeft([]byte(reply))
-		return errors.New("checkUserOfReq -> username not found: " + user2Check.ID)
+		return errors.New("checkUserOfReq -> username not found: " +
+			user2Check.ID)
 	}
 	err = validUser.CheckAuth(user2Check)
 	if err != nil {
@@ -283,11 +282,7 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 		return errors.New("checkUserOfReq -> " + err.Error())
 	}
 	reply := "valid"
-	count, _ := tunnel.WriteLeft([]byte(reply))
-	if count != 5 {
-		// 发送响应失败
-		return errors.New("checkUserOfReq -> wrong reply")
-	}
+	tunnel.WriteLeft([]byte(reply))
 	tunnel.SpeedLimiter = validUser.SpeedLimiter()
 	return nil
 }
