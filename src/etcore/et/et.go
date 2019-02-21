@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-17 00:53:49
+ * @LastEditTime: 2019-02-21 15:19:33
  */
 
 package et
@@ -26,7 +26,7 @@ import (
 )
 
 // ProtocolVersion 作为Sender使用的协议版本号
-var ProtocolVersion, _ = version.CreateVersion("1.4")
+var ProtocolVersion, _ = version.CreateVersion("1.5")
 
 // ProtocolCompatibleVersion 作为Handler可兼容的最低协议版本号
 var ProtocolCompatibleVersion, _ = version.CreateVersion("1.3")
@@ -77,13 +77,14 @@ func CreateET(
 		dns6,
 	)
 	location := createLocation(et.localLocation)
+	check := Check{validUsers: validUsers}
 
 	// 添加子协议的handler
 	et.AddSubHandler(tcp)
 	et.AddSubHandler(dns)
 	et.AddSubHandler(dns6)
 	et.AddSubHandler(location)
-	et.AddSubHandler(Check{})
+	et.AddSubHandler(check)
 
 	// 添加子协议的sender
 	et.AddSubSender(tcp)

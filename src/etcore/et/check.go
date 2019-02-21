@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-19 16:26:17
+ * @LastEditTime: 2019-02-21 15:28:11
  */
 
 package et
@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/eaglexiang/go-bytebuffer"
+	myuser "github.com/eaglexiang/go-user"
 
 	mytunnel "github.com/eaglexiang/go-tunnel"
 	version "github.com/eaglexiang/go-version"
@@ -23,24 +24,28 @@ import (
 // EtASK请求的类型
 const (
 	EtCheckUNKNOWN = iota
-	EtCheckAuth
+	EtCheckAUTH
 	EtCheckPING
 	EtCheckVERSION
+	EtCheckUSERS
 )
 
 // Check ET-Check协议的实现
 type Check struct {
+	validUsers map[string]*myuser.User
 }
 
 // ParseEtCheckType 将字符串转换为EtCHECK请求的类型
 func ParseEtCheckType(src string) int {
 	switch src {
 	case "AUTH", "auth":
-		return EtCheckAuth
+		return EtCheckAUTH
 	case "PING", "ping":
 		return EtCheckPING
 	case "VERSION", "version":
 		return EtCheckVERSION
+	case "USERS", "users":
+		return EtCheckUSERS
 	default:
 		return EtCheckUNKNOWN
 	}
@@ -49,12 +54,14 @@ func ParseEtCheckType(src string) int {
 // formatEtCheckType 得到EtCHECK请求类型对应的字符串
 func formatEtCheckType(src int) string {
 	switch src {
-	case EtCheckAuth:
+	case EtCheckAUTH:
 		return "AUTH"
 	case EtCheckPING:
 		return "PING"
 	case EtCheckVERSION:
 		return "VERSION"
+	case EtCheckUSERS:
+		return "USERS"
 	default:
 		return "UNKNOWN"
 	}
@@ -72,8 +79,11 @@ func (c Check) Handle(req string, tunnel *mytunnel.Tunnel) error {
 		handleEtCheckPingReq(tunnel)
 	case EtCheckVERSION:
 		handleEtCheckVersionReq(tunnel, reqs)
+	case EtCheckUSERS:
+		c.handleEtCheckUsersReq(tunnel)
 	default:
-		return errors.New("Check.Handle -> invalid check type")
+		return errors.New("Check.Handle -> invalid check type: " +
+			reqs[1])
 	}
 	return nil
 }
@@ -87,8 +97,18 @@ func (c Check) Match(req string) bool {
 	return false
 }
 
+// Type ET子协议的类型
+func (c Check) Type() int {
+	return EtCHECK
+}
+
 // SendEtCheckAuthReq 发射 ET-CHECK-AUTH 请求
 func SendEtCheckAuthReq(et *ET) string {
+	// null代表未启用本地用户
+	if et.localUser.ID() == "null" {
+		return "no local user"
+	}
+
 	// 当connect2Relayer成功，则说明鉴权成功
 	tunnel := mytunnel.GetTunnel()
 	defer mytunnel.PutTunnel(tunnel)
@@ -97,38 +117,15 @@ func SendEtCheckAuthReq(et *ET) string {
 		return err.Error()
 	}
 
-	if et.localUser.ID() == "null" {
-		return "no local user"
-	}
 	return "AUTH OK with local user: " + et.localUser.ID()
 }
 
 // SendEtCheckVersionReq 发射 ET-CHECK-VERSION 请求
 func SendEtCheckVersionReq(et *ET) string {
-	tunnel := mytunnel.GetTunnel()
-	defer mytunnel.PutTunnel(tunnel)
-	err := et.connect2Relayer(tunnel)
-	if err != nil {
-		return err.Error()
-	}
-
-	// 告知VERSION请求
 	req := FormatEtType(EtCHECK) + " " +
 		formatEtCheckType(EtCheckVERSION) + " " +
 		ProtocolVersion.Raw
-	_, err = tunnel.WriteRight([]byte(req))
-	if err != nil {
-		return err.Error()
-	}
-
-	// 接受回复
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = tunnel.ReadRight(buffer.Buf())
-	if err != nil {
-		return err.Error()
-	}
-	reply := buffer.String()
+	reply := sendNormalEtCheckReq(et, req)
 	return reply
 }
 
@@ -137,38 +134,14 @@ func SendEtCheckPingReq(et *ET, sig chan string) {
 
 	start := time.Now() // 开始计时
 
-	// 连接服务器
-	tunnel := mytunnel.GetTunnel()
-	defer mytunnel.PutTunnel(tunnel)
-	err := et.connect2Relayer(tunnel)
-	if err != nil {
-		sig <- "SendEtCheckPingReq-> " + err.Error()
-		return
-	}
-
-	// 告知PING请求
 	req := FormatEtType(EtCHECK) + " " + formatEtCheckType(EtCheckPING)
-	_, err = tunnel.WriteRight([]byte(req))
-	if err != nil {
-		sig <- "SendEtCheckPingReq-> " + err.Error()
+	reply := sendNormalEtCheckReq(et, req)
+	if reply != "ok" {
+		sig <- "SendEtCheckPingReq-> invalid reply: " + reply
 		return
 	}
 
-	// 接收响应数据
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = tunnel.ReadRight(buffer.Buf())
-	end := time.Now() // 停止计时
-	if err != nil {
-		sig <- err.Error()
-		return
-	}
-	reply := buffer.String()
-	if reply != "ok" {
-		sig <- "SendEtCheckPingReq-> " + "invalid ping reply: " + reply
-		return
-	}
-	duration := end.Sub(start)
+	duration := time.Since(start)
 	ns := duration.Nanoseconds()
 	ms := ns / 1000 / 1000
 	sig <- strconv.FormatInt(ms, 10)
@@ -201,7 +174,46 @@ func handleEtCheckVersionReq(tunnel *mytunnel.Tunnel, reqs []string) {
 	tunnel.WriteLeft([]byte(reply))
 }
 
-// Type ET子协议的类型
-func (c Check) Type() int {
-	return EtCHECK
+// SendEtCheckUsersReq 发射 ET-CHECK-USERS 请求
+func SendEtCheckUsersReq(et *ET) string {
+	req := FormatEtType(EtCHECK) + " " +
+		formatEtCheckType(EtCheckUSERS)
+	reply := sendNormalEtCheckReq(et, req)
+	return reply
+}
+
+func (c Check) handleEtCheckUsersReq(tunnel *mytunnel.Tunnel) {
+	var reply string
+	for _, user := range c.validUsers {
+		line := user.ID() + ": " + user.Count()
+		reply += line + "\n"
+	}
+	tunnel.WriteLeft([]byte(reply))
+}
+
+// 大多数 ET-CHECK 发射操作都是类似的：
+// 连接 - 发送请求 - 得到反馈
+func sendNormalEtCheckReq(et *ET, req string) string {
+	tunnel := mytunnel.GetTunnel()
+	defer mytunnel.PutTunnel(tunnel)
+	err := et.connect2Relayer(tunnel)
+	if err != nil {
+		return "sendNormalEtCheckReq-> " + err.Error()
+	}
+
+	// 发送请求
+	_, err = tunnel.WriteRight([]byte(req))
+	if err != nil {
+		return "sendNormalEtCheckReq-> " + err.Error()
+	}
+
+	// 接受回复
+	buffer := bytebuffer.GetKBBuffer()
+	defer bytebuffer.PutKBBuffer(buffer)
+	buffer.Length, err = tunnel.ReadRight(buffer.Buf())
+	if err != nil {
+		return "sendNormalEtCheckReq-> " + err.Error()
+	}
+	reply := buffer.String()
+	return reply
 }

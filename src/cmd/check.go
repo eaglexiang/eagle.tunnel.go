@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-07 00:02:36
+ * @LastEditTime: 2019-02-21 15:52:26
  */
 
 package cmd
@@ -34,10 +34,12 @@ func Check(args []string) {
 	switch theType {
 	case myet.EtCheckPING:
 		ping()
-	case myet.EtCheckAuth:
+	case myet.EtCheckAUTH:
 		auth()
 	case myet.EtCheckVERSION:
 		version()
+	case myet.EtCheckUSERS:
+		users()
 	default:
 		fmt.Println("invalid check command")
 	}
@@ -77,6 +79,15 @@ func auth() {
 func version() {
 	et := createET()
 	reply := myet.SendEtCheckVersionReq(et)
+	fmt.Println(reply)
+}
+
+func users() {
+	fmt.Println("USERS: ")
+	fmt.Println("--- ---")
+
+	et := createET()
+	reply := myet.SendEtCheckUsersReq(et)
 	fmt.Println(reply)
 }
 
