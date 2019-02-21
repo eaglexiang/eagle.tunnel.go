@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 20:58:58
+ * @LastEditTime: 2019-02-22 00:55:15
  */
 
 package et
@@ -32,16 +32,12 @@ func (d DNS6) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	if len(reqs) < 2 {
 		return errors.New("DNS6.Handle -> req is too short")
 	}
-	domain := reqs[1]
-	e := NetArg{Domain: domain}
+	e := NetArg{Domain: reqs[1]}
 	err := d.resolvDNS6ByLocalServer(&e)
 	if err != nil {
 		return errors.New("DNS6.Handle -> " + err.Error())
 	}
-	_, err = tunnel.WriteLeft([]byte(e.IP))
-	if err != nil {
-		return errors.New("DNS6.Handle -> " + err.Error())
-	}
+	tunnel.WriteLeft([]byte(e.IP))
 	return nil
 }
 
@@ -94,8 +90,7 @@ func (d DNS6) Send(et *ET, e *NetArg) (err error) {
 // 智能模式会先检查域名是否存在于白名单
 // 白名单内域名将转入强制代理模式
 func (d DNS6) smartSend(et *ET, e *NetArg) error {
-	white := IsWhiteDomain(e.Domain)
-	if white {
+	if IsWhiteDomain(e.Domain) {
 		err := d.resolvDNS6ByProxy(et, e)
 		if err != nil {
 			return errors.New("DNS6.smartSend -> " + err.Error())
@@ -126,8 +121,7 @@ func (d DNS6) Type() int {
 // resolvDNS6ByProxy 使用代理服务器进行DNS6的解析
 // 此函数主要完成缓存功能
 // 当缓存不命中则调用 DNS6._resolvDNSByProxy
-func (d DNS6) resolvDNS6ByProxy(et *ET, e *NetArg) error {
-	var err error
+func (d DNS6) resolvDNS6ByProxy(et *ET, e *NetArg) (err error) {
 	if dns6RemoteCache.Exsit(e.Domain) {
 		e.IP, err = dns6RemoteCache.Wait4IP(e.Domain)
 		if err != nil {
@@ -195,16 +189,16 @@ func (d DNS6) _resolvDNS6ByLocalClient(et *ET, e *NetArg) (err error) {
 	l := et.subSenders[EtLOCATION].(Location)
 	l.Send(et, e)
 	proxy := l.CheckProxyByLocation(e.Location)
-	if proxy {
-		// 更新IP为Relayer端的解析结果
-		ne := NetArg{Domain: e.Domain}
-		err = d.resolvDNS6ByProxy(et, &ne)
-		if err != nil {
-			return errors.New("_resolvDNS6ByLocalClient -> " + err.Error())
-		}
-		e.IP = ne.IP
+	if !proxy {
+		return nil
 	}
-
+	// 需要代理：更新IP为Relayer端的解析结果
+	ne := NetArg{Domain: e.Domain}
+	err = d.resolvDNS6ByProxy(et, &ne)
+	if err != nil {
+		return errors.New("_resolvDNS6ByLocalClient -> " + err.Error())
+	}
+	e.IP = ne.IP
 	return nil
 }
 
