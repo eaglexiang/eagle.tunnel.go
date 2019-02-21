@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 18:13:49
+ * @LastEditTime: 2019-02-21 18:23:51
  */
 
 package et
@@ -15,8 +15,6 @@ import (
 	"time"
 
 	"go.uber.org/ratelimit"
-
-	"github.com/eaglexiang/go-bytebuffer"
 
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
@@ -160,26 +158,13 @@ func (t TCP) Type() int {
 }
 
 func (t *TCP) sendTCPReq2Remote(et *ET, e *NetArg) error {
-	err := et.connect2Relayer(e.Tunnel)
-	if err != nil {
-		return errors.New("TCP.sendTCPReq2Remote -> " + err.Error())
-	}
 	req := FormatEtType(EtTCP) + " " + e.IP + " " + e.Port
-	_, err = e.Tunnel.WriteRight([]byte(req))
-	if err != nil {
-		return errors.New("TCP.sendTCPReq2Remote -> " + err.Error())
-	}
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = e.Tunnel.ReadRight(buffer.Buf())
-	if err != nil {
-		return errors.New("TCP.sendTCPReq2Remote -> " + err.Error())
-	}
-	reply := buffer.String()
+	reply := sendQueryReq(et, req)
 	if reply != "ok" {
-		err = errors.New("TCP.sendTCPReq2Remote -> failed 2 connect 2 server by relayer")
+		return errors.New("TCP.sendTCPReq2Remote -> " +
+			"failed 2 connect 2 server by relayer")
 	}
-	return err
+	return nil
 }
 
 func (t *TCP) sendTCPReq2Server(e *NetArg) error {

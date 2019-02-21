@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-14 12:28:47
+ * @LastEditTime: 2019-02-21 18:20:44
  */
 
 package et
@@ -12,8 +12,6 @@ import (
 	"errors"
 	"net"
 	"strings"
-
-	"github.com/eaglexiang/go-bytebuffer"
 
 	dnscache "github.com/eaglexiang/go-dnscache"
 	mynet "github.com/eaglexiang/go-net"
@@ -151,27 +149,8 @@ func (d DNS) resolvDNSByProxy(et *ET, e *NetArg) error {
 // _resolvDNSByProxy 使用代理服务器进行DNS的解析
 // 实际完成DNS查询操作
 func (d DNS) _resolvDNSByProxy(et *ET, e *NetArg) error {
-	// connect 2 relayer
-	tunnel := mytunnel.GetTunnel()
-	defer mytunnel.PutTunnel(tunnel)
-	err := et.connect2Relayer(tunnel)
-	if err != nil {
-		return errors.New("_resolvDNSByProxy -> " + err.Error())
-	}
-	// send req
 	req := FormatEtType(EtDNS) + " " + e.Domain
-	_, err = tunnel.WriteRight([]byte(req))
-	if err != nil {
-		return errors.New("_resolvDNSByProxy -> " + err.Error())
-	}
-	// get reply
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = tunnel.ReadRight(buffer.Buf())
-	if err != nil {
-		return errors.New("_resolvDNSByProxy -> " + err.Error())
-	}
-	reply := buffer.String()
+	reply := sendQueryReq(et, req)
 	ip := net.ParseIP(reply)
 	if ip == nil {
 		return errors.New("_resolvDNSByProxy -> failed to resolv by remote: " +
@@ -253,7 +232,7 @@ func (d DNS) resolvDNSByLocalServer(e *NetArg) (err error) {
 }
 
 // _resolvDNSByLocalServer 本地解析DNS
-// 实际完成DNS的解析动作修改为
+// 实际完成DNS的解析动作
 func (d DNS) _resolvDNSByLocalServer(e *NetArg) (err error) {
 	e.IP, err = mynet.ResolvIPv4(e.Domain)
 	if err != nil {

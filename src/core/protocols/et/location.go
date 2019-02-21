@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-14 12:21:59
+ * @LastEditTime: 2019-02-21 18:22:37
  */
 
 package et
@@ -14,8 +14,6 @@ import (
 	"net"
 	"net/http"
 	"strings"
-
-	"github.com/eaglexiang/go-bytebuffer"
 
 	mynet "github.com/eaglexiang/go-net"
 	mytunnel "github.com/eaglexiang/go-tunnel"
@@ -82,23 +80,9 @@ func (l Location) Type() int {
 }
 
 func (l *Location) checkLocationByRemote(et *ET, e *NetArg) error {
-	tunnel := mytunnel.GetTunnel()
-	defer mytunnel.PutTunnel(tunnel)
-	err := et.connect2Relayer(tunnel)
-	if err != nil {
-		return errors.New("Location.checkLocationByRemote -> " + err.Error())
-	}
 	req := FormatEtType(EtLOCATION) + " " + e.IP
-	_, err = tunnel.WriteRight([]byte(req))
-	if err != nil {
-		return errors.New("Location.checkLocationByRemote -> " + err.Error())
-	}
-	buffer := bytebuffer.GetKBBuffer()
-	buffer.Length, err = tunnel.ReadRight(buffer.Buf())
-	if err != nil {
-		return errors.New("Location.checkLocationByRemote -> " + err.Error())
-	}
-	e.Location = buffer.String()
+	reply := sendQueryReq(et, req)
+	e.Location = reply
 	return nil
 }
 

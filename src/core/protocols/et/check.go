@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 15:28:11
+ * @LastEditTime: 2019-02-21 18:19:29
  */
 
 package et
@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eaglexiang/go-bytebuffer"
 	myuser "github.com/eaglexiang/go-user"
 
 	mytunnel "github.com/eaglexiang/go-tunnel"
@@ -125,7 +124,7 @@ func SendEtCheckVersionReq(et *ET) string {
 	req := FormatEtType(EtCHECK) + " " +
 		formatEtCheckType(EtCheckVERSION) + " " +
 		ProtocolVersion.Raw
-	reply := sendNormalEtCheckReq(et, req)
+	reply := sendQueryReq(et, req)
 	return reply
 }
 
@@ -135,7 +134,7 @@ func SendEtCheckPingReq(et *ET, sig chan string) {
 	start := time.Now() // 开始计时
 
 	req := FormatEtType(EtCHECK) + " " + formatEtCheckType(EtCheckPING)
-	reply := sendNormalEtCheckReq(et, req)
+	reply := sendQueryReq(et, req)
 	if reply != "ok" {
 		sig <- "SendEtCheckPingReq-> invalid reply: " + reply
 		return
@@ -178,7 +177,7 @@ func handleEtCheckVersionReq(tunnel *mytunnel.Tunnel, reqs []string) {
 func SendEtCheckUsersReq(et *ET) string {
 	req := FormatEtType(EtCHECK) + " " +
 		formatEtCheckType(EtCheckUSERS)
-	reply := sendNormalEtCheckReq(et, req)
+	reply := sendQueryReq(et, req)
 	return reply
 }
 
@@ -189,31 +188,4 @@ func (c Check) handleEtCheckUsersReq(tunnel *mytunnel.Tunnel) {
 		reply += line + "\n"
 	}
 	tunnel.WriteLeft([]byte(reply))
-}
-
-// 大多数 ET-CHECK 发射操作都是类似的：
-// 连接 - 发送请求 - 得到反馈
-func sendNormalEtCheckReq(et *ET, req string) string {
-	tunnel := mytunnel.GetTunnel()
-	defer mytunnel.PutTunnel(tunnel)
-	err := et.connect2Relayer(tunnel)
-	if err != nil {
-		return "sendNormalEtCheckReq-> " + err.Error()
-	}
-
-	// 发送请求
-	_, err = tunnel.WriteRight([]byte(req))
-	if err != nil {
-		return "sendNormalEtCheckReq-> " + err.Error()
-	}
-
-	// 接受回复
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = tunnel.ReadRight(buffer.Buf())
-	if err != nil {
-		return "sendNormalEtCheckReq-> " + err.Error()
-	}
-	reply := buffer.String()
-	return reply
 }

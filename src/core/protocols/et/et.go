@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 17:58:19
+ * @LastEditTime: 2019-02-21 18:18:32
  */
 
 package et
@@ -318,4 +318,32 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 	}
 	tunnel.SpeedLimiter = validUser.SpeedLimiter()
 	return nil
+}
+
+// 查询类请求的发射过程都是类似的
+// 连接 - 发送请求 - 得到反馈
+// 区别仅仅在请求命令的内容
+func sendQueryReq(et *ET, req string) string {
+	tunnel := mytunnel.GetTunnel()
+	defer mytunnel.PutTunnel(tunnel)
+	err := et.connect2Relayer(tunnel)
+	if err != nil {
+		return "sendNormalEtCheckReq-> " + err.Error()
+	}
+
+	// 发送请求
+	_, err = tunnel.WriteRight([]byte(req))
+	if err != nil {
+		return "sendNormalEtCheckReq-> " + err.Error()
+	}
+
+	// 接受回复
+	buffer := bytebuffer.GetKBBuffer()
+	defer bytebuffer.PutKBBuffer(buffer)
+	buffer.Length, err = tunnel.ReadRight(buffer.Buf())
+	if err != nil {
+		return "sendNormalEtCheckReq-> " + err.Error()
+	}
+	reply := buffer.String()
+	return reply
 }
