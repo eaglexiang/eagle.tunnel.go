@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 16:18:54
+ * @LastEditTime: 2019-02-22 00:07:23
  */
 
 package httpproxy
@@ -89,64 +89,77 @@ func (conn *HTTPProxy) Name() string {
 	return "HTTP"
 }
 
-func dismantle(request string) (int, string, string) {
-	var reqType int
-	var host string
-	var port string
+func dismantle(request string) (reqType int, host string, port string) {
 	lines := strings.Split(request, "\r\n")
 	args := strings.Split(lines[0], " ")
-	if len(args) >= 3 {
-		switch args[0] {
-		case "CONNECT":
-			reqType = HTTPCONNECT
-		case "OPTIONS", "HEAD", "GET", "POST", "PUT", "DELETE", "TRACE":
-			reqType = HTTPOTHERS
-		default:
-			reqType = HTTPERROR
-		}
-		u, err := url.Parse(args[1])
-		if err == nil {
-			if u.Host == "" {
-				switch reqType {
-				case HTTPCONNECT:
-					args[1] = "https://" + args[1]
-				case HTTPOTHERS:
-					args[1] = "http://" + args[1]
-				}
-				u, err = url.Parse(args[1])
-			}
-		} else {
-			args := strings.Split(args[1], ":")
-			if len(args) == 2 {
-				host = args[0]
-				port = args[1]
-			}
-		}
-		if err == nil {
-			host = u.Host
-			hostLines := strings.Split(host, ":")
-			host = hostLines[0]
-			if len(hostLines) == 2 {
-				port = hostLines[1]
-			}
-			if port == "" {
-				port = u.Port()
-			}
-			if port == "" {
-				switch u.Scheme {
-				case "https":
-					port = "443"
-				case "http":
-					port = "80"
-				case "ftp":
-					port = "21"
-				default:
-					port = "80"
-				}
-			}
+	if len(args) < 3 {
+		return HTTPERROR, "", ""
+	}
+
+	// 获取HTTP请求类型
+	reqType = getReqType(args[0])
+	if reqType == HTTPERROR {
+		return HTTPERROR, "", ""
+	}
+
+	// 补全协议头
+	args[1] = completeProtocolHeader(args[1], reqType)
+	url, err := url.Parse(args[1])
+	if err != nil {
+		return reqType, "", ""
+	}
+	// 获取host与port
+	host = url.Host
+	// url.Host有可能包含了端口号
+	hostElements := strings.Split(host, ":")
+	host = hostElements[0]
+	if len(hostElements) == 2 {
+		port = hostElements[1]
+	} else if len(hostElements) > 2 {
+		return HTTPERROR, "", ""
+	}
+	if port != "" {
+		return reqType, host, port
+	}
+	// url.Host未包含端口号
+	port = url.Port()
+	if port != "" {
+		return reqType, host, port
+	}
+	// 无端口号，则使用协议默认端口
+	switch url.Scheme {
+	case "https":
+		return reqType, host, "443"
+	case "http":
+		return reqType, host, "80"
+	default:
+		return reqType, host, "80"
+	}
+}
+
+// completeProtocolHeader 补全协议头
+func completeProtocolHeader(path string, reqType int) string {
+	if !strings.HasPrefix(path, "http://") &&
+		!strings.HasPrefix(path, "https://") {
+		switch reqType {
+		case HTTPCONNECT:
+			path = "https://" + path
+		case HTTPOTHERS:
+			path = "http://" + path
 		}
 	}
-	return reqType, host, port
+	return path
+}
+
+func getReqType(reqType string) int {
+	switch reqType {
+	case "CONNECT":
+		return HTTPCONNECT
+	case "OPTIONS", "HEAD", "GET", "POST", "PUT", "DELETE", "TRACE":
+		return HTTPOTHERS
+	default:
+		return HTTPERROR
+	}
 }
 
 func createNewRequest(oldRequest string) string {
