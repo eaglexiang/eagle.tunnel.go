@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 23:10:44
+ * @LastEditTime: 2019-02-22 01:08:13
  */
 
 package core
@@ -43,7 +43,7 @@ type Service struct {
 	listener net.Listener
 	running  bool
 	reqs     chan net.Conn
-	relayer  *Relayer
+	relayer  Relayer
 }
 
 // CreateService 构造Service
@@ -62,7 +62,7 @@ func CreateService() *Service {
 
 	service := Service{
 		reqs:    make(chan net.Conn),
-		relayer: CreateRelayer(Debug),
+		relayer: Relayer{},
 	}
 
 	users := myet.UsersArg{
@@ -158,8 +158,11 @@ func (s *Service) handle() {
 
 func (s *Service) _Handle(req net.Conn) {
 	err := s.relayer.Handle(req)
-	if err != nil {
-		fmt.Println(err.Error())
+	if err == nil {
+		return
+	}
+	if Debug {
+		fmt.Println(err)
 	}
 }
 

@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 16:19:20
+ * @LastEditTime: 2019-02-22 01:11:52
  */
 
 package core
@@ -23,15 +23,6 @@ import (
 type Relayer struct {
 	handlers []Handler
 	sender   Sender
-	debug    bool
-}
-
-// CreateRelayer 构造Relayer
-func CreateRelayer(debug bool) *Relayer {
-	relayer := Relayer{
-		debug: debug,
-	}
-	return &relayer
 }
 
 // AddHandler 为Relayer增添可用的handler
@@ -46,23 +37,8 @@ func (relayer *Relayer) SetSender(sender Sender) {
 
 // Handle 处理请求连接
 func (relayer *Relayer) Handle(conn net.Conn) (err error) {
-	// 获取握手消息
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = conn.Read(buffer.Buf())
-	if err != nil {
-		return errors.New("Relayer.Handle -> " + err.Error())
-	}
-	firstMsg := buffer.Cut()
-
-	// 识别业务协议
-	var handler Handler
-	for _, h := range relayer.handlers {
-		if h.Match(firstMsg) {
-			handler = h
-			break
-		}
-	}
+	firstMsg := getFirsMsg(conn)                      // 获取握手消息
+	handler := getHandler(firstMsg, relayer.handlers) // 识别业务协议
 	if handler == nil {
 		ip := conn.RemoteAddr().String()
 		return errors.New("Relayer.Handle -> no matched handler from " +
@@ -79,45 +55,56 @@ func (relayer *Relayer) Handle(conn net.Conn) (err error) {
 		Tunnel: tunnel,
 	}
 
+	err = handler.Handle(&e)
+	if err != nil {
+		if err.Error() == "no need to continue" {
+			return nil
+		}
+		return errors.New("Relayer.Handle -> " +
+			err.Error())
+	}
+
 	// 判断是否是sender业务
 	typeOfSender := reflect.TypeOf(relayer.sender)
 	typeOfHandler := reflect.TypeOf(handler)
-	if typeOfHandler != typeOfSender {
-		// 非sender业务负责获取目的Host
-		err = handler.Handle(&e)
-		if err != nil {
-			if !relayer.debug {
-				return nil
-			}
-			return errors.New("Relayer.Handle -> " +
-				err.Error())
-		}
-		// 根据目的Host建立连接
-		err = relayer.sender.Send(&e)
-		if err != nil {
-			return errors.New("Relayer.Handle -> " +
-				err.Error())
-		}
-		// 完成委托行为
-		for _, f := range e.Delegates {
-			f()
-		}
-	} else {
-		// sender业务直接进行处理
-		err = handler.Handle(&e)
-		if err != nil {
-			if !relayer.debug {
-				return nil
-			}
-			if err.Error() == "no need to continue" {
-				return nil
-			}
-			return errors.New("Relayer.Handle -> " +
-				err.Error())
-		}
+	if typeOfHandler == typeOfSender {
+		// sender业务直接流动
+		tunnel.Flow()
+		return nil
 	}
-
-	// Tunnel开始流动
+	// 从非sender业务获取目的Host
+	// 然后根据目的Host建立连接
+	err = relayer.sender.Send(&e)
+	if err != nil {
+		return errors.New("Relayer.Handle -> " +
+			err.Error())
+	}
+	// 完成委托行为
+	for _, f := range e.Delegates {
+		f()
+	}
 	tunnel.Flow()
 	return nil
+}
+
+func getHandler(firstMsg []byte, handlers []Handler) Handler {
+	var handler Handler
+	for _, h := range handlers {
+		if h.Match(firstMsg) {
+			handler = h
+			break
+		}
+	}
+	return handler
+}
+
+func getFirsMsg(conn net.Conn) []byte {
+	buffer := bytebuffer.GetKBBuffer()
+	defer bytebuffer.PutKBBuffer(buffer)
+	var err error
+	buffer.Length, err = conn.Read(buffer.Buf())
+	if err != nil {
+		return nil
+	}
+	return buffer.Cut()
 }
