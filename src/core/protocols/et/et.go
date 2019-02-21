@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-22 00:35:01
+ * @LastEditTime: 2019-02-22 00:44:43
  */
 
 package et
@@ -86,39 +86,22 @@ func (et *ET) Match(firstMsg []byte) bool {
 
 // Handle 处理ET请求
 func (et *ET) Handle(e *mynet.Arg) error {
-	// 验证流程
 	args := strings.Split(string(e.Msg), " ")
-	err := et.checkHeaderOfReq(args, e.Tunnel) // 检查握手头
+	err := et.checkHeaderOfReq(args, e.Tunnel) // 检查协议头
 	if err != nil {
 		return errors.New("ET.Handle -> " + err.Error())
 	}
-	c := mycipher.DefaultCipher() // 创建Cipher
-	if c == nil {
-		return errors.New("ET.Handle -> cipher is nil")
-	}
-	e.Tunnel.EncryptLeft = c.Encrypt
-	e.Tunnel.DecryptLeft = c.Decrypt
-
+	createCipher(e.Tunnel)            // 创建cipher
 	err = et.checkUserOfReq(e.Tunnel) // 检查请求用户
 	if err != nil {
 		return errors.New("ET.Handle -> " + err.Error())
 	}
 	// 选择子协议handler
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = e.Tunnel.ReadLeft(buffer.Buf())
+	subReq, err := e.Tunnel.ReadLeftStr()
 	if err != nil {
-		return errors.New("ET.Handle -> get sub-header: " +
-			err.Error())
+		return errors.New("ET.Handle -> " + err.Error())
 	}
-	subReq := buffer.String()
-	var handler Handler
-	for _, h := range et.subHandlers {
-		if h.Match(subReq) {
-			handler = h
-			break
-		}
-	}
+	handler := getHandler(subReq, et.subHandlers)
 	if handler == nil {
 		return errors.New("ET.Handle -> invalid req: " +
 			subReq)
@@ -134,6 +117,26 @@ func (et *ET) Handle(e *mynet.Arg) error {
 		return errors.New("no need to continue")
 	}
 	return nil
+}
+
+func createCipher(tunnel *mytunnel.Tunnel) {
+	c := mycipher.DefaultCipher()
+	if c == nil {
+		panic("ET.Handle -> cipher is nil")
+	}
+	tunnel.EncryptLeft = c.Encrypt
+	tunnel.DecryptLeft = c.Decrypt
+}
+
+func getHandler(subReq string, subHandlers []Handler) Handler {
+	var handler Handler
+	for _, h := range subHandlers {
+		if h.Match(subReq) {
+			handler = h
+			break
+		}
+	}
+	return handler
 }
 
 // Send 发送ET请求
