@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-22 00:07:23
+ * @LastEditTime: 2019-02-22 00:15:54
  */
 
 package httpproxy
@@ -163,33 +163,32 @@ func getReqType(reqType string) int {
 }
 
 func createNewRequest(oldRequest string) string {
-	newReq := ""
 	lines := strings.Split(oldRequest, "\r\n")
 	firstLine := lines[0]
 	argsOfFirstLine := strings.Split(firstLine, " ")
-	if len(argsOfFirstLine) == 3 {
-		u, err := url.Parse(argsOfFirstLine[1])
-		if err == nil {
-			path := u.Path
-			if u.RawQuery != "" {
-				path += "?" + u.RawQuery
-			}
-			argsOfFirstLine[1] = path
-			newFirstLine := fmt.Sprintf("%s %s %s",
-				argsOfFirstLine[0],
-				argsOfFirstLine[1],
-				argsOfFirstLine[2])
-			newReq = newFirstLine
-			for _, line := range lines[1:] {
-				if strings.HasPrefix(line, "Proxy-Connection:") {
-					connection := strings.TrimPrefix(line, "Proxy-Connection:")
-					newReq += "\r\nConnection:" + connection
-				} else {
-					newReq += "\r\n" + line
-				}
-			}
+	if len(argsOfFirstLine) != 3 {
+		return ""
+	}
+	u, err := url.Parse(argsOfFirstLine[1])
+	if err != nil {
+		return ""
+	}
+	path := u.Path
+	if u.RawQuery != "" {
+		path += "?" + u.RawQuery
+	}
+	argsOfFirstLine[1] = path
+	newFirstLine := fmt.Sprintf("%s %s %s",
+		argsOfFirstLine[0],
+		argsOfFirstLine[1],
+		argsOfFirstLine[2])
+	newReq := newFirstLine
+	for _, line := range lines[1:] {
+		if strings.HasPrefix(line, "Proxy-Connection:") {
+			connection := strings.TrimPrefix(line, "Proxy-Connection:")
+			newReq += "\r\nConnection:" + connection
 		} else {
-			fmt.Println(oldRequest)
+			newReq += "\r\n" + line
 		}
 	}
 	return newReq
