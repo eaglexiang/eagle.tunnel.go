@@ -3,10 +3,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-17 23:59:45
+ * @LastEditTime: 2019-02-21 16:19:20
  */
 
-package etcore
+package core
 
 import (
 	"errors"

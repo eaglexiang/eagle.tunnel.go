@@ -3,10 +3,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-31 21:09:38
+ * @LastEditTime: 2019-02-21 16:18:54
  */
 
-package etcore
+package httpproxy
 
 import (
 	"errors"

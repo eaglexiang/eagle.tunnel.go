@@ -3,10 +3,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-13 23:33:28
+ * @LastEditTime: 2019-02-21 16:20:14
  */
 
-package etcore
+package core
 
 import (
 	"crypto/tls"
@@ -22,7 +22,9 @@ import (
 	"github.com/eaglexiang/go-simplecipher"
 	myuser "github.com/eaglexiang/go-user"
 
-	myet "./et"
+	myet "../et"
+	"../httpproxy"
+	"../socks5"
 )
 
 // LocalUser 本地用户
@@ -79,10 +81,10 @@ func CreateService() *Service {
 		service.relayer.AddHandler(et)
 	}
 	if settings.Get("http") == "on" {
-		service.relayer.AddHandler(&HTTPProxy{})
+		service.relayer.AddHandler(&httpproxy.HTTPProxy{})
 	}
 	if settings.Get("socks") == "on" {
-		service.relayer.AddHandler(&Socks5{})
+		service.relayer.AddHandler(&socks5.Socks5{})
 	}
 	for name, h := range AllHandlers {
 		if !settings.Exsit(name) {

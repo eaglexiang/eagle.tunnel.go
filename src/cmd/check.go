@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 15:52:26
+ * @LastEditTime: 2019-02-21 16:21:06
  */
 
 package cmd
@@ -20,8 +20,8 @@ import (
 	cipher "github.com/eaglexiang/go-cipher"
 	simplecipher "github.com/eaglexiang/go-simplecipher"
 
-	"../etcore"
-	myet "../etcore/et"
+	etcore "../core/core"
+	myet "../core/et"
 )
 
 // Check check命令

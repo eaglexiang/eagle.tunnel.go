@@ -3,10 +3,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-31 23:27:20
+ * @LastEditTime: 2019-02-21 16:19:01
  */
 
-package etcore
+package socks5
 
 import (
 	"encoding/binary"

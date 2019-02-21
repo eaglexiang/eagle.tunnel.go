@@ -3,10 +3,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:46:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-01-31 21:09:32
+ * @LastEditTime: 2019-02-21 16:19:14
  */
 
-package etcore
+package core
 
 import mynet "github.com/eaglexiang/go-net"
 

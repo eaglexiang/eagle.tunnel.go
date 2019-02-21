@@ -12,6 +12,7 @@ WhiteListSrcPath="${SrcPath}/whitelistdomains"
 HostsSrcPath="${SrcPath}/hosts"
 ServiceSrcPath="${SrcPath}/services"
 ConfSrcPath="${SrcPath}/config"
+SrcMainPath="${SrcPath}/main"
 
 HttpDesPath="${PublishPath}/http"
 ServiceDesPath="${PublishPath}/services"

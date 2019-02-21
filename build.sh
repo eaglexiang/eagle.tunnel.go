@@ -1,24 +1,26 @@
 source ./scripts/env_build.sh
 
-mkdir -p ${PublishPath}
+# 清理旧的临时文件
+echo "begin to clean tmp files for build"
+if [ -d ${PublishPath} ]; then
+    rm -rf ${PublishPath}
+else
+    echo "nothing to clean"
+fi
 
 if [ $# -gt 0 ]; then
     case $1 in
         "clean")
-        echo "begin to clean tmp files for build"
-        if [ -d ${PublishPath} ]; then
-            rm -rf ${PublishPath}
-        else
-            echo "nothing to clean"
-        fi
         echo "build clean done"
         exit
         ;;
         *)
+        mkdir -p ${PublishPath}
         source ${ScriptPath}/buildgo.sh $*
         ;;
     esac
 else
+    mkdir -p ${PublishPath}
     source ${ScriptPath}/buildgo.sh $*
 fi
 

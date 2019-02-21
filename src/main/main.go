@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-07 00:06:17
+ * @LastEditTime: 2019-02-21 16:21:51
  */
 
 package main
@@ -15,8 +15,8 @@ import (
 
 	"github.com/eaglexiang/go-settings"
 
-	"./cmd"
-	"./etcore"
+	"../cmd"
+	etcore "../core/core"
 )
 
 var service *etcore.Service
