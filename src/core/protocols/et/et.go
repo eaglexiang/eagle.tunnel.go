@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 19:27:00
+ * @LastEditTime: 2019-02-21 23:08:49
  */
 
 package et
@@ -223,10 +223,10 @@ func (et *ET) checkHeaderOfReq(
 }
 
 func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
-	if et.arg.LocalUser.ID() == "null" {
+	if et.arg.Users.LocalUser.ID() == "null" {
 		return nil // no need to check
 	}
-	user := et.arg.LocalUser.ToString()
+	user := et.arg.Users.LocalUser.ToString()
 	_, err = tunnel.WriteRight([]byte(user))
 	if err != nil {
 		return errors.New("checkUserOfLocal -> " + err.Error())
@@ -241,12 +241,12 @@ func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
 	if reply != "valid" {
 		return errors.New("checkUserOfLocal -> invalid reply: " + reply)
 	}
-	tunnel.SpeedLimiter = et.arg.LocalUser.SpeedLimiter()
+	tunnel.SpeedLimiter = et.arg.Users.LocalUser.SpeedLimiter()
 	return nil
 }
 
 func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
-	if et.arg.ValidUsers == nil {
+	if et.arg.Users.ValidUsers == nil {
 		return nil
 	}
 	// 接收用户信息
@@ -269,7 +269,7 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 		tunnel.WriteLeft([]byte(reply))
 		return errors.New("checkUserOfReq -> " + reply)
 	}
-	validUser, ok := et.arg.ValidUsers[user2Check.ID]
+	validUser, ok := et.arg.Users.ValidUsers[user2Check.ID]
 	if !ok {
 		// 找不到该用户
 		reply := "incorrent username or password"

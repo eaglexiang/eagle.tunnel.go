@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 18:59:06
+ * @LastEditTime: 2019-02-21 23:11:44
  */
 
 package cmd
@@ -102,14 +102,18 @@ func createET() *myet.ET {
 			return nil
 		}
 	}
+
+	users := myet.UsersArg{
+		LocalUser:  etcore.LocalUser,
+		ValidUsers: etcore.Users,
+	}
 	e := myet.Arg{
 		ProxyStatus:   myet.ProxyENABLE,
 		IPType:        settings.Get("ip-type"),
 		Head:          settings.Get("head"),
 		RemoteET:      settings.Get("relayer"),
 		LocalLocation: settings.Get("location"),
-		LocalUser:     etcore.LocalUser,
-		ValidUsers:    etcore.Users,
+		Users:         users,
 		Timeout:       time.Second * time.Duration(etcore.Timeout),
 	}
 	et := myet.CreateET(&e)

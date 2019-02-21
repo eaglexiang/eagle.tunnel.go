@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 19:19:46
+ * @LastEditTime: 2019-02-21 23:10:44
  */
 
 package core
@@ -65,14 +65,18 @@ func CreateService() *Service {
 		relayer: CreateRelayer(Debug),
 	}
 
+	users := myet.UsersArg{
+		LocalUser:  LocalUser,
+		ValidUsers: Users,
+	}
+
 	e := myet.Arg{
 		ProxyStatus:   ProxyStatus,
 		IPType:        settings.Get("ip-type"),
 		Head:          settings.Get("head"),
 		RemoteET:      settings.Get("relayer"),
 		LocalLocation: settings.Get("location"),
-		LocalUser:     LocalUser,
-		ValidUsers:    Users,
+		Users:         users,
 		Timeout:       time.Second * time.Duration(Timeout),
 	}
 	et := myet.CreateET(&e)
