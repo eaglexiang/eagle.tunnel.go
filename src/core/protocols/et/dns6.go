@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 19:46:56
+ * @LastEditTime: 2019-02-21 20:58:58
  */
 
 package et
@@ -131,7 +131,7 @@ func (d DNS6) resolvDNS6ByProxy(et *ET, e *NetArg) error {
 	if dns6RemoteCache.Exsit(e.Domain) {
 		e.IP, err = dns6RemoteCache.Wait4IP(e.Domain)
 		if err != nil {
-			return errors.New("resolvDNSByProxy -> " + err.Error())
+			return errors.New("resolvDNS6ByProxy -> " + err.Error())
 		}
 		return nil
 	}
@@ -139,7 +139,7 @@ func (d DNS6) resolvDNS6ByProxy(et *ET, e *NetArg) error {
 	err = d._resolvDNS6ByProxy(et, e)
 	if err != nil {
 		dns6RemoteCache.Delete(e.Domain)
-		return errors.New("resolvDNSByProxy -> " + err.Error())
+		return errors.New("resolvDNS6ByProxy -> " + err.Error())
 	}
 	dns6RemoteCache.Update(e.Domain, e.IP)
 	return nil
@@ -152,7 +152,7 @@ func (d DNS6) _resolvDNS6ByProxy(et *ET, e *NetArg) error {
 	reply := sendQueryReq(et, req)
 	ip := net.ParseIP(reply)
 	if ip == nil {
-		return errors.New("_resolvDNSByProxy -> failed to resolv by remote: " +
+		return errors.New("_resolvDNS6ByProxy -> failed to resolv by remote: " +
 			e.Domain + " -> " + reply)
 	}
 	e.IP = reply
@@ -162,12 +162,12 @@ func (d DNS6) _resolvDNS6ByProxy(et *ET, e *NetArg) error {
 // resolvDNS6ByLocalClient 本地解析DNS6
 // 此函数由客户端使用
 // 此函数主要完成缓存功能
-// 当缓存不命中则进一步调用 DNS6._resolvDNSByLocalClient
+// 当缓存不命中则进一步调用 DNS6._resolvDNS6ByLocalClient
 func (d DNS6) resolvDNS6ByLocalClient(et *ET, e *NetArg) (err error) {
 	if dns6LocalCache.Exsit(e.Domain) {
 		e.IP, err = dns6LocalCache.Wait4IP(e.Domain)
 		if err != nil {
-			return errors.New("resolvDNSByLocalClient -> " + err.Error())
+			return errors.New("resolvDNS6ByLocalClient -> " + err.Error())
 		}
 		return nil
 	}
@@ -175,7 +175,7 @@ func (d DNS6) resolvDNS6ByLocalClient(et *ET, e *NetArg) (err error) {
 	err = d._resolvDNS6ByLocalClient(et, e)
 	if err != nil {
 		dns6LocalCache.Delete(e.Domain)
-		return errors.New("resolvDNSByLocalClient -> " + err.Error())
+		return errors.New("resolvDNS6ByLocalClient -> " + err.Error())
 	}
 	dns6LocalCache.Update(e.Domain, e.IP)
 	return nil
@@ -187,7 +187,7 @@ func (d DNS6) _resolvDNS6ByLocalClient(et *ET, e *NetArg) (err error) {
 	e.IP, err = mynet.ResolvIPv6(e.Domain)
 	// 本地解析失败应该让用户察觉，手动添加DNS白名单
 	if err != nil {
-		return errors.New("_resolvDNSByLocalClient -> fail to resolv DNS6 by local: " + e.Domain +
+		return errors.New("_resolvDNS6ByLocalClient -> fail to resolv DNS6 by local: " + e.Domain +
 			" , consider adding this domain to your whitelist_domain.txt")
 	}
 
@@ -200,7 +200,7 @@ func (d DNS6) _resolvDNS6ByLocalClient(et *ET, e *NetArg) (err error) {
 		ne := NetArg{Domain: e.Domain}
 		err = d.resolvDNS6ByProxy(et, &ne)
 		if err != nil {
-			return errors.New("_resolvDNSByLocalClient -> " + err.Error())
+			return errors.New("_resolvDNS6ByLocalClient -> " + err.Error())
 		}
 		e.IP = ne.IP
 	}
@@ -216,7 +216,7 @@ func (d DNS6) resolvDNS6ByLocalServer(e *NetArg) (err error) {
 	if dns6LocalCache.Exsit(e.Domain) {
 		e.IP, err = dns6LocalCache.Wait4IP(e.Domain)
 		if err != nil {
-			return errors.New("resolvDNSByLocalServer -> " + err.Error())
+			return errors.New("resolvDNS6ByLocalServer -> " + err.Error())
 		}
 		return nil
 	}
@@ -224,7 +224,7 @@ func (d DNS6) resolvDNS6ByLocalServer(e *NetArg) (err error) {
 	err = d._resolvDNS6ByLocalServer(e)
 	if err != nil {
 		dns6LocalCache.Delete(e.Domain)
-		return errors.New("resolvDNSByLocalServer -> " + err.Error())
+		return errors.New("resolvDNS6ByLocalServer -> " + err.Error())
 	}
 	dns6LocalCache.Update(e.Domain, e.IP)
 	return nil
@@ -235,7 +235,7 @@ func (d DNS6) resolvDNS6ByLocalServer(e *NetArg) (err error) {
 func (d DNS6) _resolvDNS6ByLocalServer(e *NetArg) (err error) {
 	e.IP, err = mynet.ResolvIPv6(e.Domain)
 	if err != nil {
-		return errors.New("_resolvDNSByLocalServer -> " + err.Error())
+		return errors.New("_resolvDNS6ByLocalServer -> " + err.Error())
 	}
 	return nil
 }
