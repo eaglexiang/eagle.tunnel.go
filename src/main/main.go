@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 16:21:51
+ * @LastEditTime: 2019-02-21 16:37:07
  */
 
 package main
@@ -15,8 +15,8 @@ import (
 
 	"github.com/eaglexiang/go-settings"
 
-	"../cmd"
-	etcore "../core/core"
+	etcore "core/core"
+	mycmd "mycmd"
 )
 
 var service *etcore.Service
@@ -30,7 +30,7 @@ func main() {
 	switch args[1] {
 	case "check":
 		Init(args[2:])
-		cmd.Check(args[:3])
+		mycmd.Check(args[:3])
 	default:
 		err := Init(args)
 		if err != nil {
@@ -57,7 +57,7 @@ func checkSig() {
 
 // Init 初始化参数系统
 func Init(args []string) error {
-	err := cmd.ImportArgs(args)
+	err := mycmd.ImportArgs(args)
 	return err
 }
 

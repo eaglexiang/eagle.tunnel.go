@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 16:19:10
+ * @LastEditTime: 2019-02-21 16:32:41
  */
 
 package core
@@ -23,7 +23,7 @@ import (
 	"github.com/eaglexiang/go-settings"
 	myuser "github.com/eaglexiang/go-user"
 
-	myet "../et"
+	myet "core/protocols/et"
 )
 
 // ConfigPath 主配置文件的路径

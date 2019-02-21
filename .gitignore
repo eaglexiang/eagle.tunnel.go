@@ -15,3 +15,5 @@ publish/*
 tmp/*
 zip/*
 .vscode/*
+pkg/*
+src/github.com/*

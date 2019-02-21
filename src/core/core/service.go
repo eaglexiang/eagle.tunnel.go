@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 16:20:14
+ * @LastEditTime: 2019-02-21 16:33:16
  */
 
 package core
@@ -22,9 +22,9 @@ import (
 	"github.com/eaglexiang/go-simplecipher"
 	myuser "github.com/eaglexiang/go-user"
 
-	myet "../et"
-	"../httpproxy"
-	"../socks5"
+	myet "core/protocols/et"
+	"core/protocols/httpproxy"
+	"core/protocols/socks5"
 )
 
 // LocalUser 本地用户
