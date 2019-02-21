@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 18:18:32
+ * @LastEditTime: 2019-02-21 19:27:00
  */
 
 package et
@@ -13,7 +13,6 @@ import (
 	"net"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/eaglexiang/go-bytebuffer"
 
@@ -33,50 +32,23 @@ var ProtocolCompatibleVersion, _ = version.CreateVersion("1.3")
 // ET ET代理协议的实现
 // 必须使用CreateET来构造该结构
 type ET struct {
-	proxyStatus   int
-	head          string
-	remoteET      string
-	localLocation string
-	localUser     *myuser.User
-	validUsers    map[string]*myuser.User
-	subHandlers   []Handler
-	subSenders    map[int]Sender
-	timeout       time.Duration
+	arg         *Arg
+	subHandlers []Handler
+	subSenders  map[int]Sender
 }
 
 // CreateET 构造ET
-func CreateET(
-	proxyStatus int,
-	ipType string,
-	head string,
-	remoteET string,
-	localLocation string,
-	localUser *myuser.User,
-	validUsers map[string]*myuser.User,
-	timeout time.Duration,
-) *ET {
-	et := ET{
-		proxyStatus:   proxyStatus,
-		head:          head,
-		remoteET:      remoteET,
-		localLocation: localLocation,
-		localUser:     localUser,
-		validUsers:    validUsers,
-		timeout:       timeout,
+func CreateET(arg *Arg) *ET {
+	et := ET{arg: arg}
+	dns := DNS{arg: arg}
+	dns6 := DNS6{arg: arg}
+	tcp := TCP{
+		arg:  arg,
+		dns:  dns,
+		dns6: dns6,
 	}
-
-	dns := DNS{ProxyStatus: et.proxyStatus}
-	dns6 := DNS6{ProxyStatus: et.proxyStatus}
-	tcp := createTCP(
-		et.proxyStatus,
-		localUser.SpeedLimiter(),
-		timeout,
-		ipType,
-		dns,
-		dns6,
-	)
-	location := createLocation(et.localLocation)
-	check := Check{validUsers: validUsers}
+	location := Location{arg: arg}
+	check := Check{arg: arg}
 
 	// 添加子协议的handler
 	et.AddSubHandler(tcp)
@@ -109,7 +81,7 @@ func (et *ET) AddSubSender(sender Sender) {
 // Match 判断请求消息是否匹配该业务
 func (et *ET) Match(firstMsg []byte) bool {
 	firstMsgStr := string(firstMsg)
-	return firstMsgStr == et.head
+	return firstMsgStr == et.arg.Head
 }
 
 // Handle 处理ET请求
@@ -192,7 +164,7 @@ func (et *ET) Name() string {
 
 // connect2Relayer 连接到下一个Relayer，完成版本校验和用户校验两个步骤
 func (et *ET) connect2Relayer(tunnel *mytunnel.Tunnel) error {
-	conn, err := net.DialTimeout("tcp", et.remoteET, et.timeout)
+	conn, err := net.DialTimeout("tcp", et.arg.RemoteET, et.arg.Timeout)
 	if err != nil {
 		return errors.New("connect2Relayer -> " + err.Error())
 	}
@@ -215,7 +187,7 @@ func (et *ET) connect2Relayer(tunnel *mytunnel.Tunnel) error {
 }
 
 func (et *ET) checkVersionOfRelayer(tunnel *mytunnel.Tunnel) error {
-	req := et.head
+	req := et.arg.Head
 	_, err := tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return errors.New("checkVersionOfRelayer -> " + err.Error())
@@ -239,7 +211,7 @@ func (et *ET) checkHeaderOfReq(
 	if len(headers) < 1 {
 		return errors.New("checkHeaderOfReq -> nil req")
 	}
-	if headers[0] != et.head {
+	if headers[0] != et.arg.Head {
 		return errors.New("checkHeaderOfReq -> wrong head: " + headers[0])
 	}
 	reply := "valid valid valid"
@@ -251,10 +223,10 @@ func (et *ET) checkHeaderOfReq(
 }
 
 func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
-	if et.localUser.ID() == "null" {
+	if et.arg.LocalUser.ID() == "null" {
 		return nil // no need to check
 	}
-	user := et.localUser.ToString()
+	user := et.arg.LocalUser.ToString()
 	_, err = tunnel.WriteRight([]byte(user))
 	if err != nil {
 		return errors.New("checkUserOfLocal -> " + err.Error())
@@ -269,12 +241,12 @@ func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
 	if reply != "valid" {
 		return errors.New("checkUserOfLocal -> invalid reply: " + reply)
 	}
-	tunnel.SpeedLimiter = et.localUser.SpeedLimiter()
+	tunnel.SpeedLimiter = et.arg.LocalUser.SpeedLimiter()
 	return nil
 }
 
 func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
-	if et.validUsers == nil {
+	if et.arg.ValidUsers == nil {
 		return nil
 	}
 	// 接收用户信息
@@ -297,7 +269,7 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 		tunnel.WriteLeft([]byte(reply))
 		return errors.New("checkUserOfReq -> " + reply)
 	}
-	validUser, ok := et.validUsers[user2Check.ID]
+	validUser, ok := et.arg.ValidUsers[user2Check.ID]
 	if !ok {
 		// 找不到该用户
 		reply := "incorrent username or password"

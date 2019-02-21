@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 18:19:29
+ * @LastEditTime: 2019-02-21 19:04:22
  */
 
 package et
@@ -13,8 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	myuser "github.com/eaglexiang/go-user"
 
 	mytunnel "github.com/eaglexiang/go-tunnel"
 	version "github.com/eaglexiang/go-version"
@@ -31,7 +29,7 @@ const (
 
 // Check ET-Check协议的实现
 type Check struct {
-	validUsers map[string]*myuser.User
+	arg *Arg
 }
 
 // ParseEtCheckType 将字符串转换为EtCHECK请求的类型
@@ -104,7 +102,7 @@ func (c Check) Type() int {
 // SendEtCheckAuthReq 发射 ET-CHECK-AUTH 请求
 func SendEtCheckAuthReq(et *ET) string {
 	// null代表未启用本地用户
-	if et.localUser.ID() == "null" {
+	if et.arg.LocalUser.ID() == "null" {
 		return "no local user"
 	}
 
@@ -116,7 +114,7 @@ func SendEtCheckAuthReq(et *ET) string {
 		return err.Error()
 	}
 
-	return "AUTH OK with local user: " + et.localUser.ID()
+	return "AUTH OK with local user: " + et.arg.LocalUser.ID()
 }
 
 // SendEtCheckVersionReq 发射 ET-CHECK-VERSION 请求
@@ -183,7 +181,7 @@ func SendEtCheckUsersReq(et *ET) string {
 
 func (c Check) handleEtCheckUsersReq(tunnel *mytunnel.Tunnel) {
 	var reply string
-	for _, user := range c.validUsers {
+	for _, user := range c.arg.ValidUsers {
 		line := user.ID() + ": " + user.Count()
 		reply += line + "\n"
 	}

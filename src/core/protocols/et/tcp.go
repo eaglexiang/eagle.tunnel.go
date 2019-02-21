@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 18:23:51
+ * @LastEditTime: 2019-02-21 19:41:35
  */
 
 package et
@@ -12,41 +12,16 @@ import (
 	"errors"
 	"net"
 	"strings"
-	"time"
 
-	"go.uber.org/ratelimit"
-
+	bytebuffer "github.com/eaglexiang/go-bytebuffer"
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
 // TCP ET-TCP子协议的实现
-// 必须使用createTCP进行构造
 type TCP struct {
-	proxyStatus int
-	ipType      string
-	limiter     *ratelimit.Limiter
-	timeout     time.Duration
-	dns         DNS
-	dns6        DNS6
-}
-
-// createTCP 构造TCP
-func createTCP(
-	proxyStatus int,
-	limiter *ratelimit.Limiter,
-	timeout time.Duration,
-	ipType string,
-	dns DNS,
-	dns6 DNS6,
-) TCP {
-	return TCP{
-		proxyStatus: proxyStatus,
-		limiter:     limiter,
-		timeout:     timeout,
-		ipType:      ipType,
-		dns:         dns,
-		dns6:        dns6,
-	}
+	arg  *Arg
+	dns  DNS
+	dns6 DNS6
 }
 
 // Send 发送请求
@@ -67,7 +42,7 @@ func (t TCP) Send(et *ET, e *NetArg) (err error) {
 	}
 
 	// 建立连接
-	switch t.proxyStatus {
+	switch t.arg.ProxyStatus {
 	case ProxySMART:
 		err = t.smartSend(et, e)
 	case ProxyENABLE:
@@ -85,7 +60,7 @@ func (t TCP) Send(et *ET, e *NetArg) (err error) {
 
 func (t TCP) resolvDNS(et *ET, e *NetArg) (err error) {
 	// 调用DNS Sender解析Domain为IP
-	switch t.ipType {
+	switch t.arg.IPType {
 	case "4":
 		err = t.dns.Send(et, e)
 		if err != nil {
@@ -118,7 +93,7 @@ func (t TCP) resolvDNS(et *ET, e *NetArg) (err error) {
 		}
 	default:
 		return errors.New("TCP.Send -> invalid ip-type: " +
-			t.ipType)
+			t.arg.IPType)
 	}
 	return nil
 }
@@ -158,11 +133,24 @@ func (t TCP) Type() int {
 }
 
 func (t *TCP) sendTCPReq2Remote(et *ET, e *NetArg) error {
+	err := et.connect2Relayer(e.Tunnel)
+	if err != nil {
+		return errors.New("TCP.sendTCPReq2Remote -> " + err.Error())
+	}
 	req := FormatEtType(EtTCP) + " " + e.IP + " " + e.Port
-	reply := sendQueryReq(et, req)
+	_, err = e.Tunnel.WriteRight([]byte(req))
+	if err != nil {
+		return errors.New("TCP.sendTCPReq2Remote -> " + err.Error())
+	}
+	buffer := bytebuffer.GetKBBuffer()
+	defer bytebuffer.PutKBBuffer(buffer)
+	buffer.Length, err = e.Tunnel.ReadRight(buffer.Buf())
+	if err != nil {
+		return errors.New("TCP.sendTCPReq2Remote -> " + err.Error())
+	}
+	reply := buffer.String()
 	if reply != "ok" {
-		return errors.New("TCP.sendTCPReq2Remote -> " +
-			"failed 2 connect 2 server by relayer")
+		err = errors.New("TCP.sendTCPReq2Remote -> failed 2 connect 2 server by relayer")
 	}
 	return nil
 }
@@ -182,14 +170,14 @@ func (t *TCP) sendTCPReq2Server(e *NetArg) error {
 	} else {
 		ipe = "[" + e.IP + "]:" + e.Port // [ipv6]:port
 	}
-	conn, err := net.DialTimeout("tcp", ipe, t.timeout)
+	conn, err := net.DialTimeout("tcp", ipe, t.arg.Timeout)
 	if err != nil {
 		return errors.New("TCP.sendTCPReq2Server -> " + err.Error())
 	}
 	e.Tunnel.Right = &conn
 	e.Tunnel.EncryptRight = nil
 	e.Tunnel.DecryptRight = nil
-	e.Tunnel.SpeedLimiter = t.limiter
+	e.Tunnel.SpeedLimiter = t.arg.LocalUser.SpeedLimiter()
 	return nil
 }
 

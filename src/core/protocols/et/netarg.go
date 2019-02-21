@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-22 10:28:46
- * @LastEditTime: 2019-02-09 21:00:46
+ * @LastEditTime: 2019-02-21 18:41:47
  */
 
 package et
@@ -36,6 +36,7 @@ const (
 )
 
 // NetArg ET协议工作需要的参数集
+// 此参数集用于在协议间传递消息
 type NetArg struct {
 	TheType  int
 	Domain   string

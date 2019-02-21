@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 18:22:37
+ * @LastEditTime: 2019-02-21 19:04:34
  */
 
 package et
@@ -25,14 +25,8 @@ var iPGeoCacheClient = CreateLocationCache() // [ip string, location string]
 var iPGeoCacheServer = CreateLocationCache() // [ip string, location string]
 
 // Location ET-LOCATION子协议的实现
-// 必须使用createLocation进行构造
 type Location struct {
-	localLocation string
-}
-
-func createLocation(localLocation string) Location {
-	location := Location{localLocation: localLocation}
-	return location
+	arg *Arg
 }
 
 // Send 发送ET-LOCATION请求 解析IP的地理位置，结果存放于e.Reply
@@ -139,7 +133,7 @@ func (l *Location) CheckProxyByLocation(location string) bool {
 	switch location {
 	case "0;;;WRONG INPUT":
 		return true
-	case "1;ZZ;ZZZ;Reserved", l.localLocation:
+	case "1;ZZ;ZZZ;Reserved", l.arg.LocalLocation:
 		return false
 	default:
 		return true

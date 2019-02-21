@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 18:21:45
+ * @LastEditTime: 2019-02-21 19:02:05
  */
 
 package et
@@ -23,7 +23,7 @@ var dns6LocalCache = dnscache.CreateDNSCache()
 
 // DNS6 ET-DNS6子协议的实现
 type DNS6 struct {
-	ProxyStatus int
+	arg *Arg
 }
 
 // Handle 处理ET-DNS6请求

@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 18:20:44
+ * @LastEditTime: 2019-02-21 19:01:31
  */
 
 package et
@@ -29,7 +29,7 @@ var WhitelistDomains []string
 
 // DNS ET-DNS子协议的实现
 type DNS struct {
-	ProxyStatus int
+	arg *Arg
 }
 
 // Handle 处理ET-DNS请求
@@ -67,7 +67,7 @@ func (d DNS) Send(et *ET, e *NetArg) (err error) {
 		e.IP = ip
 		return nil
 	}
-	switch d.ProxyStatus {
+	switch d.arg.ProxyStatus {
 	case ProxySMART:
 		err = d.smartSend(et, e)
 		if err != nil {

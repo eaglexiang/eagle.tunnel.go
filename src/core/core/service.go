@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 16:33:16
+ * @LastEditTime: 2019-02-21 19:19:46
  */
 
 package core
@@ -65,16 +65,17 @@ func CreateService() *Service {
 		relayer: CreateRelayer(Debug),
 	}
 
-	et := myet.CreateET(
-		ProxyStatus,
-		settings.Get("ip-type"),
-		settings.Get("head"),
-		settings.Get("relayer"),
-		settings.Get("location"),
-		LocalUser,
-		Users,
-		time.Second*time.Duration(Timeout),
-	)
+	e := myet.Arg{
+		ProxyStatus:   ProxyStatus,
+		IPType:        settings.Get("ip-type"),
+		Head:          settings.Get("head"),
+		RemoteET:      settings.Get("relayer"),
+		LocalLocation: settings.Get("location"),
+		LocalUser:     LocalUser,
+		ValidUsers:    Users,
+		Timeout:       time.Second * time.Duration(Timeout),
+	}
+	et := myet.CreateET(&e)
 
 	// 添加后端协议Handler
 	if settings.Get("et") == "on" {
