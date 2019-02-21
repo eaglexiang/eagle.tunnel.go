@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-22 01:11:52
+ * @LastEditTime: 2019-02-22 01:28:41
  */
 
 package core
@@ -37,7 +37,10 @@ func (relayer *Relayer) SetSender(sender Sender) {
 
 // Handle 处理请求连接
 func (relayer *Relayer) Handle(conn net.Conn) (err error) {
-	firstMsg := getFirsMsg(conn)                      // 获取握手消息
+	firstMsg := getFirsMsg(conn) // 获取握手消息
+	if firstMsg == nil {
+		return errors.New("Relayer.Handle -> no firstMsg")
+	}
 	handler := getHandler(firstMsg, relayer.handlers) // 识别业务协议
 	if handler == nil {
 		ip := conn.RemoteAddr().String()
