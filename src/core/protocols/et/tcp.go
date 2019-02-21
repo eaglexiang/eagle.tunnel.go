@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-14 12:21:35
+ * @LastEditTime: 2019-02-21 18:13:49
  */
 
 package et
@@ -54,48 +54,17 @@ func createTCP(
 // Send 发送请求
 func (t TCP) Send(et *ET, e *NetArg) (err error) {
 	// 检查目的地址是否合法
-	if e.IP == "" {
-		// 不存在可供连接的IP
-		if e.Domain == "" {
-			// 也不存在可供解析的域名
-			return errors.New("TCP.Send -> no des host")
-		}
+	if e.IP == "" && e.Domain == "" {
+		// 不存在可供使用的IP或域名
+		return errors.New("TCP.Send -> no des host")
+	}
 
-		// 调用DNS Sender解析Domain为IP
-		switch t.ipType {
-		case "4":
-			err = t.dns.Send(et, e)
-			if err != nil {
-				return errors.New("TCP.Send -> " +
-					err.Error())
-			}
-		case "6":
-			err = t.dns6.Send(et, e)
-			if err != nil {
-				return errors.New("TCP.Send -> " +
-					err.Error())
-			}
-		case "46":
-			err = t.dns.Send(et, e)
-			if err != nil {
-				err = t.dns6.Send(et, e)
-				if err != nil {
-					return errors.New("TCP.Send -> " +
-						err.Error())
-				}
-			}
-		case "64":
-			err = t.dns6.Send(et, e)
-			if err != nil {
-				err = t.dns.Send(et, e)
-				if err != nil {
-					return errors.New("TCP.Send -> " +
-						err.Error())
-				}
-			}
-		default:
-			return errors.New("TCP.Send -> invalid ip-type: " +
-				t.ipType)
+	if e.IP == "" {
+		// IP不存在，解析域名
+		err = t.resolvDNS(et, e)
+		if err != nil {
+			return errors.New("TCP.Send -> " +
+				err.Error())
 		}
 	}
 
@@ -112,6 +81,46 @@ func (t TCP) Send(et *ET, e *NetArg) (err error) {
 	if err != nil {
 		return errors.New("TCP.Send -> " +
 			err.Error())
+	}
+	return nil
+}
+
+func (t TCP) resolvDNS(et *ET, e *NetArg) (err error) {
+	// 调用DNS Sender解析Domain为IP
+	switch t.ipType {
+	case "4":
+		err = t.dns.Send(et, e)
+		if err != nil {
+			return errors.New("TCP.Send -> " +
+				err.Error())
+		}
+	case "6":
+		err = t.dns6.Send(et, e)
+		if err != nil {
+			return errors.New("TCP.Send -> " +
+				err.Error())
+		}
+	case "46":
+		err = t.dns.Send(et, e)
+		if err != nil {
+			err = t.dns6.Send(et, e)
+		}
+		if err != nil {
+			return errors.New("TCP.Send -> " +
+				err.Error())
+		}
+	case "64":
+		err = t.dns6.Send(et, e)
+		if err != nil {
+			err = t.dns.Send(et, e)
+		}
+		if err != nil {
+			return errors.New("TCP.Send -> " +
+				err.Error())
+		}
+	default:
+		return errors.New("TCP.Send -> invalid ip-type: " +
+			t.ipType)
 	}
 	return nil
 }
