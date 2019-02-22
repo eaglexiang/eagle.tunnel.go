@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-22 01:28:41
+ * @LastEditTime: 2019-02-22 15:56:35
  */
 
 package core
@@ -41,7 +41,8 @@ func (relayer *Relayer) Handle(conn net.Conn) (err error) {
 	if firstMsg == nil {
 		return errors.New("Relayer.Handle -> no firstMsg")
 	}
-	handler := getHandler(firstMsg, relayer.handlers) // 识别业务协议
+	// 识别业务协议
+	handler := getHandler(firstMsg, relayer.handlers)
 	if handler == nil {
 		ip := conn.RemoteAddr().String()
 		return errors.New("Relayer.Handle -> no matched handler from " +
@@ -53,12 +54,24 @@ func (relayer *Relayer) Handle(conn net.Conn) (err error) {
 	tunnel := mytunnel.GetTunnel()
 	defer mytunnel.PutTunnel(tunnel)
 	tunnel.Left = &conn
-	e := mynet.Arg{
+	e := &mynet.Arg{
 		Msg:    firstMsg,
 		Tunnel: tunnel,
 	}
 
-	err = handler.Handle(&e)
+	// 判断是否是sender业务
+	if reflect.TypeOf(relayer.sender) == reflect.TypeOf(handler) {
+		return relayer.handleSenderReqs(handler, tunnel, e)
+	}
+	return relayer.handleOtherReqs(handler, tunnel, e)
+}
+
+func (relayer *Relayer) handleSenderReqs(
+	handler Handler,
+	tunnel *mytunnel.Tunnel,
+	e *mynet.Arg) (err error) {
+	// 直接处理
+	err = handler.Handle(e)
 	if err != nil {
 		if err.Error() == "no need to continue" {
 			return nil
@@ -66,18 +79,28 @@ func (relayer *Relayer) Handle(conn net.Conn) (err error) {
 		return errors.New("Relayer.Handle -> " +
 			err.Error())
 	}
+	// 开始流动
+	tunnel.Flow()
+	return nil
+}
 
-	// 判断是否是sender业务
-	typeOfSender := reflect.TypeOf(relayer.sender)
-	typeOfHandler := reflect.TypeOf(handler)
-	if typeOfHandler == typeOfSender {
-		// sender业务直接流动
-		tunnel.Flow()
-		return nil
+// 从非sender业务获取目的Host
+// 然后根据目的Host建立连接
+func (relayer *Relayer) handleOtherReqs(
+	handler Handler,
+	tunnel *mytunnel.Tunnel,
+	e *mynet.Arg) (err error) {
+	// 获取Host
+	err = handler.Handle(e)
+	if err != nil {
+		if err.Error() == "no need to continue" {
+			return nil
+		}
+		return errors.New("Relayer.Handle -> " +
+			err.Error())
 	}
-	// 从非sender业务获取目的Host
-	// 然后根据目的Host建立连接
-	err = relayer.sender.Send(&e)
+	// 发起连接
+	err = relayer.sender.Send(e)
 	if err != nil {
 		return errors.New("Relayer.Handle -> " +
 			err.Error())

@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 16:32:41
+ * @LastEditTime: 2019-02-22 15:38:09
  */
 
 package core
@@ -28,15 +28,6 @@ import (
 
 // ConfigPath 主配置文件的路径
 var ConfigPath string
-
-// EnableSOCKS5 启用relayer对SOCKS5协议的接收
-var EnableSOCKS5 bool
-
-// EnableHTTP 启用relayer对HTTP代理协议的接收
-var EnableHTTP bool
-
-// EnableET 启用relayer对ET协议的接收
-var EnableET bool
 
 // ProxyStatus 代理的状态（全局/智能）
 var ProxyStatus int
@@ -80,11 +71,41 @@ func readConfig(filePath string) error {
 }
 
 // ExecConfig 执行配置
-func ExecConfig() error {
+func ExecConfig() (err error) {
 	// 读取配置文件
 	if settings.Exsit("config") {
 		readConfig(settings.Get("config"))
 	}
+
+	err = execUserSystem()
+
+	SetListen(settings.Get("listen"))
+	SetRelayer(settings.Get("relayer"))
+
+	err = SetProxyStatus(settings.Get("proxy-status"))
+	if err != nil {
+		return err
+	}
+
+	// DNS解析白名单
+	whiteDomainsPath := settings.Get("config-dir") + "/whitelist_domain.txt"
+	myet.WhitelistDomains, _ = readLines(whiteDomainsPath)
+	// hosts文件
+	err = execHosts()
+	if err != nil {
+		return err
+	}
+	execTimeout()
+	SetDebug(settings.Get("debug"))
+	// 导入Mods
+	err = execMods()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func execUserSystem() error {
 	// 读取用户列表
 	if settings.Get("user-check") == "on" {
 		usersPath := settings.Get("config-dir") + "/users.list"
@@ -100,35 +121,10 @@ func ExecConfig() error {
 		return err
 	}
 
-	EnableSOCKS5 = settings.Get("socks") == "on"
-	EnableHTTP = settings.Get("http") == "on"
-	EnableET = settings.Get("et") == "on"
+	return nil
+}
 
-	SetListen(settings.Get("listen"))
-	SetRelayer(settings.Get("relayer"))
-
-	err = SetProxyStatus(settings.Get("proxy-status"))
-	if err != nil {
-		return err
-	}
-
-	if !settings.Exsit("config-dir") {
-		return nil
-	}
-
-	// DNS解析白名单
-	whiteDomainsPath := settings.Get("config-dir") + "/whitelist_domain.txt"
-	myet.WhitelistDomains, _ = readLines(whiteDomainsPath)
-
-	// hosts文件
-	if settings.Exsit("config-dir") {
-		hostsDir := settings.Get("config-dir") + "/hosts"
-		err = readHosts(hostsDir)
-		if err != nil {
-			return errors.New("ExecConfig -> " + err.Error())
-		}
-	}
-
+func execTimeout() error {
 	timeout, err := strconv.ParseInt(
 		settings.Get("timeout"),
 		10,
@@ -137,10 +133,19 @@ func ExecConfig() error {
 		return errors.New("ExecConfig -> " + err.Error())
 	}
 	Timeout = int(timeout)
+	return nil
+}
 
-	SetDebug(settings.Get("debug"))
+func execHosts() (err error) {
+	hostsDir := settings.Get("config-dir") + "/hosts"
+	err = readHosts(hostsDir)
+	if err != nil {
+		return errors.New("ExecConfig -> " + err.Error())
+	}
+	return nil
+}
 
-	// 导入Mods
+func execMods() (err error) {
 	if settings.Exsit("mod-dir") {
 		modsDir := settings.Get("mod-dir")
 		err = ImportMods(modsDir)
@@ -148,7 +153,6 @@ func ExecConfig() error {
 			return errors.New("ExecConfig -> " + err.Error())
 		}
 	}
-
 	return nil
 }
 
