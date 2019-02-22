@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-22 15:56:35
+ * @LastEditTime: 2019-02-22 16:32:25
  */
 
 package core
@@ -54,6 +54,7 @@ func (relayer *Relayer) Handle(conn net.Conn) (err error) {
 	tunnel := mytunnel.GetTunnel()
 	defer mytunnel.PutTunnel(tunnel)
 	tunnel.Left = &conn
+	tunnel.Timeout = Timeout
 	e := &mynet.Arg{
 		Msg:    firstMsg,
 		Tunnel: tunnel,

@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-22 15:38:09
+ * @LastEditTime: 2019-02-22 16:11:15
  */
 
 package core
@@ -19,6 +19,7 @@ import (
 	"plugin"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/eaglexiang/go-settings"
 	myuser "github.com/eaglexiang/go-user"
@@ -32,8 +33,8 @@ var ConfigPath string
 // ProxyStatus 代理的状态（全局/智能）
 var ProxyStatus int
 
-// Timeout 超时时间（s）
-var Timeout int
+// Timeout 超时时间
+var Timeout time.Duration
 
 func init() {
 	// 设定参数默认值
@@ -87,6 +88,9 @@ func ExecConfig() (err error) {
 		return err
 	}
 
+	if !settings.Exsit("config-dir") {
+		return nil
+	}
 	// DNS解析白名单
 	whiteDomainsPath := settings.Get("config-dir") + "/whitelist_domain.txt"
 	myet.WhitelistDomains, _ = readLines(whiteDomainsPath)
@@ -132,7 +136,7 @@ func execTimeout() error {
 	if err != nil {
 		return errors.New("ExecConfig -> " + err.Error())
 	}
-	Timeout = int(timeout)
+	Timeout = time.Second * time.Duration(timeout)
 	return nil
 }
 

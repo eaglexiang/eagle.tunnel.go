@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-22 01:08:13
+ * @LastEditTime: 2019-02-22 16:44:53
  */
 
 package core
@@ -77,7 +77,7 @@ func CreateService() *Service {
 		RemoteET:      settings.Get("relayer"),
 		LocalLocation: settings.Get("location"),
 		Users:         users,
-		Timeout:       time.Second * time.Duration(Timeout),
+		Timeout:       Timeout,
 	}
 	et := myet.CreateET(&e)
 
@@ -151,6 +151,9 @@ func (s *Service) handle() {
 		req, ok := <-s.reqs
 		if !ok {
 			return
+		}
+		if Timeout != 0 {
+			req.SetReadDeadline(time.Now().Add(Timeout))
 		}
 		go s._Handle(req)
 	}
