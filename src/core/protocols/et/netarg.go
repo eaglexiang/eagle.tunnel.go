@@ -4,13 +4,12 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-22 10:28:46
- * @LastEditTime: 2019-02-21 18:41:47
+ * @LastEditTime: 2019-02-24 19:21:27
  */
 
 package et
 
 import (
-	"errors"
 	"net"
 	"strings"
 
@@ -53,19 +52,14 @@ func parseNetArg(e *mynet.Arg) (*NetArg, error) {
 		Tunnel:  e.Tunnel,
 	}
 	ipe := strings.Split(e.Host, ":")
-	if len(ipe) != 2 {
-		return nil, errors.New("parseNetArg -> invalid Host: " +
-			e.Host)
-	}
-	_ip := ipe[0]
-	_port := ipe[1]
+	ne.Port = ipe[len(ipe)-1]
+	_ip := strings.TrimSuffix(e.Host, ":"+ne.Port)
 	ip := net.ParseIP(_ip)
 	if ip != nil {
 		ne.IP = _ip
 	} else {
 		ne.Domain = _ip
 	}
-	ne.Port = _port
 	return &ne, nil
 }
 
