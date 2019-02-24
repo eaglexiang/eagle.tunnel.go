@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-24 21:03:58
+ * @LastEditTime: 2019-02-24 23:07:11
  */
 
 package socks5
@@ -26,10 +26,9 @@ const (
 	SOCKSBIND
 	SOCKSUDP
 
-	AddrERROR  = 0
-	AddrV4     = 1
-	AddrDomain = 3
-	AddrV6     = 4
+	// SOCKS请求是否成功的反馈
+	REPSUCCESS = iota
+	REPERROR
 )
 
 var commands map[byte]command
