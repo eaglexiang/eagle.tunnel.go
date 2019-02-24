@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-24 19:23:44
+ * @LastEditTime: 2019-02-24 21:03:58
  */
 
 package socks5
@@ -108,18 +108,18 @@ func getHost(request []byte) (host string, err error) {
 	switch destype {
 	case AddrV4:
 		ip := net.IP(request[4:8])
-		return ip.String(), nil
+		host = ip.String()
 	case AddrDomain:
 		len := request[4]
-		domain := string(request[5 : 5+len])
-		return domain, nil
+		host = string(request[5 : 5+len])
 	case AddrV6:
 		ip := net.IP(request[4:20])
-		return ip.String(), nil
+		host = ip.String()
 	default:
-		return "", errors.New("connect.getHost -> invalid socks req des type: " +
+		return "", errors.New("getHost -> invalid socks req des type: " +
 			strconv.FormatInt(int64(destype), 10))
 	}
+	return host, nil
 }
 
 func getPort(request []byte) (port int, err error) {
@@ -134,11 +134,19 @@ func getPort(request []byte) (port int, err error) {
 	case AddrV6:
 		buffer = request[20:22]
 	default:
-		buffer = make([]byte, 0)
-		err = errors.New("connect.getPort -> invalid destype")
+		return 0, errors.New("getPort -> invalid destype")
 	}
+	return int(binary.BigEndian.Uint16(buffer)), nil
+}
+
+func getHostAndPort(request []byte) (host string, port int, err error) {
+	host, err = getHost(request)
 	if err == nil {
-		port = int(binary.BigEndian.Uint16(buffer))
+		port, err = getPort(request)
 	}
-	return port, err
+	if err != nil {
+		return "", 0, errors.New("getHostAndPort -> " +
+			err.Error())
+	}
+	return host, port, nil
 }
