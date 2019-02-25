@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-22 00:44:43
+ * @LastEditTime: 2019-02-24 23:59:45
  */
 
 package et
@@ -39,7 +39,10 @@ type ET struct {
 
 // CreateET 构造ET
 func CreateET(arg *Arg) *ET {
-	et := ET{arg: arg}
+	et := ET{
+		arg:        arg,
+		subSenders: make(map[int]Sender),
+	}
 	dns := DNS{arg: arg}
 	dns6 := DNS6{arg: arg}
 	tcp := TCP{
@@ -72,9 +75,6 @@ func (et *ET) AddSubHandler(handler Handler) {
 
 // AddSubSender 添加子协议Sender
 func (et *ET) AddSubSender(sender Sender) {
-	if et.subSenders == nil {
-		et.subSenders = make(map[int]Sender)
-	}
 	et.subSenders[sender.Type()] = sender
 }
 
@@ -141,17 +141,17 @@ func getHandler(subReq string, subHandlers []Handler) Handler {
 
 // Send 发送ET请求
 func (et *ET) Send(e *mynet.Arg) error {
-	// 外部Send请求只允许TCP请求
-	sender, ok := et.subSenders[EtTCP]
-	if !ok {
-		return errors.New("ET.Send -> no tcp sender")
-	}
-	// 进入子协议业务
+	// 选择Sender
 	newE, err := parseNetArg(e)
 	if err != nil {
 		return errors.New("ET.Send -> " +
 			err.Error())
 	}
+	sender, ok := et.subSenders[newE.TheType]
+	if !ok {
+		return errors.New("ET.Send -> no tcp sender")
+	}
+	// 进入子协议业务
 	err = sender.Send(et, newE)
 	if err != nil {
 		return errors.New("ET.Send -> " +

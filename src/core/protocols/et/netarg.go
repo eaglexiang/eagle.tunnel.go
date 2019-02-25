@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-22 10:28:46
- * @LastEditTime: 2019-02-24 19:21:27
+ * @LastEditTime: 2019-02-25 13:50:11
  */
 
 package et
@@ -25,6 +25,7 @@ const (
 	EtDNS6
 	EtLOCATION
 	EtCHECK
+	EtBIND
 )
 
 // 代理的状态
@@ -37,18 +38,32 @@ const (
 // NetArg ET协议工作需要的参数集
 // 此参数集用于在协议间传递消息
 type NetArg struct {
-	TheType  int
-	Domain   string
-	IP       string
-	Port     string
-	Location string
-	Tunnel   *mytunnel.Tunnel
+	TheType      int
+	Domain       string
+	IP           string
+	Port         string // 端口号
+	Location     string // 所在地，用于识别是否使用代理
+	BindDelegate func() // BIND操作会用到的委托
+	Tunnel       *mytunnel.Tunnel
+}
+
+// 将net网络操作类型转化为ET网络操作类型
+// 此函数供sender使用
+func netOPType2ETOPType(netOPType int) int {
+	switch netOPType {
+	case mynet.CONNECT:
+		return EtTCP
+	case mynet.BIND:
+		return EtBIND
+	default:
+		return EtUNKNOWN
+	}
 }
 
 // parseNetArg 将通用的net.Arg转化为ET专用NetArg
 func parseNetArg(e *mynet.Arg) (*NetArg, error) {
 	ne := NetArg{
-		TheType: e.TheType,
+		TheType: netOPType2ETOPType(e.TheType),
 		Tunnel:  e.Tunnel,
 	}
 	ipe := strings.Split(e.Host, ":")
@@ -102,6 +117,8 @@ func ParseEtType(src string) int {
 		return EtLOCATION
 	case "CHECK":
 		return EtCHECK
+	case "BIND":
+		return EtBIND
 	default:
 		return EtUNKNOWN
 	}
@@ -120,6 +137,8 @@ func FormatEtType(src int) string {
 		return "LOCATION"
 	case EtCHECK:
 		return "CHECK"
+	case EtBIND:
+		return "BIND"
 	default:
 		return "UNKNOWN"
 	}
