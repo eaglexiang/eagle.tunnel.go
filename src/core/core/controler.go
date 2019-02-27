@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-22 16:11:15
+ * @LastEditTime: 2019-02-27 14:27:27
  */
 
 package core
@@ -53,6 +53,7 @@ func init() {
 	settings.SetDefault("et", "off")
 	settings.SetDefault("debug", "off")
 	settings.SetDefault("cipher", "simple")
+	settings.SetDefault("maxclients", "0")
 }
 
 // readConfig 读取根据给定的配置文件

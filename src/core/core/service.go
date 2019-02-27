@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-22 16:44:53
+ * @LastEditTime: 2019-02-27 14:26:05
  */
 
 package core
@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -40,10 +41,12 @@ var Debug bool
 // 必须使用CreateService方法进行构造
 type Service struct {
 	sync.Mutex
-	listener net.Listener
-	running  bool
-	reqs     chan net.Conn
-	relayer  Relayer
+	listener   net.Listener
+	running    bool
+	reqs       chan net.Conn
+	relayer    Relayer
+	MaxClients int              // 最大客户数量
+	clients    chan interface{} // 当前客户，用来统计当前客户数量
 }
 
 // CreateService 构造Service
@@ -105,6 +108,12 @@ func CreateService() *Service {
 	if DefaultSender != nil {
 		service.relayer.SetSender(DefaultSender)
 	}
+
+	maxclients, _ := strconv.ParseInt(settings.Get("maxclients"), 10, 64)
+	if maxclients > 0 {
+		service.clients = make(chan interface{}, maxclients)
+	}
+
 	return &service
 }
 
@@ -116,7 +125,7 @@ func (s *Service) Start() (err error) {
 		return errors.New("Service.Start -> the service is already started")
 	}
 
-	// disable tls check for ip-inside cache
+	// disable tls check for ET-LOCATION
 	http.DefaultTransport.(*http.Transport).TLSClientConfig =
 		&tls.Config{InsecureSkipVerify: true}
 
@@ -148,6 +157,9 @@ func (s *Service) listen() {
 
 func (s *Service) handle() {
 	for s.running {
+		if s.clients != nil {
+			s.clients <- new(interface{})
+		}
 		req, ok := <-s.reqs
 		if !ok {
 			return
@@ -161,6 +173,11 @@ func (s *Service) handle() {
 
 func (s *Service) _Handle(req net.Conn) {
 	err := s.relayer.Handle(req)
+	defer func() {
+		if s.clients != nil {
+			<-s.clients
+		}
+	}()
 	if err == nil {
 		return
 	}
