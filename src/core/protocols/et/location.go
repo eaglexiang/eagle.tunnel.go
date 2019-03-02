@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 19:04:34
+ * @LastEditTime: 2019-03-03 05:40:42
  */
 
 package et
@@ -30,26 +30,24 @@ type Location struct {
 }
 
 // Send 发送ET-LOCATION请求 解析IP的地理位置，结果存放于e.Reply
-func (l Location) Send(et *ET, e *NetArg) error {
-	if iPGeoCacheClient.Exsit(e.IP) {
-		// 读取缓存
-		location, err := iPGeoCacheClient.Wait4Proxy(e.IP)
+func (l Location) Send(et *ET, e *NetArg) (err error) {
+	node, loaded := iPGeoCacheClient.Get(e.IP)
+	if loaded {
+		e.Location, err = node.Wait()
 		if err != nil {
-			return errors.New("Location.Send -> " + err.Error())
+			err = errors.New("Location.Send -> " + err.Error())
 		}
-		e.Location = location
-		return nil
+		return
 	}
-
-	iPGeoCacheClient.Add(e.IP)
 	ip := net.ParseIP(e.IP)
-	if ip != nil {
-		if ip.To4() == nil {
-			// IPv6 默认代理
-			e.Location = "Ipv6"
-			iPGeoCacheClient.Update(e.IP, e.Location)
-			return nil
-		}
+	if ip == nil {
+		return errors.New("Location.Send -> invalid ip")
+	}
+	if ip.To4() == nil {
+		// IPv6 默认代理
+		e.Location = "Ipv6"
+		iPGeoCacheClient.Update(e.IP, e.Location)
+		return nil
 	}
 	if mynet.CheckPrivateIPv4(e.IP) {
 		// 保留地址不适合代理
@@ -57,7 +55,7 @@ func (l Location) Send(et *ET, e *NetArg) error {
 		iPGeoCacheClient.Update(e.IP, e.Location)
 		return nil
 	}
-	err := l.checkLocationByRemote(et, e)
+	err = l.checkLocationByRemote(et, e)
 	if err != nil {
 		// 解析失败，尝试直连
 		e.Location = "0;;;WRONG INPUT"
@@ -81,16 +79,19 @@ func (l *Location) checkLocationByRemote(et *ET, e *NetArg) error {
 }
 
 // Handle 处理ET-LOCATION请求
+// 此方法完成缓存的读取
+// 如果缓存不命中则进一步调用CheckLocationByWeb
 func (l Location) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
 		return errors.New("Location.Handle -> req is too short")
 	}
-
-	// read cache
 	ip := reqs[1]
-	if iPGeoCacheServer.Exsit(ip) {
-		location, err := iPGeoCacheServer.Wait4Proxy(ip)
+
+	// check by cache
+	node, loaded := iPGeoCacheServer.Get(ip)
+	if loaded {
+		location, err := node.Wait()
 		if err != nil {
 			tunnel.WriteLeft([]byte(err.Error()))
 			return errors.New("Location.Handle -> " + err.Error())
@@ -102,9 +103,7 @@ func (l Location) Handle(req string, tunnel *mytunnel.Tunnel) error {
 		return nil
 	}
 
-	iPGeoCacheServer.Add(ip)
-
-	// check location
+	// check by web
 	location, err := CheckLocationByWeb(ip)
 	if err != nil {
 		iPGeoCacheServer.Delete(ip)

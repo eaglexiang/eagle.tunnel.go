@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-22 00:55:15
+ * @LastEditTime: 2019-03-03 05:23:06
  */
 
 package et
@@ -122,14 +122,14 @@ func (d DNS6) Type() int {
 // 此函数主要完成缓存功能
 // 当缓存不命中则调用 DNS6._resolvDNSByProxy
 func (d DNS6) resolvDNS6ByProxy(et *ET, e *NetArg) (err error) {
-	if dns6RemoteCache.Exsit(e.Domain) {
-		e.IP, err = dns6RemoteCache.Wait4IP(e.Domain)
+	node, loaded := dns6RemoteCache.Get(e.Domain)
+	if loaded {
+		e.IP, err = node.Wait()
 		if err != nil {
-			return errors.New("resolvDNS6ByProxy -> " + err.Error())
+			err = errors.New("resolvDNS6ByProxy -> " + err.Error())
 		}
-		return nil
+		return
 	}
-	dns6RemoteCache.Add(e.Domain)
 	err = d._resolvDNS6ByProxy(et, e)
 	if err != nil {
 		dns6RemoteCache.Delete(e.Domain)
@@ -158,14 +158,14 @@ func (d DNS6) _resolvDNS6ByProxy(et *ET, e *NetArg) error {
 // 此函数主要完成缓存功能
 // 当缓存不命中则进一步调用 DNS6._resolvDNS6ByLocalClient
 func (d DNS6) resolvDNS6ByLocalClient(et *ET, e *NetArg) (err error) {
-	if dns6LocalCache.Exsit(e.Domain) {
-		e.IP, err = dns6LocalCache.Wait4IP(e.Domain)
+	node, loaded := dns6LocalCache.Get(e.Domain)
+	if loaded {
+		e.IP, err = node.Wait()
 		if err != nil {
-			return errors.New("resolvDNS6ByLocalClient -> " + err.Error())
+			err = errors.New("resolvDNS6ByLocalClient -> " + err.Error())
 		}
-		return nil
+		return
 	}
-	dns6LocalCache.Add(e.Domain)
 	err = d._resolvDNS6ByLocalClient(et, e)
 	if err != nil {
 		dns6LocalCache.Delete(e.Domain)
@@ -207,14 +207,14 @@ func (d DNS6) _resolvDNS6ByLocalClient(et *ET, e *NetArg) (err error) {
 // 此函数完成缓存相关的工作
 // 当缓存不命中则进一步调用 DNS6._resolvDNSByLocalServer
 func (d DNS6) resolvDNS6ByLocalServer(e *NetArg) (err error) {
-	if dns6LocalCache.Exsit(e.Domain) {
-		e.IP, err = dns6LocalCache.Wait4IP(e.Domain)
+	node, loaded := dns6LocalCache.Get(e.Domain)
+	if loaded {
+		e.IP, err = node.Wait()
 		if err != nil {
-			return errors.New("resolvDNS6ByLocalServer -> " + err.Error())
+			err = errors.New("resolvDNS6ByLocalServer -> " + err.Error())
 		}
-		return nil
+		return
 	}
-	dns6LocalCache.Add(e.Domain)
 	err = d._resolvDNS6ByLocalServer(e)
 	if err != nil {
 		dns6LocalCache.Delete(e.Domain)
