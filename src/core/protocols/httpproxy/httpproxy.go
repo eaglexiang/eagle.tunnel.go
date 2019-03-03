@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 20:49:48
+ * @LastEditTime: 2019-03-03 21:08:28
  */
 
 package httpproxy
@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	mynet "github.com/eaglexiang/go-net"
+	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
 // HTTP请求的类型
@@ -40,20 +41,26 @@ func (conn *HTTPProxy) Match(firstMsg []byte) bool {
 	}
 }
 
-// Handle 处理HTTPProxy请求
-func (conn *HTTPProxy) Handle(e *mynet.Arg) error {
-	if e.Tunnel == nil {
+func checkTunnel(tunnel *mytunnel.Tunnel) error {
+	if tunnel == nil {
 		return errors.New("HTTPProxy.Handle -> tunnel is nil")
 	}
-	e.TheType = mynet.CONNECT
-
 	// 不接受来自公网IP的HTTP代理请求
-	ipOfReq := strings.Split(e.Tunnel.Left.RemoteAddr().String(), ":")[0]
+	ipOfReq := strings.Split(tunnel.Left.RemoteAddr().String(), ":")[0]
 	if !mynet.CheckPrivateIPv4(ipOfReq) {
 		return errors.New("HTTPProxy.Handle -> invalid source ip type: public " +
 			ipOfReq)
 	}
+	return nil
+}
 
+// Handle 处理HTTPProxy请求
+func (conn *HTTPProxy) Handle(e *mynet.Arg) error {
+	err := checkTunnel(e.Tunnel)
+	if err != nil {
+		return err
+	}
+	e.TheType = mynet.CONNECT
 	reqStr := string(e.Msg)
 	reqType, host, _port := dismantle(reqStr)
 	port, err := strconv.Atoi(_port)
