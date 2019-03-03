@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-27 14:27:27
+ * @LastEditTime: 2019-03-03 18:49:23
  */
 
 package core
@@ -101,7 +101,6 @@ func ExecConfig() (err error) {
 		return err
 	}
 	execTimeout()
-	SetDebug(settings.Get("debug"))
 	// 导入Mods
 	err = execMods()
 	if err != nil {
@@ -179,14 +178,6 @@ func SetProxyStatus(status string) error {
 	}
 	settings.Set("proxy-status", status)
 	return nil
-}
-
-// SetDebug 设置Debug
-func SetDebug(debug string) {
-	if debug == "on" {
-		Debug = true
-	}
-	settings.Set("debug", debug)
 }
 
 func readLines(filePath string) ([]string, error) {

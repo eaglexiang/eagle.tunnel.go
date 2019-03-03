@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-27 14:26:05
+ * @LastEditTime: 2019-03-03 19:01:35
  */
 
 package core
@@ -34,19 +34,17 @@ var LocalUser *myuser.User
 // Users 所有授权用户
 var Users map[string]*myuser.User
 
-// Debug 开启Debug
-var Debug bool
-
 // Service ET服务
 // 必须使用CreateService方法进行构造
 type Service struct {
 	sync.Mutex
-	listener   net.Listener
-	running    bool
-	reqs       chan net.Conn
-	relayer    Relayer
-	MaxClients int              // 最大客户数量
-	clients    chan interface{} // 当前客户，用来统计当前客户数量
+	listener    net.Listener
+	stopRunning chan interface{}
+	reqs        chan net.Conn
+	relayer     Relayer
+	MaxClients  int              // 最大客户数量
+	clients     chan interface{} // 当前客户，用来统计当前客户数量
+	debug       bool
 }
 
 // CreateService 构造Service
@@ -66,6 +64,7 @@ func CreateService() *Service {
 	service := Service{
 		reqs:    make(chan net.Conn),
 		relayer: Relayer{},
+		debug:   settings.Get("debug") == "on",
 	}
 
 	users := myet.UsersArg{
@@ -121,7 +120,7 @@ func CreateService() *Service {
 func (s *Service) Start() (err error) {
 	s.Lock()
 	defer s.Unlock()
-	if s.running {
+	if s.stopRunning != nil {
 		return errors.New("Service.Start -> the service is already started")
 	}
 
@@ -135,16 +134,16 @@ func (s *Service) Start() (err error) {
 		return errors.New("Service.Start -> " + err.Error())
 	}
 	fmt.Println("start to listen: ", ipe)
-	s.reqs = make(chan net.Conn, 10)
+	s.reqs = make(chan net.Conn)
 	go s.listen()
 	go s.handle()
 
-	s.running = true
+	s.stopRunning = make(chan interface{})
 	return nil
 }
 
 func (s *Service) listen() {
-	for s.running {
+	for s.stopRunning != nil {
 		req, err := s.listener.Accept()
 		if err != nil {
 			fmt.Println(err.Error())
@@ -156,18 +155,22 @@ func (s *Service) listen() {
 }
 
 func (s *Service) handle() {
-	for s.running {
-		if s.clients != nil {
-			s.clients <- new(interface{})
+	for {
+		select {
+		case req, ok := <-s.reqs:
+			if !ok {
+				return
+			}
+			if s.clients != nil {
+				s.clients <- new(interface{})
+			}
+			if Timeout != 0 {
+				req.SetReadDeadline(time.Now().Add(Timeout))
+			}
+			go s._Handle(req)
+		case <-s.stopRunning:
+			break
 		}
-		req, ok := <-s.reqs
-		if !ok {
-			return
-		}
-		if Timeout != 0 {
-			req.SetReadDeadline(time.Now().Add(Timeout))
-		}
-		go s._Handle(req)
 	}
 }
 
@@ -181,7 +184,7 @@ func (s *Service) _Handle(req net.Conn) {
 	if err == nil {
 		return
 	}
-	if Debug {
+	if s.debug {
 		fmt.Println(err)
 	}
 }
@@ -190,10 +193,11 @@ func (s *Service) _Handle(req net.Conn) {
 func (s *Service) Close() {
 	s.Lock()
 	defer s.Unlock()
-	if s.running == false {
+	if s.stopRunning == nil {
 		return
 	}
-	s.running = false
+	close(s.stopRunning)
+	s.stopRunning = nil
 	s.listener.Close()
 	close(s.reqs)
 }
