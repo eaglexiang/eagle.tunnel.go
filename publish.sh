@@ -19,6 +19,7 @@ if [ $# -gt 0 ]; then
         source ${ScriptPath}/publishzip.sh linux amd64
         source ${ScriptPath}/publishzip.sh linux 386
         source ${ScriptPath}/publishzip.sh linux arm
+        source ${ScriptPath}/publishzip.sh linux arm64
         source ${ScriptPath}/publishzip.sh darwin amd64
         source ${ScriptPath}/publishzip.sh darwin 386
         source ${ScriptPath}/publishzip.sh windows amd64
