@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 18:49:23
+ * @LastEditTime: 2019-03-03 21:24:19
  */
 
 package core
@@ -255,7 +255,6 @@ func SetListen(localIpe string) {
 }
 
 func readHosts(hostsDir string) error {
-
 	hostsFiles, err := getHostsList(hostsDir)
 	if err != nil {
 		return errors.New("readHosts -> " +
@@ -271,27 +270,36 @@ func readHosts(hostsDir string) error {
 		hosts = append(hosts, newHosts...)
 	}
 
-	for _, host := range hosts {
-		// 将所有连续空格缩减为单个空格
-		for {
-			newHost := strings.Replace(host, "  ", " ", -1)
-			if newHost == host {
-				break
-			}
-			host = newHost
+	for index, host := range hosts {
+		err = handleSingleHost(host)
+		if err != nil {
+			return errors.New("readHosts -> " + err.Error())
 		}
+		hosts[index] = host
+	}
+	return nil
+}
 
-		items := strings.Split(host, " ")
-		if len(items) < 2 {
-			return errors.New("invalid hosts line: " + host)
+func handleSingleHost(host string) (err error) {
+	// 将所有连续空格缩减为单个空格
+	for {
+		newHost := strings.Replace(host, "  ", " ", -1)
+		if newHost == host {
+			break
 		}
-		ip := strings.TrimSpace(items[0])
-		domain := strings.TrimSpace(items[1])
-		if domain != "" && ip != "" {
-			myet.HostsCache[domain] = ip
-		} else {
-			return errors.New("invalid hosts line: " + host)
-		}
+		host = newHost
+	}
+
+	items := strings.Split(host, " ")
+	if len(items) < 2 {
+		return errors.New("invalid hosts line: " + host)
+	}
+	ip := strings.TrimSpace(items[0])
+	domain := strings.TrimSpace(items[1])
+	if domain != "" && ip != "" {
+		myet.HostsCache[domain] = ip
+	} else {
+		return errors.New("invalid hosts line: " + host)
 	}
 	return nil
 }
