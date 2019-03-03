@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 19:01:35
+ * @LastEditTime: 2019-03-03 19:52:59
  */
 
 package core
@@ -47,32 +47,24 @@ type Service struct {
 	debug       bool
 }
 
-// CreateService 构造Service
-func CreateService() *Service {
-	mycipher.DefaultCipher = func() mycipher.Cipher {
-		cipherType := mycipher.ParseCipherType(settings.Get("cipher"))
-		switch cipherType {
-		case mycipher.SimpleCipherType:
-			c := simplecipher.SimpleCipher{}
-			c.SetKey(settings.Get("data-key"))
-			return &c
-		default:
-			return nil
-		}
+func createCipher() mycipher.Cipher {
+	cipherType := mycipher.ParseCipherType(settings.Get("cipher"))
+	switch cipherType {
+	case mycipher.SimpleCipherType:
+		c := simplecipher.SimpleCipher{}
+		c.SetKey(settings.Get("data-key"))
+		return &c
+	default:
+		return nil
 	}
+}
 
-	service := Service{
-		reqs:    make(chan net.Conn),
-		relayer: Relayer{},
-		debug:   settings.Get("debug") == "on",
-	}
-
+func createETArg() *myet.Arg {
 	users := myet.UsersArg{
 		LocalUser:  LocalUser,
 		ValidUsers: Users,
 	}
-
-	e := myet.Arg{
+	return &myet.Arg{
 		ProxyStatus:   ProxyStatus,
 		IPType:        settings.Get("ip-type"),
 		Head:          settings.Get("head"),
@@ -81,7 +73,10 @@ func CreateService() *Service {
 		Users:         users,
 		Timeout:       Timeout,
 	}
-	et := myet.CreateET(&e)
+}
+
+func setHandlersAndSender(service *Service) {
+	et := myet.CreateET(createETArg())
 
 	// 添加后端协议Handler
 	if settings.Get("et") == "on" {
@@ -107,13 +102,26 @@ func CreateService() *Service {
 	if DefaultSender != nil {
 		service.relayer.SetSender(DefaultSender)
 	}
+}
 
+func setMaxClients(service *Service) {
 	maxclients, _ := strconv.ParseInt(settings.Get("maxclients"), 10, 64)
 	if maxclients > 0 {
 		service.clients = make(chan interface{}, maxclients)
 	}
+}
 
-	return &service
+// CreateService 构造Service
+func CreateService() *Service {
+	mycipher.DefaultCipher = createCipher
+	service := &Service{
+		reqs:    make(chan net.Conn),
+		relayer: Relayer{},
+		debug:   settings.Get("debug") == "on",
+	}
+	setHandlersAndSender(service)
+	setMaxClients(service)
+	return service
 }
 
 // Start 启动ET服务

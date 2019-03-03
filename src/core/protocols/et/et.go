@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-24 23:59:45
+ * @LastEditTime: 2019-03-03 20:50:27
  */
 
 package et
@@ -171,7 +171,7 @@ func (et *ET) connect2Relayer(tunnel *mytunnel.Tunnel) error {
 	if err != nil {
 		return errors.New("connect2Relayer -> " + err.Error())
 	}
-	tunnel.Right = &conn
+	tunnel.Right = conn
 	err = et.checkVersionOfRelayer(tunnel)
 	if err != nil {
 		return errors.New("connect2Relayer -> " + err.Error())
@@ -259,7 +259,7 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 			err.Error())
 	}
 	// 获取用户IP
-	addr := (*tunnel.Left).RemoteAddr()
+	addr := tunnel.Left.RemoteAddr()
 	ip := strings.Split(addr.String(), ":")[0]
 	user2Check, err := myuser.ParseReqUser(userStr, ip)
 	if err != nil {

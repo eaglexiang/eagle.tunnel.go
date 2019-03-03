@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-24 23:07:11
+ * @LastEditTime: 2019-03-03 20:49:05
  */
 
 package socks5
@@ -17,6 +17,7 @@ import (
 
 	"github.com/eaglexiang/go-bytebuffer"
 	mynet "github.com/eaglexiang/go-net"
+	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
 // SOCKS请求的类型
@@ -62,18 +63,38 @@ func (conn *Socks5) Name() string {
 	return "SOCKS"
 }
 
-// Handle 处理SOCKS5请求
-func (conn *Socks5) Handle(e *mynet.Arg) (err error) {
-	if e.Tunnel == nil {
+func checkTunnel(tunnel *mytunnel.Tunnel) error {
+	if tunnel == nil {
 		return errors.New("Socks5.Handle -> tunnel is nil")
 	}
-
 	// 不接受来自公网IP的SOCKS5请求
-	ipOfReq := strings.Split((*e.Tunnel.Left).RemoteAddr().String(), ":")[0]
+	ipOfReq := strings.Split(tunnel.Left.RemoteAddr().String(), ":")[0]
 	if !mynet.CheckPrivateIPv4(ipOfReq) {
 		return errors.New("Socks5.Handle -> invalid source IP type: public " + ipOfReq)
 	}
+	return nil
+}
 
+func getCommand(tunnel *mytunnel.Tunnel,
+	buffer *bytebuffer.ByteBuffer) (cmd command, err error) {
+	cmd, ok := commands[buffer.Buf()[1]]
+	if !ok {
+		return nil, errors.New("Socks5.Handle -> invalid req")
+	}
+	return cmd, nil
+}
+
+func getMsgFromL(tunnel *mytunnel.Tunnel) (buffer *bytebuffer.ByteBuffer, err error) {
+	buffer = bytebuffer.GetKBBuffer()
+	defer bytebuffer.PutKBBuffer(buffer)
+	buffer.Length, err = tunnel.ReadLeft(buffer.Buf())
+	if err != nil {
+		return nil, errors.New("Socks5.Handle -> " + err.Error())
+	}
+	return buffer, nil
+}
+
+func checkVersion(e *mynet.Arg) (err error) {
 	version := e.Msg[0]
 	if version != '\u0005' {
 		return errors.New("Socks5.Handle -> invalid socks version")
@@ -83,19 +104,28 @@ func (conn *Socks5) Handle(e *mynet.Arg) (err error) {
 	if count < 2 {
 		return errors.New("Scosk5.Handle -> fail to reply")
 	}
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = e.Tunnel.ReadLeft(buffer.Buf())
+	return nil
+}
+
+// Handle 处理SOCKS5请求
+func (conn *Socks5) Handle(e *mynet.Arg) (err error) {
+	err = checkTunnel(e.Tunnel)
 	if err != nil {
-		return errors.New("Socks5.Handle -> " + err.Error())
+		return err
 	}
-	cmdType := buffer.Buf()[1]
-	command, ok := commands[cmdType]
-	if ok {
-		err = command.Handle(buffer.Cut(), e)
-	} else {
-		err = errors.New("invalid socks req type")
+	err = checkVersion(e)
+	if err != nil {
+		return err
 	}
+	req, err := getMsgFromL(e.Tunnel)
+	if err != nil {
+		return err
+	}
+	cmd, err := getCommand(e.Tunnel, req)
+	if err != nil {
+		return err
+	}
+	err = cmd.Handle(req.Cut(), e)
 	if err != nil {
 		return errors.New("Socks5.Handle -> " + err.Error())
 	}

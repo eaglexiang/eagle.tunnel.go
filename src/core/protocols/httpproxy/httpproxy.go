@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-25 04:01:53
+ * @LastEditTime: 2019-03-03 20:49:48
  */
 
 package httpproxy
@@ -48,7 +48,7 @@ func (conn *HTTPProxy) Handle(e *mynet.Arg) error {
 	e.TheType = mynet.CONNECT
 
 	// 不接受来自公网IP的HTTP代理请求
-	ipOfReq := strings.Split((*e.Tunnel.Left).RemoteAddr().String(), ":")[0]
+	ipOfReq := strings.Split(e.Tunnel.Left.RemoteAddr().String(), ":")[0]
 	if !mynet.CheckPrivateIPv4(ipOfReq) {
 		return errors.New("HTTPProxy.Handle -> invalid source ip type: public " +
 			ipOfReq)

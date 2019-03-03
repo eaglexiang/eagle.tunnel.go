@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 23:08:59
+ * @LastEditTime: 2019-03-03 20:50:32
  */
 
 package et
@@ -174,7 +174,7 @@ func (t *TCP) sendTCPReq2Server(e *NetArg) error {
 	if err != nil {
 		return errors.New("TCP.sendTCPReq2Server -> " + err.Error())
 	}
-	e.Tunnel.Right = &conn
+	e.Tunnel.Right = conn
 	e.Tunnel.EncryptRight = nil
 	e.Tunnel.DecryptRight = nil
 	e.Tunnel.SpeedLimiter = t.arg.Users.LocalUser.SpeedLimiter()
