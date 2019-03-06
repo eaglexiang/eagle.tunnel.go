@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-06 18:31:12
+ * @LastEditTime: 2019-03-06 18:42:45
  */
 
 package core
@@ -53,12 +53,12 @@ func (relayer *Relayer) Handle(conn net.Conn) (err error) {
 		ip := conn.RemoteAddr().String()
 		return errors.New("Relayer.Handle -> no matched handler from " +
 			ip + ": " +
-			string(firstMsg))
+			firstMsg.String())
 	}
 
 	// 进入业务流程
 	e := &mynet.Arg{
-		Msg:    firstMsg,
+		Msg:    firstMsg.Data(),
 		Tunnel: tunnel,
 	}
 
@@ -116,10 +116,10 @@ func (relayer *Relayer) handleOtherReqs(
 	return nil
 }
 
-func getHandler(firstMsg []byte, handlers []Handler) Handler {
+func getHandler(firstMsg *bytebuffer.ByteBuffer, handlers []Handler) Handler {
 	var handler Handler
 	for _, h := range handlers {
-		if h.Match(firstMsg) {
+		if h.Match(firstMsg.Data()) {
 			handler = h
 			break
 		}
@@ -127,13 +127,12 @@ func getHandler(firstMsg []byte, handlers []Handler) Handler {
 	return handler
 }
 
-func getFirsMsg(tunnel *mytunnel.Tunnel) (msg []byte, err error) {
+func getFirsMsg(tunnel *mytunnel.Tunnel) (msg *bytebuffer.ByteBuffer, err error) {
 	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
 	buffer.Length, err = tunnel.ReadLeft(buffer.Buf())
 	if err != nil {
 		return nil, errors.New("getFirstMsg -> " +
 			err.Error())
 	}
-	return buffer.Cut(), nil
+	return buffer, nil
 }
