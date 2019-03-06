@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 20:50:54
+ * @LastEditTime: 2019-03-06 17:51:58
  */
 
 package core
@@ -37,9 +37,11 @@ func (relayer *Relayer) SetSender(sender Sender) {
 
 // Handle 处理请求连接
 func (relayer *Relayer) Handle(conn net.Conn) (err error) {
-	firstMsg := getFirsMsg(conn) // 获取握手消息
-	if firstMsg == nil {
-		return errors.New("Relayer.Handle -> no firstMsg")
+	defer conn.Close()
+	firstMsg, err := getFirsMsg(conn) // 获取握手消息
+	if err != nil {
+		return errors.New("Relayer.Handle -> " +
+			err.Error())
 	}
 	// 识别业务协议
 	handler := getHandler(firstMsg, relayer.handlers)
@@ -125,13 +127,14 @@ func getHandler(firstMsg []byte, handlers []Handler) Handler {
 	return handler
 }
 
-func getFirsMsg(conn net.Conn) []byte {
+func getFirsMsg(conn net.Conn) ([]byte, error) {
 	buffer := bytebuffer.GetKBBuffer()
 	defer bytebuffer.PutKBBuffer(buffer)
 	var err error
 	buffer.Length, err = conn.Read(buffer.Buf())
 	if err != nil {
-		return nil
+		return nil, errors.New("getFirstMsg -> " +
+			err.Error())
 	}
-	return buffer.Cut()
+	return buffer.Cut(), nil
 }
