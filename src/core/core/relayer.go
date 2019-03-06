@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 20:50:54
+ * @LastEditTime: 2019-03-06 18:26:28
  */
 
 package core
@@ -37,9 +37,15 @@ func (relayer *Relayer) SetSender(sender Sender) {
 
 // Handle 处理请求连接
 func (relayer *Relayer) Handle(conn net.Conn) (err error) {
-	firstMsg := getFirsMsg(conn) // 获取握手消息
-	if firstMsg == nil {
-		return errors.New("Relayer.Handle -> no firstMsg")
+	tunnel := mytunnel.GetTunnel()
+	defer mytunnel.PutTunnel(tunnel)
+	tunnel.Left = conn
+	tunnel.Timeout = Timeout
+
+	firstMsg, err := getFirsMsg(tunnel) // 获取握手消息
+	if err != nil {
+		return errors.New("Relayer.Handle -> " +
+			err.Error())
 	}
 	// 识别业务协议
 	handler := getHandler(firstMsg, relayer.handlers)
@@ -51,10 +57,6 @@ func (relayer *Relayer) Handle(conn net.Conn) (err error) {
 	}
 
 	// 进入业务流程
-	tunnel := mytunnel.GetTunnel()
-	defer mytunnel.PutTunnel(tunnel)
-	tunnel.Left = conn
-	tunnel.Timeout = Timeout
 	e := &mynet.Arg{
 		Msg:    firstMsg,
 		Tunnel: tunnel,
@@ -125,13 +127,13 @@ func getHandler(firstMsg []byte, handlers []Handler) Handler {
 	return handler
 }
 
-func getFirsMsg(conn net.Conn) []byte {
+func getFirsMsg(tunnel *mytunnel.Tunnel) (msg []byte, err error) {
 	buffer := bytebuffer.GetKBBuffer()
 	defer bytebuffer.PutKBBuffer(buffer)
-	var err error
-	buffer.Length, err = conn.Read(buffer.Buf())
+	buffer.Length, err = tunnel.ReadLeft(buffer.Buf())
 	if err != nil {
-		return nil
+		return nil, errors.New("getFirstMsg -> " +
+			err.Error())
 	}
-	return buffer.Cut()
+	return buffer.Cut(), nil
 }
