@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-08 02:09:00
+ * @LastEditTime: 2019-03-08 02:34:14
  */
 
 package core
@@ -41,26 +41,23 @@ func (relayer *Relayer) Handle(conn net.Conn) (err error) {
 	defer mytunnel.PutTunnel(tunnel)
 	tunnel.Left = conn
 	tunnel.Timeout = Timeout
-	// 获取握手消息
-	firstMsg, err := getFirsMsg(tunnel)
+	// 获取握手消息和对应handler
+	firstMsg, handler, err := relayer.shake(tunnel)
 	if err != nil {
 		return errors.New("Relayer.Handle -> " +
 			err.Error())
 	}
 	defer bytebuffer.PutKBBuffer(firstMsg)
-	// 识别业务协议
-	handler := getHandler(firstMsg, relayer.handlers)
-	if handler == nil {
-		ip := conn.RemoteAddr().String()
-		return errors.New("Relayer.Handle -> no matched handler from " +
-			ip + ": " +
-			firstMsg.String())
-	}
-	// 进入业务流程
 	e := &mynet.Arg{
 		Msg:    firstMsg.Data(),
 		Tunnel: tunnel,
 	}
+	return relayer.handleReqs(handler, tunnel, e)
+}
+
+func (relayer *Relayer) handleReqs(handler Handler,
+	tunnel *mytunnel.Tunnel,
+	e *mynet.Arg) error {
 	// 判断是否是sender业务
 	if reflect.TypeOf(relayer.sender) == reflect.TypeOf(handler) {
 		return relayer.handleSenderReqs(handler, tunnel, e)
@@ -68,8 +65,8 @@ func (relayer *Relayer) Handle(conn net.Conn) (err error) {
 	return relayer.handleOtherReqs(handler, tunnel, e)
 }
 
-func (relayer *Relayer) handleSenderReqs(
-	handler Handler,
+// 使用sender业务向远端发起请求
+func (relayer *Relayer) handleSenderReqs(handler Handler,
 	tunnel *mytunnel.Tunnel,
 	e *mynet.Arg) (err error) {
 	// 直接处理
@@ -126,13 +123,21 @@ func getHandler(firstMsg *bytebuffer.ByteBuffer, handlers []Handler) Handler {
 	return handler
 }
 
-func getFirsMsg(tunnel *mytunnel.Tunnel) (msg *bytebuffer.ByteBuffer, err error) {
+func (relayer *Relayer) shake(tunnel *mytunnel.Tunnel) (
+	msg *bytebuffer.ByteBuffer,
+	handler Handler, err error) {
 	buffer := bytebuffer.GetKBBuffer()
 	buffer.Length, err = tunnel.ReadLeft(buffer.Buf())
 	if err != nil {
 		bytebuffer.PutKBBuffer(buffer)
-		return nil, errors.New("getFirstMsg -> " +
+		return nil, nil, errors.New("getFirstMsg -> " +
 			err.Error())
 	}
-	return buffer, nil
+	handler = getHandler(buffer, relayer.handlers)
+	if handler == nil {
+		bytebuffer.PutKBBuffer(buffer)
+		return nil, nil, errors.New("Relayer.Handle -> no matched handler from " +
+			tunnel.Left.RemoteAddr().String() + ": ")
+	}
+	return buffer, handler, nil
 }
