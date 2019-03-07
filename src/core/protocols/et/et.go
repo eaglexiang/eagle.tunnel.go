@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 20:50:27
+ * @LastEditTime: 2019-03-08 02:48:27
  */
 
 package et
@@ -85,26 +85,16 @@ func (et *ET) Match(firstMsg []byte) bool {
 }
 
 // Handle 处理ET请求
-func (et *ET) Handle(e *mynet.Arg) error {
-	args := strings.Split(string(e.Msg), " ")
-	err := et.checkHeaderOfReq(args, e.Tunnel) // 检查协议头
-	if err != nil {
-		return errors.New("ET.Handle -> " + err.Error())
-	}
+func (et *ET) Handle(e *mynet.Arg) (err error) {
 	createCipher(e.Tunnel)            // 创建cipher
 	err = et.checkUserOfReq(e.Tunnel) // 检查请求用户
 	if err != nil {
 		return errors.New("ET.Handle -> " + err.Error())
 	}
 	// 选择子协议handler
-	subReq, err := e.Tunnel.ReadLeftStr()
+	subReq, handler, err := et.subShake(e.Tunnel)
 	if err != nil {
-		return errors.New("ET.Handle -> " + err.Error())
-	}
-	handler := getHandler(subReq, et.subHandlers)
-	if handler == nil {
-		return errors.New("ET.Handle -> invalid req: " +
-			subReq)
+		return err
 	}
 	// 进入子协议业务
 	err = handler.Handle(subReq, e.Tunnel)
@@ -117,6 +107,20 @@ func (et *ET) Handle(e *mynet.Arg) error {
 		return errors.New("no need to continue")
 	}
 	return nil
+}
+
+func (et *ET) subShake(tunnel *mytunnel.Tunnel) (subReq string,
+	handler Handler, err error) {
+	subReq, err = tunnel.ReadLeftStr()
+	if err != nil {
+		return "", nil, errors.New("ET.Handle -> " + err.Error())
+	}
+	handler = getHandler(subReq, et.subHandlers)
+	if handler == nil {
+		return "", nil, errors.New("ET.Handle -> invalid req: " +
+			subReq)
+	}
+	return "", handler, nil
 }
 
 func createCipher(tunnel *mytunnel.Tunnel) {
@@ -259,8 +263,7 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 			err.Error())
 	}
 	// 获取用户IP
-	addr := tunnel.Left.RemoteAddr()
-	ip := strings.Split(addr.String(), ":")[0]
+	ip := strings.Split(tunnel.Left.RemoteAddr().String(), ":")[0]
 	user2Check, err := myuser.ParseReqUser(userStr, ip)
 	if err != nil {
 		tunnel.WriteLeft([]byte(err.Error()))
@@ -273,15 +276,13 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 	validUser, ok := et.arg.Users.ValidUsers[user2Check.ID]
 	if !ok {
 		// 找不到该用户
-		reply := "incorrent username or password"
-		tunnel.WriteLeft([]byte(reply))
+		tunnel.WriteLeft([]byte("incorrent username or password"))
 		return errors.New("checkUserOfReq -> username not found: " +
 			user2Check.ID)
 	}
 	err = validUser.CheckAuth(user2Check)
 	if err != nil {
-		reply := err.Error()
-		tunnel.WriteLeft([]byte(reply))
+		tunnel.WriteLeft([]byte(err.Error()))
 		return errors.New("checkUserOfReq -> " + err.Error())
 	}
 	reply := "valid"
@@ -291,7 +292,7 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 }
 
 // 查询类请求的发射过程都是类似的
-// 连接 - 发送请求 - 得到反馈
+// 连接 - 发送请求 - 得到反馈 - 关闭连接
 // 区别仅仅在请求命令的内容
 func sendQueryReq(et *ET, req string) string {
 	tunnel := mytunnel.GetTunnel()
