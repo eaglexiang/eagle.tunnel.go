@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-08 02:48:27
+ * @LastEditTime: 2019-03-09 01:39:53
  */
 
 package et
@@ -86,8 +86,12 @@ func (et *ET) Match(firstMsg []byte) bool {
 
 // Handle 处理ET请求
 func (et *ET) Handle(e *mynet.Arg) (err error) {
-	createCipher(e.Tunnel)            // 创建cipher
-	err = et.checkUserOfReq(e.Tunnel) // 检查请求用户
+	err = et.checkHeaderOfReq(string(e.Msg), e.Tunnel)
+	if err != nil {
+		return errors.New("ET.Handle -> " + err.Error())
+	}
+	createCipher(e.Tunnel)
+	err = et.checkUserOfReq(e.Tunnel)
 	if err != nil {
 		return errors.New("ET.Handle -> " + err.Error())
 	}
@@ -213,20 +217,22 @@ func (et *ET) checkVersionOfRelayer(tunnel *mytunnel.Tunnel) error {
 }
 
 func (et *ET) checkHeaderOfReq(
-	headers []string,
+	header string,
 	tunnel *mytunnel.Tunnel) error {
-	if len(headers) < 1 {
+	headers := strings.Split(header, " ")
+	switch {
+	case len(headers) < 1:
 		return errors.New("checkHeaderOfReq -> nil req")
-	}
-	if headers[0] != et.arg.Head {
+	case headers[0] != et.arg.Head:
 		return errors.New("checkHeaderOfReq -> wrong head: " + headers[0])
+	default:
+		reply := "valid valid valid"
+		count, _ := tunnel.WriteLeft([]byte(reply))
+		if count != 17 {
+			return errors.New("checkHeaderOfReq -> fail to reply")
+		}
+		return nil
 	}
-	reply := "valid valid valid"
-	count, _ := tunnel.WriteLeft([]byte(reply))
-	if count != 17 {
-		return errors.New("checkHeaderOfReq -> fail to reply")
-	}
-	return nil
 }
 
 func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
