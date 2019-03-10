@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 20:49:05
+ * @LastEditTime: 2019-03-10 10:03:53
  */
 
 package socks5
@@ -51,6 +51,9 @@ type Socks5 struct {
 
 // Match 匹配业务
 func (conn *Socks5) Match(firstMsg []byte) bool {
+	if len(firstMsg) < 3 {
+		return false
+	}
 	version := firstMsg[0]
 	if version == '\u0005' {
 		return true
