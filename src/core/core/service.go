@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 19:52:59
+ * @LastEditTime: 2019-03-16 17:06:38
  */
 
 package core
@@ -18,14 +18,13 @@ import (
 	"sync"
 	"time"
 
+	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/httpproxy"
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/socks5"
 	mycipher "github.com/eaglexiang/go-cipher"
 	settings "github.com/eaglexiang/go-settings"
 	"github.com/eaglexiang/go-simplecipher"
 	myuser "github.com/eaglexiang/go-user"
-
-	myet "core/protocols/et"
-	"core/protocols/httpproxy"
-	"core/protocols/socks5"
 )
 
 // LocalUser 本地用户
@@ -41,7 +40,7 @@ type Service struct {
 	listener    net.Listener
 	stopRunning chan interface{}
 	reqs        chan net.Conn
-	relayer     Relayer
+	relay       Relay
 	MaxClients  int              // 最大客户数量
 	clients     chan interface{} // 当前客户，用来统计当前客户数量
 	debug       bool
@@ -55,6 +54,7 @@ func createCipher() mycipher.Cipher {
 		c.SetKey(settings.Get("data-key"))
 		return &c
 	default:
+		fmt.Println("invalid cipher: ", settings.Get("cipher"))
 		return nil
 	}
 }
@@ -68,7 +68,7 @@ func createETArg() *myet.Arg {
 		ProxyStatus:   ProxyStatus,
 		IPType:        settings.Get("ip-type"),
 		Head:          settings.Get("head"),
-		RemoteET:      settings.Get("relayer"),
+		RemoteET:      settings.Get("relayer"), // relayer即relay
 		LocalLocation: settings.Get("location"),
 		Users:         users,
 		Timeout:       Timeout,
@@ -80,27 +80,27 @@ func setHandlersAndSender(service *Service) {
 
 	// 添加后端协议Handler
 	if settings.Get("et") == "on" {
-		service.relayer.AddHandler(et)
+		service.relay.AddHandler(et)
 	}
 	if settings.Get("http") == "on" {
-		service.relayer.AddHandler(&httpproxy.HTTPProxy{})
+		service.relay.AddHandler(&httpproxy.HTTPProxy{})
 	}
 	if settings.Get("socks") == "on" {
-		service.relayer.AddHandler(&socks5.Socks5{})
+		service.relay.AddHandler(&socks5.Socks5{})
 	}
 	for name, h := range AllHandlers {
 		if !settings.Exsit(name) {
 			continue
 		}
 		if settings.Get(name) == "on" {
-			service.relayer.AddHandler(h)
+			service.relay.AddHandler(h)
 		}
 	}
 
 	// 设置后端协议Sender
-	service.relayer.SetSender(et)
+	service.relay.SetSender(et)
 	if DefaultSender != nil {
-		service.relayer.SetSender(DefaultSender)
+		service.relay.SetSender(DefaultSender)
 	}
 }
 
@@ -115,9 +115,9 @@ func setMaxClients(service *Service) {
 func CreateService() *Service {
 	mycipher.DefaultCipher = createCipher
 	service := &Service{
-		reqs:    make(chan net.Conn),
-		relayer: Relayer{},
-		debug:   settings.Get("debug") == "on",
+		reqs:  make(chan net.Conn),
+		relay: Relay{},
+		debug: settings.Get("debug") == "on",
 	}
 	setHandlersAndSender(service)
 	setMaxClients(service)
@@ -183,7 +183,7 @@ func (s *Service) handle() {
 }
 
 func (s *Service) _Handle(req net.Conn) {
-	err := s.relayer.Handle(req)
+	err := s.relay.Handle(req)
 	defer func() {
 		if s.clients != nil {
 			<-s.clients

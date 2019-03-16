@@ -4,16 +4,15 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 16:31:00
+ * @LastEditTime: 2019-03-16 15:15:09
  */
 
 package cmd
 
 import (
-	etcore "core/core"
-	"core/protocols/et"
-
-	"github.com/eaglexiang/go-settings"
+	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/core"
+	et "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
+	settings "github.com/eaglexiang/go-settings"
 
 	"errors"
 	"strings"

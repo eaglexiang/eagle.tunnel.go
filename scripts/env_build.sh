@@ -19,6 +19,4 @@ ServiceDesPath="${PublishPath}/services"
 ConfDesPath="${PublishPath}/config"
 HostsDesPath="${ConfDesPath}/hosts"
 
-export GOPATH=$GOPATH:${RootPath}
-
 echo "done"

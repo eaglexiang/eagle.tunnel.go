@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 21:24:19
+ * @LastEditTime: 2019-03-16 16:51:50
  */
 
 package core
@@ -21,10 +21,9 @@ import (
 	"strings"
 	"time"
 
+	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
 	"github.com/eaglexiang/go-settings"
 	myuser "github.com/eaglexiang/go-user"
-
-	myet "core/protocols/et"
 )
 
 // ConfigPath 主配置文件的路径
@@ -37,6 +36,7 @@ var ProxyStatus int
 var Timeout time.Duration
 
 func init() {
+	settings.Bind("relayer", "relay")
 	// 设定参数默认值
 	settings.SetDefault("timeout", "0")
 	settings.SetDefault("location", "1;CN;CHN;China")
@@ -47,7 +47,7 @@ func init() {
 	settings.SetDefault("user", "null:null")
 	settings.SetDefault("user-check", "off")
 	settings.SetDefault("listen", "0.0.0.0")
-	settings.SetDefault("relayer", "127.0.0.1")
+	settings.SetDefault("relay", "127.0.0.1")
 	settings.SetDefault("http", "off")
 	settings.SetDefault("socks", "off")
 	settings.SetDefault("et", "off")
@@ -174,7 +174,8 @@ func SetUser(user string) error {
 func SetProxyStatus(status string) error {
 	ProxyStatus = myet.ParseProxyStatus(status)
 	if ProxyStatus == myet.ErrorProxyStatus {
-		return errors.New("SetProxyStatus -> invalid proxy-status")
+		return errors.New("SetProxyStatus -> invalid proxy-status: " +
+			settings.Get("proxy-status"))
 	}
 	settings.Set("proxy-status", status)
 	return nil

@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-22 10:28:46
- * @LastEditTime: 2019-02-25 13:50:11
+ * @LastEditTime: 2019-03-16 16:50:02
  */
 
 package et
@@ -80,10 +80,11 @@ func parseNetArg(e *mynet.Arg) (*NetArg, error) {
 
 // ParseProxyStatus 识别ProxyStatus
 func ParseProxyStatus(status string) int {
+	status = strings.ToLower(status)
 	switch status {
-	case "smart", "Smart", "SMART":
+	case "smart":
 		return ProxySMART
-	case "enable", "Enable", "ENABLE":
+	case "enable":
 		return ProxyENABLE
 	default:
 		return ErrorProxyStatus

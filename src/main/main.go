@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 16:37:07
+ * @LastEditTime: 2019-03-16 15:14:41
  */
 
 package main
@@ -13,10 +13,9 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/eaglexiang/go-settings"
-
-	etcore "core/core"
-	mycmd "mycmd"
+	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/core"
+	mycmd "github.com/eaglexiang/eagle.tunnel.go/src/mycmd"
+	settings "github.com/eaglexiang/go-settings"
 )
 
 var service *etcore.Service

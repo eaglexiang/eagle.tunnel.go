@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 23:11:44
+ * @LastEditTime: 2019-03-16 15:15:31
  */
 
 package cmd
@@ -15,12 +15,11 @@ import (
 	"strconv"
 	"time"
 
+	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/core"
+	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
 	cipher "github.com/eaglexiang/go-cipher"
-	"github.com/eaglexiang/go-settings"
+	settings "github.com/eaglexiang/go-settings"
 	simplecipher "github.com/eaglexiang/go-simplecipher"
-
-	etcore "core/core"
-	myet "core/protocols/et"
 )
 
 // Check check命令
