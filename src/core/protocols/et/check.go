@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 23:07:56
+ * @LastEditTime: 2019-03-17 16:42:10
  */
 
 package et
@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 
 	mytunnel "github.com/eaglexiang/go-tunnel"
 	version "github.com/eaglexiang/go-version"
@@ -79,8 +81,8 @@ func (c Check) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	case EtCheckUSERS:
 		c.handleEtCheckUsersReq(tunnel)
 	default:
-		return errors.New("Check.Handle -> invalid check type: " +
-			reqs[1])
+		logger.Warning("invalid et check type: ", reqs[1])
+		return errors.New("Check.Handle -> invalid check type")
 	}
 	return nil
 }

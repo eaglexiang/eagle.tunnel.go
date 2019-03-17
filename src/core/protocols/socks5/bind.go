@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-24 18:40:56
- * @LastEditTime: 2019-02-25 00:56:24
+ * @LastEditTime: 2019-03-17 17:34:22
  */
 
 package socks5
@@ -32,12 +32,12 @@ func (b bind) Handle(req []byte, e *mynet.Arg) error {
 	e.Host = host + ":" + port
 	e.TheType = mynet.BIND
 	// 根据BIND的结果对客户端进行反馈
-	e.Delegates = append(e.Delegates, func() {
+	e.Delegates = append(e.Delegates, func() bool {
 		var reply []byte
 		defer e.Tunnel.WriteLeft(reply)
 		if e.TheType != 0 {
 			reply = []byte{5, REPERROR, 0, 1, 0, 0, 0, 0, 0, 0}
-			return
+			return false
 		}
 		var hostType int
 		host, _port, hostType = dismantle(e.Host)
@@ -48,8 +48,10 @@ func (b bind) Handle(req []byte, e *mynet.Arg) error {
 			var portBytes []byte
 			binary.BigEndian.PutUint16(portBytes, uint16(_port))
 			reply = append(reply, portBytes...) // port
+			return true
 		default:
 			reply = []byte{5, REPERROR, 0, 0, 0, 0, 0, 0, 0, 0}
+			return false
 		}
 	})
 	return nil

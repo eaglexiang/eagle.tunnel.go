@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 05:23:06
+ * @LastEditTime: 2019-03-17 17:06:46
  */
 
 package et
@@ -12,6 +12,8 @@ import (
 	"errors"
 	"net"
 	"strings"
+
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 
 	dnscache "github.com/eaglexiang/go-dnscache"
 	mynet "github.com/eaglexiang/go-net"
@@ -35,7 +37,7 @@ func (d DNS6) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	e := NetArg{Domain: reqs[1]}
 	err := d.resolvDNS6ByLocalServer(&e)
 	if err != nil {
-		return errors.New("DNS6.Handle -> " + err.Error())
+		return err
 	}
 	tunnel.WriteLeft([]byte(e.IP))
 	return nil
@@ -77,40 +79,24 @@ func (d DNS6) Send(et *ET, e *NetArg) (err error) {
 	// 	err = errors.New("DNS6.Send -> invalid proxy-status")
 	// }
 
-	err = d.proxySend(et, e)
-
-	if err != nil {
-		return errors.New("DNS6.Send -> " +
-			err.Error())
-	}
-	return nil
+	return d.proxySend(et, e)
 }
 
 // smartSend 智能模式
 // 智能模式会先检查域名是否存在于白名单
 // 白名单内域名将转入强制代理模式
-func (d DNS6) smartSend(et *ET, e *NetArg) error {
+func (d DNS6) smartSend(et *ET, e *NetArg) (err error) {
 	if IsWhiteDomain(e.Domain) {
-		err := d.resolvDNS6ByProxy(et, e)
-		if err != nil {
-			return errors.New("DNS6.smartSend -> " + err.Error())
-		}
-		return nil
+		err = d.resolvDNS6ByProxy(et, e)
+	} else {
+		err = d.resolvDNS6ByLocalClient(et, e)
 	}
-	err := d.resolvDNS6ByLocalClient(et, e)
-	if err != nil {
-		return errors.New("DNS6.smartSend -> " + err.Error())
-	}
-	return nil
+	return
 }
 
 // proxySend 强制代理模式
 func (d DNS6) proxySend(et *ET, e *NetArg) error {
-	err := d.resolvDNS6ByProxy(et, e)
-	if err != nil {
-		return errors.New("DNS6.proxySend -> " + err.Error())
-	}
-	return nil
+	return d.resolvDNS6ByProxy(et, e)
 }
 
 // Type ET子协议类型
@@ -125,31 +111,27 @@ func (d DNS6) resolvDNS6ByProxy(et *ET, e *NetArg) (err error) {
 	node, loaded := dns6RemoteCache.Get(e.Domain)
 	if loaded {
 		e.IP, err = node.Wait()
+	} else {
+		err = d._resolvDNS6ByProxy(et, e)
 		if err != nil {
-			err = errors.New("resolvDNS6ByProxy -> " + err.Error())
+			dns6RemoteCache.Delete(e.Domain)
+		} else {
+			dns6RemoteCache.Update(e.Domain, e.IP)
 		}
-		return
 	}
-	err = d._resolvDNS6ByProxy(et, e)
-	if err != nil {
-		dns6RemoteCache.Delete(e.Domain)
-		return errors.New("resolvDNS6ByProxy -> " + err.Error())
-	}
-	dns6RemoteCache.Update(e.Domain, e.IP)
-	return nil
+	return
 }
 
 // _resolvDNS6ByProxy 使用代理服务器进行DNS6的解析
 // 实际完成DNS查询操作
 func (d DNS6) _resolvDNS6ByProxy(et *ET, e *NetArg) error {
 	req := FormatEtType(EtDNS6) + " " + e.Domain
-	reply := sendQueryReq(et, req)
-	ip := net.ParseIP(reply)
+	e.IP = sendQueryReq(et, req)
+	ip := net.ParseIP(e.IP)
 	if ip == nil {
-		return errors.New("_resolvDNS6ByProxy -> failed to resolv by remote: " +
-			e.Domain + " -> " + reply)
+		logger.Warning("resolv dns6 by proxy: ", e.Domain, " -> ",
+			e.IP)
 	}
-	e.IP = reply
 	return nil
 }
 
@@ -161,18 +143,15 @@ func (d DNS6) resolvDNS6ByLocalClient(et *ET, e *NetArg) (err error) {
 	node, loaded := dns6LocalCache.Get(e.Domain)
 	if loaded {
 		e.IP, err = node.Wait()
+	} else {
+		err = d._resolvDNS6ByLocalClient(et, e)
 		if err != nil {
-			err = errors.New("resolvDNS6ByLocalClient -> " + err.Error())
+			dns6LocalCache.Delete(e.Domain)
+		} else {
+			dns6LocalCache.Update(e.Domain, e.IP)
 		}
-		return
 	}
-	err = d._resolvDNS6ByLocalClient(et, e)
-	if err != nil {
-		dns6LocalCache.Delete(e.Domain)
-		return errors.New("resolvDNS6ByLocalClient -> " + err.Error())
-	}
-	dns6LocalCache.Update(e.Domain, e.IP)
-	return nil
+	return
 }
 
 // _resolvDNS6ByLocalClient 本地解析DNS6
@@ -181,25 +160,22 @@ func (d DNS6) _resolvDNS6ByLocalClient(et *ET, e *NetArg) (err error) {
 	e.IP, err = mynet.ResolvIPv6(e.Domain)
 	// 本地解析失败应该让用户察觉，手动添加DNS白名单
 	if err != nil {
-		return errors.New("_resolvDNS6ByLocalClient -> fail to resolv DNS6 by local: " + e.Domain +
+		logger.Warning("fail to resolv DNS6 by local: ", e.Domain,
 			" , consider adding this domain to your whitelist_domain.txt")
+		return err
 	}
 
 	// 判断IP所在位置是否适合代理
 	l := et.subSenders[EtLOCATION].(Location)
 	l.Send(et, e)
-	proxy := l.CheckProxyByLocation(e.Location)
-	if !proxy {
+	if !l.CheckProxyByLocation(e.Location) {
 		return nil
 	}
 	// 需要代理：更新IP为Relayer端的解析结果
 	ne := NetArg{Domain: e.Domain}
 	err = d.resolvDNS6ByProxy(et, &ne)
-	if err != nil {
-		return errors.New("_resolvDNS6ByLocalClient -> " + err.Error())
-	}
 	e.IP = ne.IP
-	return nil
+	return err
 }
 
 // resolvDNS6ByLocalServer 本地解析DNS6
@@ -210,26 +186,20 @@ func (d DNS6) resolvDNS6ByLocalServer(e *NetArg) (err error) {
 	node, loaded := dns6LocalCache.Get(e.Domain)
 	if loaded {
 		e.IP, err = node.Wait()
+	} else {
+		err = d._resolvDNS6ByLocalServer(e)
 		if err != nil {
-			err = errors.New("resolvDNS6ByLocalServer -> " + err.Error())
+			dns6LocalCache.Delete(e.Domain)
+		} else {
+			dns6LocalCache.Update(e.Domain, e.IP)
 		}
-		return
 	}
-	err = d._resolvDNS6ByLocalServer(e)
-	if err != nil {
-		dns6LocalCache.Delete(e.Domain)
-		return errors.New("resolvDNS6ByLocalServer -> " + err.Error())
-	}
-	dns6LocalCache.Update(e.Domain, e.IP)
-	return nil
+	return
 }
 
 // _resolvDNS6ByLocalServer 本地解析DNS6
 // 实际完成DNS6的解析动作
 func (d DNS6) _resolvDNS6ByLocalServer(e *NetArg) (err error) {
 	e.IP, err = mynet.ResolvIPv6(e.Domain)
-	if err != nil {
-		return errors.New("_resolvDNS6ByLocalServer -> " + err.Error())
-	}
-	return nil
+	return err
 }

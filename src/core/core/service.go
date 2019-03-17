@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-16 17:44:04
+ * @LastEditTime: 2019-03-17 16:34:08
  */
 
 package core
@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 
 	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/httpproxy"
@@ -42,7 +44,6 @@ type Service struct {
 	relay       Relay
 	MaxClients  int              // 最大客户数量
 	clients     chan interface{} // 当前客户，用来统计当前客户数量
-	debug       bool
 }
 
 func createCipher() mycipher.Cipher {
@@ -53,7 +54,7 @@ func createCipher() mycipher.Cipher {
 		c.SetKey(settings.Get("data-key"))
 		return &c
 	default:
-		fmt.Println("invalid cipher: ", settings.Get("cipher"))
+		logger.Error("invalid cipher: ", settings.Get("cipher"))
 		return nil
 	}
 }
@@ -116,7 +117,6 @@ func CreateService() *Service {
 	service := &Service{
 		reqs:  make(chan net.Conn),
 		relay: Relay{},
-		debug: settings.Get("debug") == "on",
 	}
 	setHandlersAndSender(service)
 	setMaxClients(service)
@@ -128,7 +128,8 @@ func (s *Service) Start() (err error) {
 	s.Lock()
 	defer s.Unlock()
 	if s.stopRunning != nil {
-		return errors.New("Service.Start -> the service is already started")
+		logger.Error("fail to start the already started service")
+		return errors.New("service is already started")
 	}
 
 	// disable tls check for ET-LOCATION
@@ -138,7 +139,8 @@ func (s *Service) Start() (err error) {
 	ipe := settings.Get("listen")
 	s.listener, err = net.Listen("tcp", ipe)
 	if err != nil {
-		return errors.New("Service.Start -> " + err.Error())
+		logger.Error(err)
+		return err
 	}
 	fmt.Println("start to listen: ", ipe)
 	s.reqs = make(chan net.Conn)
@@ -182,17 +184,9 @@ func (s *Service) handle() {
 }
 
 func (s *Service) _Handle(req net.Conn) {
-	err := s.relay.Handle(req)
-	defer func() {
-		if s.clients != nil {
-			<-s.clients
-		}
-	}()
-	if err == nil {
-		return
-	}
-	if s.debug {
-		fmt.Println(err)
+	s.relay.Handle(req)
+	if s.clients != nil {
+		<-s.clients
 	}
 }
 

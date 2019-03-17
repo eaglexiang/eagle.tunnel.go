@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-16 15:25:12
+ * @LastEditTime: 2019-03-17 16:31:56
  */
 
 package core
@@ -13,6 +13,7 @@ import (
 	"net"
 	"reflect"
 
+	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	"github.com/eaglexiang/go-bytebuffer"
 	mynet "github.com/eaglexiang/go-net"
 	mytunnel "github.com/eaglexiang/go-tunnel"
@@ -36,51 +37,49 @@ func (relay *Relay) SetSender(sender Sender) {
 }
 
 // Handle 处理请求连接
-func (relay *Relay) Handle(conn net.Conn) (err error) {
+func (relay *Relay) Handle(conn net.Conn) {
 	tunnel := mytunnel.GetTunnel()
 	defer mytunnel.PutTunnel(tunnel)
 	tunnel.Left = conn
 	tunnel.Timeout = Timeout
-	// 获取握手消息和对应handler
 	firstMsg, handler, err := relay.shake(tunnel)
 	if err != nil {
-		return errors.New("Relay.Handle -> " +
-			err.Error())
+		return
 	}
 	defer bytebuffer.PutKBBuffer(firstMsg)
 	e := &mynet.Arg{
 		Msg:    firstMsg.Data(),
 		Tunnel: tunnel,
 	}
-	return relay.handleReqs(handler, tunnel, e)
+	relay.handleReqs(handler, tunnel, e)
 }
 
 func (relay *Relay) handleReqs(handler Handler,
 	tunnel *mytunnel.Tunnel,
-	e *mynet.Arg) error {
+	e *mynet.Arg) {
 	// 判断是否是sender业务
+	var need2Continue bool
 	if reflect.TypeOf(relay.sender) == reflect.TypeOf(handler) {
-		return relay.handleSenderReqs(handler, tunnel, e)
+		need2Continue = relay.handleSenderReqs(handler, e)
+	} else {
+		need2Continue = relay.handleOtherReqs(handler, tunnel, e)
 	}
-	return relay.handleOtherReqs(handler, tunnel, e)
+	if need2Continue {
+		tunnel.Flow()
+	}
 }
 
 // 使用sender业务向远端发起请求
 func (relay *Relay) handleSenderReqs(handler Handler,
-	tunnel *mytunnel.Tunnel,
-	e *mynet.Arg) (err error) {
-	// 直接处理
-	err = handler.Handle(e)
-	if err != nil {
-		if err.Error() == "no need to continue" {
-			return nil
-		}
-		return errors.New("Relay.Handle -> " +
-			err.Error())
+	e *mynet.Arg) bool {
+	err := handler.Handle(e)
+	if err == nil {
+		return true
 	}
-	// 开始流动
-	tunnel.Flow()
-	return nil
+	if err.Error() != "no need to continue" {
+		logger.Warning("Relay.Handle -> ", err)
+	}
+	return false
 }
 
 // 从非sender业务获取目的Host
@@ -88,41 +87,42 @@ func (relay *Relay) handleSenderReqs(handler Handler,
 func (relay *Relay) handleOtherReqs(
 	handler Handler,
 	tunnel *mytunnel.Tunnel,
-	e *mynet.Arg) (err error) {
+	e *mynet.Arg) bool {
 	// 获取Host
-	err = handler.Handle(e)
+	err := handler.Handle(e)
 	if err != nil {
 		if err.Error() == "no need to continue" {
-			return nil
+			return true
 		}
-		return errors.New("Relay.Handle -> " +
-			err.Error())
+		logger.Warning("fail to get host")
+		return false
 	}
 	// 发起连接
 	err = relay.sender.Send(e)
 	if err != nil {
-		return errors.New("Relay.Handle -> " +
-			err.Error())
+		logger.Warning("fail to connect")
+		return false
 	}
 	// 完成委托行为
 	for _, f := range e.Delegates {
-		f()
-	}
-	tunnel.Flow()
-	return nil
-}
-
-func getHandler(firstMsg *bytebuffer.ByteBuffer, handlers []Handler) Handler {
-	var handler Handler
-	for _, h := range handlers {
-		if h.Match(firstMsg.Data()) {
-			handler = h
-			break
+		if !f() {
+			return false
 		}
 	}
-	return handler
+	return true
 }
 
+func getHandler(firstMsg *bytebuffer.ByteBuffer, handlers []Handler) (Handler, error) {
+	for _, h := range handlers {
+		if h.Match(firstMsg.Data()) {
+			return h, nil
+		}
+	}
+	return nil, errors.New("no matched handler")
+}
+
+// shake 握手
+// 获取握手消息和对应handler
 func (relay *Relay) shake(tunnel *mytunnel.Tunnel) (
 	msg *bytebuffer.ByteBuffer,
 	handler Handler, err error) {
@@ -130,14 +130,13 @@ func (relay *Relay) shake(tunnel *mytunnel.Tunnel) (
 	buffer.Length, err = tunnel.ReadLeft(buffer.Buf())
 	if err != nil {
 		bytebuffer.PutKBBuffer(buffer)
-		return nil, nil, errors.New("getFirstMsg -> " +
-			err.Error())
+		logger.Warning("fail to get first msg")
+		return nil, nil, err
 	}
-	handler = getHandler(buffer, relay.handlers)
-	if handler == nil {
-		bytebuffer.PutKBBuffer(buffer)
-		return nil, nil, errors.New("Relay.Handle -> no matched handler from " +
-			tunnel.Left.RemoteAddr().String() + ": ")
+	handler, err = getHandler(buffer, relay.handlers)
+	if err != nil {
+		logger.Warning(err)
+		return nil, nil, err
 	}
 	return buffer, handler, nil
 }

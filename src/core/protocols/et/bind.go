@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-24 22:53:52
- * @LastEditTime: 2019-02-25 04:00:42
+ * @LastEditTime: 2019-03-17 16:36:52
  */
 
 package et
@@ -12,6 +12,8 @@ package et
 import (
 	"errors"
 	"strings"
+
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 
 	"github.com/eaglexiang/go-tunnel"
 )
@@ -37,21 +39,19 @@ func (b bind) Send(et *ET, e *NetArg) error {
 	// 连接远端
 	err := et.connect2Relayer(e.Tunnel)
 	if err != nil {
-		return errors.New("bind.Send ->" +
-			err.Error())
+		return err
 	}
 	// 发送请求
 	req := FormatEtType(EtBIND) + " " + e.Port
 	_, err = e.Tunnel.WriteRight([]byte(req))
 	if err != nil {
-		return errors.New("bind.Send -> " +
-			err.Error())
+		return err
 	}
 	reply, err := e.Tunnel.ReadRightStr()
 	ipe := strings.Split(reply, " ")
 	if len(ipe) != 2 {
-		return errors.New("bind.Send -> invalid reply: " +
-			reply)
+		logger.Warning("invalid reply for bind.Send: ", reply)
+		return errors.New("invalid reply")
 	}
 	e.IP = ipe[0]
 	e.Port = ipe[1]
@@ -59,10 +59,10 @@ func (b bind) Send(et *ET, e *NetArg) error {
 }
 
 func (b bind) Handle(req string, tunnel *tunnel.Tunnel) (err error) {
-	reqs := strings.Split(req, " ")
-	if len(reqs) != 2 {
-		return errors.New("bind.Handle -> invalid req: " + req)
-	}
+	// reqs := strings.Split(req, " ")
+	// if len(reqs) != 2 {
+	// 	return errors.New("bind.Handle -> invalid req: " + req)
+	// }
 	// var listener net.Listener
 	// if listener, err = net.Listen("tcp", "0.0.0.0:"+reqs[1]); err != nil {
 	// 	reply := err.Error()

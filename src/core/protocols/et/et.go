@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-09 01:47:15
+ * @LastEditTime: 2019-03-17 17:19:53
  */
 
 package et
@@ -13,6 +13,8 @@ import (
 	"net"
 	"reflect"
 	"strings"
+
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 
 	"github.com/eaglexiang/go-bytebuffer"
 
@@ -88,12 +90,12 @@ func (et *ET) Match(firstMsg []byte) bool {
 func (et *ET) Handle(e *mynet.Arg) (err error) {
 	err = et.checkHeaderOfReq(string(e.Msg), e.Tunnel)
 	if err != nil {
-		return errors.New("ET.Handle -> " + err.Error())
+		return err
 	}
 	createCipher(e.Tunnel)
 	err = et.checkUserOfReq(e.Tunnel)
 	if err != nil {
-		return errors.New("ET.Handle -> " + err.Error())
+		return err
 	}
 	// 选择子协议handler
 	subReq, handler, err := et.subShake(e.Tunnel)
@@ -103,8 +105,7 @@ func (et *ET) Handle(e *mynet.Arg) (err error) {
 	// 进入子协议业务
 	err = handler.Handle(subReq, e.Tunnel)
 	if err != nil {
-		return errors.New("ET.Handle -> " +
-			err.Error())
+		return err
 	}
 	// 只有TCP子协议需要继续运行
 	if reflect.TypeOf(handler) != reflect.TypeOf(TCP{}) {
@@ -117,12 +118,11 @@ func (et *ET) subShake(tunnel *mytunnel.Tunnel) (subReq string,
 	handler Handler, err error) {
 	subReq, err = tunnel.ReadLeftStr()
 	if err != nil {
-		return "", nil, errors.New("ET.Handle -> " + err.Error())
+		return "", nil, err
 	}
 	handler = getHandler(subReq, et.subHandlers)
 	if handler == nil {
-		return "", nil, errors.New("ET.Handle -> invalid req: " +
-			subReq)
+		logger.Warning("invalid req: ", subReq)
 	}
 	return subReq, handler, nil
 }
@@ -152,18 +152,17 @@ func (et *ET) Send(e *mynet.Arg) error {
 	// 选择Sender
 	newE, err := parseNetArg(e)
 	if err != nil {
-		return errors.New("ET.Send -> " +
-			err.Error())
+		return err
 	}
 	sender, ok := et.subSenders[newE.TheType]
 	if !ok {
-		return errors.New("ET.Send -> no tcp sender")
+		logger.Error("no tcp sender")
+		return errors.New("no tcp sender")
 	}
 	// 进入子协议业务
 	err = sender.Send(et, newE)
 	if err != nil {
-		return errors.New("ET.Send -> " +
-			err.Error())
+		return err
 	}
 	return nil
 }
@@ -177,41 +176,34 @@ func (et *ET) Name() string {
 func (et *ET) connect2Relayer(tunnel *mytunnel.Tunnel) error {
 	conn, err := net.DialTimeout("tcp", et.arg.RemoteET, et.arg.Timeout)
 	if err != nil {
-		return errors.New("connect2Relayer -> " + err.Error())
+		logger.Warning(err)
+		return err
 	}
 	tunnel.Right = conn
 	err = et.checkVersionOfRelayer(tunnel)
 	if err != nil {
-		return errors.New("connect2Relayer -> " + err.Error())
+		return err
 	}
 	c := mycipher.DefaultCipher()
 	if c == nil {
-		return errors.New("ET.connect2Relayer -> cipher is nil")
+		panic("cipher is nil")
 	}
 	tunnel.EncryptRight = c.Encrypt
 	tunnel.DecryptRight = c.Decrypt
-	err = et.checkUserOfLocal(tunnel)
-	if err != nil {
-		return errors.New("connect2Relayer -> " + err.Error())
-	}
-	return nil
+	return et.checkUserOfLocal(tunnel)
 }
 
 func (et *ET) checkVersionOfRelayer(tunnel *mytunnel.Tunnel) error {
 	req := et.arg.Head
 	_, err := tunnel.WriteRight([]byte(req))
 	if err != nil {
-		return errors.New("checkVersionOfRelayer -> " + err.Error())
+		return err
 	}
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = tunnel.ReadRight(buffer.Buf())
-	if err != nil {
-		return errors.New("checkVersionOfRelayer -> " + err.Error())
-	}
-	reply := buffer.String()
+	reply, err := tunnel.ReadRightStr()
 	if reply != "valid valid valid" {
-		return errors.New("checkVersionOfRelayer -> " + reply)
+		logger.Warning("invalid reply for et version check: ",
+			reply)
+		return errors.New("invalid reply")
 	}
 	return nil
 }
@@ -224,14 +216,12 @@ func (et *ET) checkHeaderOfReq(
 	case len(headers) < 1:
 		return errors.New("checkHeaderOfReq -> nil req")
 	case headers[0] != et.arg.Head:
-		return errors.New("checkHeaderOfReq -> wrong head: " + headers[0])
+		logger.Warning("invalid header of req: ", headers[0])
+		return errors.New("checkHeaderOfReq -> wrong head")
 	default:
 		reply := "valid valid valid"
-		count, _ := tunnel.WriteLeft([]byte(reply))
-		if count != 17 {
-			return errors.New("checkHeaderOfReq -> fail to reply")
-		}
-		return nil
+		_, err := tunnel.WriteLeft([]byte(reply))
+		return err
 	}
 }
 
@@ -242,17 +232,12 @@ func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
 	user := et.arg.Users.LocalUser.ToString()
 	_, err = tunnel.WriteRight([]byte(user))
 	if err != nil {
-		return errors.New("checkUserOfLocal -> " + err.Error())
+		return err
 	}
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = tunnel.ReadRight(buffer.Buf())
-	if err != nil {
-		return errors.New("checkUserOfLocal -> " + err.Error())
-	}
-	reply := buffer.String()
+	reply, _ := tunnel.ReadRightStr()
 	if reply != "valid" {
-		return errors.New("checkUserOfLocal -> invalid reply: " + reply)
+		logger.Error("invalid reply for check local user: ", reply)
+		return errors.New("invalid reply")
 	}
 	tunnel.SpeedLimiter = et.arg.Users.LocalUser.SpeedLimiter()
 	return nil
@@ -265,34 +250,32 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 	// 接收用户信息
 	userStr, err := tunnel.ReadLeftStr()
 	if err != nil {
-		return errors.New("ET.checkUserOfReq -> " +
-			err.Error())
+		return err
 	}
 	// 获取用户IP
 	ip := strings.Split(tunnel.Left.RemoteAddr().String(), ":")[0]
 	user2Check, err := myuser.ParseReqUser(userStr, ip)
 	if err != nil {
 		tunnel.WriteLeft([]byte(err.Error()))
-		return errors.New("checkUserOfReq -> " + err.Error())
+		return err
 	}
 	if user2Check.ID == "null" {
-		return errors.New("checkUserOfReq -> " +
-			"username shouldn't be 'null'")
+		logger.Warning("invalid user: null")
+		return errors.New("invalid user")
 	}
 	validUser, ok := et.arg.Users.ValidUsers[user2Check.ID]
 	if !ok {
 		// 找不到该用户
 		tunnel.WriteLeft([]byte("incorrent username or password"))
-		return errors.New("checkUserOfReq -> username not found: " +
-			user2Check.ID)
+		logger.Warning("user not found: ", validUser.ToString())
+		return errors.New("user not found")
 	}
 	err = validUser.CheckAuth(user2Check)
 	if err != nil {
 		tunnel.WriteLeft([]byte(err.Error()))
-		return errors.New("checkUserOfReq -> " + err.Error())
+		return err
 	}
-	reply := "valid"
-	tunnel.WriteLeft([]byte(reply))
+	tunnel.WriteLeft([]byte("valid"))
 	tunnel.SpeedLimiter = validUser.SpeedLimiter()
 	return nil
 }

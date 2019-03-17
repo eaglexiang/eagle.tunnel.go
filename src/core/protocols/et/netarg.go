@@ -4,12 +4,13 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-22 10:28:46
- * @LastEditTime: 2019-03-16 16:50:02
+ * @LastEditTime: 2019-03-17 16:13:45
  */
 
 package et
 
 import (
+	"errors"
 	"net"
 	"strings"
 
@@ -79,15 +80,15 @@ func parseNetArg(e *mynet.Arg) (*NetArg, error) {
 }
 
 // ParseProxyStatus 识别ProxyStatus
-func ParseProxyStatus(status string) int {
+func ParseProxyStatus(status string) (int, error) {
 	status = strings.ToLower(status)
 	switch status {
 	case "smart":
-		return ProxySMART
+		return ProxySMART, nil
 	case "enable":
-		return ProxyENABLE
+		return ProxyENABLE, nil
 	default:
-		return ErrorProxyStatus
+		return 0, errors.New("invalid proxy status: " + status)
 	}
 }
 

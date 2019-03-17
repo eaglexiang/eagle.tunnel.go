@@ -4,14 +4,13 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-03 05:27:00
- * @LastEditTime: 2019-03-03 05:29:33
+ * @LastEditTime: 2019-03-17 17:32:33
  */
 
 package et
 
 import (
-	"errors"
-
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mycache "github.com/eaglexiang/go-cache"
 )
 
@@ -26,8 +25,8 @@ type LocationCacheNode struct {
 func (node *LocationCacheNode) Wait() (location string, err error) {
 	v, err := node.node.Wait4Value()
 	if err != nil {
-		return "", errors.New("LocationCacheNode.Wait -> " +
-			err.Error())
+		logger.Warning(err)
+		return "", err
 	}
 	return v.(string), nil
 }

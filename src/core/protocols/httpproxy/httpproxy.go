@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 21:08:28
+ * @LastEditTime: 2019-03-17 16:41:58
  */
 
 package httpproxy
@@ -14,6 +14,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 
 	mynet "github.com/eaglexiang/go-net"
 	mytunnel "github.com/eaglexiang/go-tunnel"
@@ -68,7 +70,8 @@ func (conn *HTTPProxy) Handle(e *mynet.Arg) error {
 		return err
 	}
 	if host == "" || port <= 0 {
-		return errors.New("invalid des: " + host + ":" + _port)
+		logger.Warning("invalid des: ", host, ":", _port)
+		return errors.New("invalid des")
 	}
 	e.Host = host + ":" + _port
 	// reply http proxy req
@@ -77,19 +80,22 @@ func (conn *HTTPProxy) Handle(e *mynet.Arg) error {
 		re443 := "HTTP/1.1 200 Connection Established\r\n\r\n"
 		_, err = e.Tunnel.WriteLeft([]byte(re443))
 		if err != nil {
-			return errors.New("HTTPProxy.Handle -> " +
-				err.Error())
+			return err
 		}
-		return nil
 	case HTTPOTHERS:
-		e.Delegates = append(e.Delegates, func() {
+		e.Delegates = append(e.Delegates, func() bool {
 			newReq := createNewRequest(reqStr)
 			_, err = e.Tunnel.WriteRight([]byte(newReq))
+			if err != nil {
+				return false
+			}
+			return true
 		})
-		return nil
 	default:
-		return errors.New("invalid HTTP type: " + reqStr)
+		logger.Warning("invalid http type: ", reqStr)
+		return errors.New("invalid HTTP type: ")
 	}
+	return nil
 }
 
 // Name 名字

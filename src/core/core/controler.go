@@ -3,15 +3,13 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-16 16:51:50
+ * @LastEditTime: 2019-03-17 16:39:08
  */
 
 package core
 
 import (
 	"bufio"
-	"errors"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -20,6 +18,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 
 	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
 	"github.com/eaglexiang/go-settings"
@@ -51,7 +51,7 @@ func init() {
 	settings.SetDefault("http", "off")
 	settings.SetDefault("socks", "off")
 	settings.SetDefault("et", "off")
-	settings.SetDefault("debug", "off")
+	settings.SetDefault("debug", "warning")
 	settings.SetDefault("cipher", "simple")
 	settings.SetDefault("maxclients", "0")
 }
@@ -129,12 +129,14 @@ func execUserSystem() error {
 }
 
 func execTimeout() error {
+	_timeout := settings.Get("timeout")
 	timeout, err := strconv.ParseInt(
-		settings.Get("timeout"),
+		_timeout,
 		10,
 		32)
 	if err != nil {
-		return errors.New("ExecConfig -> " + err.Error())
+		logger.Error("invalid timeout", _timeout)
+		return err
 	}
 	Timeout = time.Second * time.Duration(timeout)
 	return nil
@@ -144,17 +146,16 @@ func execHosts() (err error) {
 	hostsDir := settings.Get("config-dir") + "/hosts"
 	err = readHosts(hostsDir)
 	if err != nil {
-		return errors.New("ExecConfig -> " + err.Error())
+		return err
 	}
 	return nil
 }
 
 func execMods() (err error) {
-	if settings.Exsit("mod-dir") {
-		modsDir := settings.Get("mod-dir")
+	if modsDir := settings.Get("mod-dir"); modsDir != "" {
 		err = ImportMods(modsDir)
 		if err != nil {
-			return errors.New("ExecConfig -> " + err.Error())
+			return err
 		}
 	}
 	return nil
@@ -171,11 +172,11 @@ func SetUser(user string) error {
 }
 
 //SetProxyStatus 设置Proxy-Status，enable/smart
-func SetProxyStatus(status string) error {
-	ProxyStatus = myet.ParseProxyStatus(status)
-	if ProxyStatus == myet.ErrorProxyStatus {
-		return errors.New("SetProxyStatus -> invalid proxy-status: " +
-			settings.Get("proxy-status"))
+func SetProxyStatus(status string) (err error) {
+	ProxyStatus, err = myet.ParseProxyStatus(status)
+	if err != nil {
+		logger.Error(err)
+		return
 	}
 	settings.Set("proxy-status", status)
 	return nil
@@ -184,6 +185,7 @@ func SetProxyStatus(status string) error {
 func readLines(filePath string) ([]string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
+		logger.Error(err)
 		return nil, err
 	}
 	defer file.Close()
@@ -258,8 +260,7 @@ func SetListen(localIpe string) {
 func readHosts(hostsDir string) error {
 	hostsFiles, err := getHostsList(hostsDir)
 	if err != nil {
-		return errors.New("readHosts -> " +
-			err.Error())
+		return err
 	}
 
 	var hosts []string
@@ -274,7 +275,7 @@ func readHosts(hostsDir string) error {
 	for index, host := range hosts {
 		err = handleSingleHost(host)
 		if err != nil {
-			return errors.New("readHosts -> " + err.Error())
+			return err
 		}
 		hosts[index] = host
 	}
@@ -293,14 +294,14 @@ func handleSingleHost(host string) (err error) {
 
 	items := strings.Split(host, " ")
 	if len(items) < 2 {
-		return errors.New("invalid hosts line: " + host)
+		panic("invalid hosts line: " + host)
 	}
 	ip := strings.TrimSpace(items[0])
 	domain := strings.TrimSpace(items[1])
 	if domain != "" && ip != "" {
 		myet.HostsCache[domain] = ip
 	} else {
-		return errors.New("invalid hosts line: " + host)
+		panic("invalid hosts line: " + host)
 	}
 	return nil
 }
@@ -308,8 +309,8 @@ func handleSingleHost(host string) (err error) {
 func getHostsList(hostsDir string) ([]string, error) {
 	files, err := ioutil.ReadDir(hostsDir)
 	if err != nil {
-		return nil, errors.New("getHostsList -> " +
-			err.Error())
+		logger.Error(err)
+		return nil, err
 	}
 	var hosts []string
 	for _, file := range files {
@@ -328,8 +329,8 @@ func getHostsList(hostsDir string) ([]string, error) {
 func ImportMods(modsDir string) error {
 	files, err := ioutil.ReadDir(modsDir)
 	if err != nil {
-		return errors.New("ImportMods -> " +
-			err.Error())
+		logger.Error(err)
+		return err
 	}
 	for _, file := range files {
 		if file.IsDir() {
@@ -340,7 +341,8 @@ func ImportMods(modsDir string) error {
 		if strings.HasSuffix(filename, ".so") {
 			_, err := plugin.Open(filename)
 			if err != nil {
-				fmt.Println(err)
+				logger.Error(err)
+				return err
 			}
 		}
 	}

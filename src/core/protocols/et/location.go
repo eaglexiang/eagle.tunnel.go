@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 05:40:42
+ * @LastEditTime: 2019-03-17 17:32:04
  */
 
 package et
@@ -11,9 +11,10 @@ package et
 import (
 	"errors"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"strings"
+
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 
 	mynet "github.com/eaglexiang/go-net"
 	mytunnel "github.com/eaglexiang/go-tunnel"
@@ -33,37 +34,37 @@ type Location struct {
 func (l Location) Send(et *ET, e *NetArg) (err error) {
 	node, loaded := iPGeoCacheClient.Get(e.IP)
 	if loaded {
+		// 缓存命中
 		e.Location, err = node.Wait()
-		if err != nil {
-			err = errors.New("Location.Send -> " + err.Error())
+	} else {
+		// 缓存不命中
+		switch mynet.TypeOfAddr(e.IP) {
+		case mynet.IPv6Addr:
+			// IPv6 默认代理
+			e.Location = "Ipv6"
+			iPGeoCacheClient.Update(e.IP, e.Location)
+		case mynet.IPv4Addr:
+			// IPv4 需要进一步判断
+			if mynet.CheckPrivateIPv4(e.IP) {
+				// 保留地址不适合代理
+				e.Location = "1;ZZ;ZZZ;Reserved"
+				iPGeoCacheClient.Update(e.IP, e.Location)
+			} else {
+				err = l.checkLocationByRemote(et, e)
+				if err != nil {
+					// 解析失败
+					e.Location = "0;;;WRONG INPUT"
+					iPGeoCacheClient.Delete(e.IP)
+				} else {
+					iPGeoCacheClient.Update(e.IP, e.Location)
+				}
+			}
+		default:
+			logger.Warning("invalid ip: ", e.IP)
+			err = errors.New("invalid ip")
 		}
-		return
 	}
-	ip := net.ParseIP(e.IP)
-	if ip == nil {
-		return errors.New("Location.Send -> invalid ip")
-	}
-	if ip.To4() == nil {
-		// IPv6 默认代理
-		e.Location = "Ipv6"
-		iPGeoCacheClient.Update(e.IP, e.Location)
-		return nil
-	}
-	if mynet.CheckPrivateIPv4(e.IP) {
-		// 保留地址不适合代理
-		e.Location = "1;ZZ;ZZZ;Reserved"
-		iPGeoCacheClient.Update(e.IP, e.Location)
-		return nil
-	}
-	err = l.checkLocationByRemote(et, e)
-	if err != nil {
-		// 解析失败，尝试直连
-		e.Location = "0;;;WRONG INPUT"
-		iPGeoCacheClient.Delete(e.IP)
-		return errors.New("Location.Send -> " + err.Error())
-	}
-	iPGeoCacheClient.Update(e.IP, e.Location)
-	return nil
+	return
 }
 
 // Type ET子协议的类型
@@ -93,14 +94,10 @@ func (l Location) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	if loaded {
 		location, err := node.Wait()
 		if err != nil {
-			tunnel.WriteLeft([]byte(err.Error()))
-			return errors.New("Location.Handle -> " + err.Error())
+			return err
 		}
 		_, err = tunnel.WriteLeft([]byte(location))
-		if err != nil {
-			return errors.New("Location.Handle -> " + err.Error())
-		}
-		return nil
+		return err
 	}
 
 	// check by web
@@ -108,14 +105,11 @@ func (l Location) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	if err != nil {
 		iPGeoCacheServer.Delete(ip)
 		tunnel.WriteLeft([]byte(err.Error()))
-		return errors.New("Location.Handle -> " + err.Error())
+		return err
 	}
 	iPGeoCacheServer.Update(ip, location)
 	_, err = tunnel.WriteLeft([]byte(location))
-	if err != nil {
-		return errors.New("Location.Handle -> " + err.Error())
-	}
-	return nil
+	return err
 }
 
 // Match 判断业务是否匹配
@@ -144,7 +138,8 @@ func CheckLocationByWeb(ip string) (string, error) {
 	req := "https://ip2c.org/" + ip
 	res, err := http.Get(req)
 	if err != nil {
-		return "", errors.New("CheckLocationByWeb -> " + err.Error())
+		logger.Warning(err)
+		return "", err
 	}
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
