@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-16 17:06:38
+ * @LastEditTime: 2019-03-16 17:44:04
  */
 
 package core
@@ -23,7 +23,6 @@ import (
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/socks5"
 	mycipher "github.com/eaglexiang/go-cipher"
 	settings "github.com/eaglexiang/go-settings"
-	"github.com/eaglexiang/go-simplecipher"
 	myuser "github.com/eaglexiang/go-user"
 )
 
@@ -50,7 +49,7 @@ func createCipher() mycipher.Cipher {
 	cipherType := mycipher.ParseCipherType(settings.Get("cipher"))
 	switch cipherType {
 	case mycipher.SimpleCipherType:
-		c := simplecipher.SimpleCipher{}
+		c := mycipher.SimpleCipher{}
 		c.SetKey(settings.Get("data-key"))
 		return &c
 	default:

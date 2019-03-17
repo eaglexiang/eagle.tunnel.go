@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-16 15:15:31
+ * @LastEditTime: 2019-03-17 15:07:11
  */
 
 package cmd
@@ -19,7 +19,6 @@ import (
 	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
 	cipher "github.com/eaglexiang/go-cipher"
 	settings "github.com/eaglexiang/go-settings"
-	simplecipher "github.com/eaglexiang/go-simplecipher"
 )
 
 // Check check命令
@@ -94,7 +93,7 @@ func createET() *myet.ET {
 		cipherType := cipher.ParseCipherType(settings.Get("cipher"))
 		switch cipherType {
 		case cipher.SimpleCipherType:
-			c := simplecipher.SimpleCipher{}
+			c := cipher.SimpleCipher{}
 			c.SetKey(settings.Get("data-key"))
 			return &c
 		default:
