@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-10 13:30:06
+ * @LastEditTime: 2019-03-17 20:09:53
  */
 
 package socks5
@@ -12,8 +12,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
-	"strconv"
 	"strings"
+
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 
 	"github.com/eaglexiang/go-bytebuffer"
 	mynet "github.com/eaglexiang/go-net"
@@ -73,7 +74,8 @@ func checkTunnel(tunnel *mytunnel.Tunnel) error {
 	// 不接受来自公网IP的SOCKS5请求
 	ipOfReq := strings.Split(tunnel.Left.RemoteAddr().String(), ":")[0]
 	if !mynet.CheckPrivateIPv4(ipOfReq) {
-		return errors.New("Socks5.Handle -> invalid source IP type: public " + ipOfReq)
+		logger.Warning("invalid public req from ", ipOfReq)
+		return errors.New("invalid public req")
 	}
 	return nil
 }
@@ -90,11 +92,7 @@ func getCommand(tunnel *mytunnel.Tunnel,
 func getMsgFromL(tunnel *mytunnel.Tunnel) (buffer *bytebuffer.ByteBuffer, err error) {
 	buffer = bytebuffer.GetKBBuffer()
 	buffer.Length, err = tunnel.ReadLeft(buffer.Buf())
-	if err != nil {
-		bytebuffer.PutKBBuffer(buffer)
-		return nil, errors.New("Socks5.Handle -> " + err.Error())
-	}
-	return buffer, nil
+	return
 }
 
 func checkVersion(e *mynet.Arg) (err error) {
@@ -121,17 +119,17 @@ func (conn *Socks5) Handle(e *mynet.Arg) (err error) {
 		return err
 	}
 	req, err := getMsgFromL(e.Tunnel)
+	defer bytebuffer.PutKBBuffer(req)
 	if err != nil {
 		return err
 	}
-	defer bytebuffer.PutKBBuffer(req)
 	cmd, err := getCommand(e.Tunnel, req)
 	if err != nil {
 		return err
 	}
 	err = cmd.Handle(req.Cut(), e)
 	if err != nil {
-		return errors.New("Socks5.Handle -> " + err.Error())
+		return err
 	}
 	return nil
 }
@@ -149,8 +147,8 @@ func getHost(request []byte) (host string, err error) {
 		ip := net.IP(request[4:20])
 		host = ip.String()
 	default:
-		return "", errors.New("getHost -> invalid socks req des type: " +
-			strconv.FormatInt(int64(destype), 10))
+		logger.Warning("invalid socks req des type: ", destype)
+		return "", errors.New("invalid socks req des type")
 	}
 	return host, nil
 }
@@ -178,8 +176,7 @@ func getHostAndPort(request []byte) (host string, port int, err error) {
 		port, err = getPort(request)
 	}
 	if err != nil {
-		return "", 0, errors.New("getHostAndPort -> " +
-			err.Error())
+		logger.Warning("fail to get host or port: ", err)
 	}
-	return host, port, nil
+	return
 }

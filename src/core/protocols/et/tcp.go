@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-03 20:50:32
+ * @LastEditTime: 2019-03-17 20:00:01
  */
 
 package et
@@ -13,7 +13,8 @@ import (
 	"net"
 	"strings"
 
-	bytebuffer "github.com/eaglexiang/go-bytebuffer"
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	mynet "github.com/eaglexiang/go-net"
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
@@ -36,8 +37,7 @@ func (t TCP) Send(et *ET, e *NetArg) (err error) {
 		// IP不存在，解析域名
 		err = t.resolvDNS(et, e)
 		if err != nil {
-			return errors.New("TCP.Send -> " +
-				err.Error())
+			return err
 		}
 	}
 
@@ -52,8 +52,7 @@ func (t TCP) Send(et *ET, e *NetArg) (err error) {
 	}
 
 	if err != nil {
-		return errors.New("TCP.Send -> " +
-			err.Error())
+		return errors.New("TCP.Send -> ")
 	}
 	return nil
 }
@@ -63,68 +62,41 @@ func (t TCP) resolvDNS(et *ET, e *NetArg) (err error) {
 	switch t.arg.IPType {
 	case "4":
 		err = t.dns.Send(et, e)
-		if err != nil {
-			return errors.New("TCP.Send -> " +
-				err.Error())
-		}
 	case "6":
 		err = t.dns6.Send(et, e)
-		if err != nil {
-			return errors.New("TCP.Send -> " +
-				err.Error())
-		}
 	case "46":
 		err = t.dns.Send(et, e)
 		if err != nil {
 			err = t.dns6.Send(et, e)
-		}
-		if err != nil {
-			return errors.New("TCP.Send -> " +
-				err.Error())
 		}
 	case "64":
 		err = t.dns6.Send(et, e)
 		if err != nil {
 			err = t.dns.Send(et, e)
 		}
-		if err != nil {
-			return errors.New("TCP.Send -> " +
-				err.Error())
-		}
 	default:
-		return errors.New("TCP.Send -> invalid ip-type: " +
-			t.arg.IPType)
+		logger.Warning("invalid ip-type: ", t.arg.IPType)
+		err = errors.New("TCP.Send -> invalid ip-type")
 	}
-	return nil
+	return err
 }
 
-func (t *TCP) smartSend(et *ET, e *NetArg) error {
+func (t *TCP) smartSend(et *ET, e *NetArg) (err error) {
 	l := et.subSenders[EtLOCATION].(Location)
-	l.Send(et, e)
-	proxy := l.CheckProxyByLocation(e.Location)
-	if proxy {
-		// 启用代理
-		err := t.sendTCPReq2Remote(et, e)
-		if err != nil {
-			return errors.New("TCP.smartSend -> " + err.Error())
-		}
-		return nil
-	}
-	// 不启用代理
-	err := t.sendTCPReq2Server(e)
+	err = l.Send(et, e)
 	if err != nil {
-		// 直连失败的网站应被用户察觉
-		return errors.New("TCP.smartSend -> " + err.Error())
+		return err
 	}
-	return nil
+	if l.CheckProxyByLocation(e.Location) {
+		err = t.sendTCPReq2Remote(et, e)
+	} else {
+		err = t.sendTCPReq2Server(e)
+	}
+	return err
 }
 
 func (t *TCP) proxySend(et *ET, e *NetArg) error {
-	err := t.sendTCPReq2Remote(et, e)
-	if err != nil {
-		return errors.New("TCP.proxySend -> " + err.Error())
-	}
-	return nil
+	return t.sendTCPReq2Remote(et, e)
 }
 
 // Type ET子协议的类型
@@ -135,44 +107,37 @@ func (t TCP) Type() int {
 func (t *TCP) sendTCPReq2Remote(et *ET, e *NetArg) error {
 	err := et.connect2Relayer(e.Tunnel)
 	if err != nil {
-		return errors.New("TCP.sendTCPReq2Remote -> " + err.Error())
+		return err
 	}
 	req := FormatEtType(EtTCP) + " " + e.IP + " " + e.Port
 	_, err = e.Tunnel.WriteRight([]byte(req))
 	if err != nil {
-		return errors.New("TCP.sendTCPReq2Remote -> " + err.Error())
+		return err
 	}
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = e.Tunnel.ReadRight(buffer.Buf())
-	if err != nil {
-		return errors.New("TCP.sendTCPReq2Remote -> " + err.Error())
-	}
-	reply := buffer.String()
+	reply, err := e.Tunnel.ReadRightStr()
 	if reply != "ok" {
+		logger.Warning("invalid reply for tcp.sendTcpReq2Remote: ", reply)
 		err = errors.New("TCP.sendTCPReq2Remote -> failed 2 connect 2 server by relayer")
 	}
-	return nil
+	return err
 }
 
 func (t *TCP) sendTCPReq2Server(e *NetArg) error {
-	if e.IP == "0.0.0.0" {
-		return nil
-	}
-	if e.IP == "::" {
-		return nil
+	if e.IP == "0.0.0.0" || e.IP == "::" {
+		logger.Info("invalid ip: ", e.IP)
+		return errors.New("invalid ip")
 	}
 
 	var ipe string
-	ip := net.ParseIP(e.IP)
-	if ip.To4() != nil {
+	if mynet.TypeOfAddr(e.IP) == mynet.IPv4Addr {
 		ipe = e.IP + ":" + e.Port // ipv4:port
 	} else {
 		ipe = "[" + e.IP + "]:" + e.Port // [ipv6]:port
 	}
 	conn, err := net.DialTimeout("tcp", ipe, t.arg.Timeout)
 	if err != nil {
-		return errors.New("TCP.sendTCPReq2Server -> " + err.Error())
+		logger.Warning(err)
+		return err
 	}
 	e.Tunnel.Right = conn
 	e.Tunnel.EncryptRight = nil
@@ -193,12 +158,12 @@ func (t TCP) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	err := t.sendTCPReq2Server(&e)
 	if err != nil {
 		tunnel.WriteLeft([]byte("nok"))
-		return errors.New("TCP.Handle -> " + err.Error())
+		return err
 
 	}
 	_, err = tunnel.WriteLeft([]byte("ok"))
 	if err != nil {
-		return errors.New("TCP.Handle -> " + err.Error())
+		return err
 	}
 	return nil
 }
