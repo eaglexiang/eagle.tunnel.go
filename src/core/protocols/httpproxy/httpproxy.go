@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 20:01:17
+ * @LastEditTime: 2019-03-17 20:21:36
  */
 
 package httpproxy
@@ -12,11 +12,9 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-
 	mynet "github.com/eaglexiang/go-net"
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
@@ -64,38 +62,35 @@ func (conn *HTTPProxy) Handle(e *mynet.Arg) error {
 	}
 	e.TheType = mynet.CONNECT
 	reqStr := string(e.Msg)
-	reqType, host, _port := dismantle(reqStr)
-	port, err := strconv.Atoi(_port)
-	if err != nil {
-		return err
-	}
-	if host == "" || port <= 0 {
-		logger.Warning("invalid des: ", host, ":", _port)
-		return errors.New("invalid des")
-	}
-	e.Host = host + ":" + _port
-	// reply http proxy req
+	reqType, host, port := dismantle(reqStr)
+	e.Host = host + ":" + port
 	switch reqType {
 	case HTTPCONNECT:
-		re443 := "HTTP/1.1 200 Connection Established\r\n\r\n"
-		_, err = e.Tunnel.WriteLeft([]byte(re443))
-		if err != nil {
-			return err
-		}
+		err = conn.handleConnect(e)
 	case HTTPOTHERS:
-		e.Delegates = append(e.Delegates, func() bool {
-			newReq := createNewRequest(reqStr)
-			_, err = e.Tunnel.WriteRight([]byte(newReq))
-			if err != nil {
-				return false
-			}
-			return true
-		})
+		conn.handleOthers(e, reqStr)
 	default:
 		logger.Warning("invalid http type: ", reqStr)
-		return errors.New("invalid HTTP type: ")
+		err = errors.New("invalid HTTP type")
 	}
-	return nil
+	return err
+}
+
+func (conn *HTTPProxy) handleConnect(e *mynet.Arg) (err error) {
+	re443 := "HTTP/1.1 200 Connection Established\r\n\r\n"
+	_, err = e.Tunnel.WriteLeft([]byte(re443))
+	return
+}
+
+func (conn *HTTPProxy) handleOthers(e *mynet.Arg, reqStr string) {
+	e.Delegates = append(e.Delegates, func() bool {
+		newReq := createNewRequest(reqStr)
+		_, err := e.Tunnel.WriteRight([]byte(newReq))
+		if err != nil {
+			return false
+		}
+		return true
+	})
 }
 
 // Name 名字

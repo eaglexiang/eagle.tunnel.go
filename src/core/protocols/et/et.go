@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 17:19:53
+ * @LastEditTime: 2019-03-17 20:27:12
  */
 
 package et
@@ -267,7 +267,7 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 	if !ok {
 		// 找不到该用户
 		tunnel.WriteLeft([]byte("incorrent username or password"))
-		logger.Warning("user not found: ", validUser.ToString())
+		logger.Warning("user not found: ", user2Check.ID)
 		return errors.New("user not found")
 	}
 	err = validUser.CheckAuth(user2Check)
