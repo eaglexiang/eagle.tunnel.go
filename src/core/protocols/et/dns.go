@@ -16,12 +16,8 @@ import (
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 
 	dnscache "github.com/eaglexiang/go-dnscache"
-	mynet "github.com/eaglexiang/go-net"
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
-
-var dnsRemoteCache = dnscache.CreateDNSCache()
-var dnsLocalCache = dnscache.CreateDNSCache()
 
 // HostsCache 本地Hosts
 var HostsCache = make(map[string]string)
@@ -31,7 +27,10 @@ var WhitelistDomains []string
 
 // DNS ET-DNS子协议的实现
 type DNS struct {
-	arg *Arg
+	arg            *Arg
+	dnsRemoteCache *dnscache.DNSCache
+	dnsLocalCache  *dnscache.DNSCache
+	dnsResolver    func(string) (string, error)
 }
 
 // Handle 处理ET-DNS请求
@@ -40,9 +39,8 @@ func (d DNS) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	if len(reqs) < 2 {
 		return errors.New("ETDNS.Handle -> req is too short")
 	}
-	domain := reqs[1]
-	e := NetArg{Domain: domain}
-	err := d.resolvDNSByLocalServer(&e)
+	e := NetArg{NetConnArg: NetConnArg{Domain: reqs[1]}}
+	err := d.resolvDNSByLocal(&e)
 	if err != nil {
 		return err
 	}
@@ -89,7 +87,17 @@ func (d DNS) smartSend(et *ET, e *NetArg) (err error) {
 	if white {
 		err = d.resolvDNSByProxy(et, e)
 	} else {
-		err = d.resolvDNSByLocalClient(et, e)
+		err = d.resolvDNSByLocal(e)
+		// 判断IP所在位置是否适合代理
+		l := et.subSenders[EtLOCATION].(Location)
+		l.Send(et, e)
+		if !l.CheckProxyByLocation(e.Location) {
+			return nil
+		}
+		// 更新IP为Relay端的解析结果
+		ne := NetArg{NetConnArg: NetConnArg{Domain: e.Domain}}
+		err = d.resolvDNSByProxy(et, &ne)
+		e.IP = ne.IP
 	}
 	return err
 }
@@ -104,19 +112,33 @@ func (d DNS) Type() int {
 	return EtDNS
 }
 
+func (d *DNS) getCacheNodeOfRemote(domain string) (node *dnscache.CacheNode, loaded bool) {
+	if d.dnsRemoteCache == nil {
+		d.dnsRemoteCache = dnscache.CreateDNSCache()
+	}
+	return d.dnsRemoteCache.Get(domain)
+}
+
+func (d *DNS) getCacheNodeOfLocal(domain string) (node *dnscache.CacheNode, loaded bool) {
+	if d.dnsLocalCache == nil {
+		d.dnsLocalCache = dnscache.CreateDNSCache()
+	}
+	return d.dnsLocalCache.Get(domain)
+}
+
 // resolvDNSByProxy 使用代理服务器进行DNS的解析
 // 此函数主要完成缓存功能
 // 当缓存不命中则调用 DNS._resolvDNSByProxy
 func (d DNS) resolvDNSByProxy(et *ET, e *NetArg) (err error) {
-	node, loaded := dnsRemoteCache.Get(e.Domain)
+	node, loaded := d.getCacheNodeOfRemote(e.Domain)
 	if loaded {
 		e.IP, err = node.Wait()
 	} else {
 		err = d._resolvDNSByProxy(et, e)
 		if err != nil {
-			dnsRemoteCache.Delete(e.Domain)
+			d.dnsRemoteCache.Delete(e.Domain)
 		} else {
-			dnsRemoteCache.Update(e.Domain, e.IP)
+			d.dnsRemoteCache.Update(e.Domain, e.IP)
 		}
 	}
 	return err
@@ -135,20 +157,19 @@ func (d DNS) _resolvDNSByProxy(et *ET, e *NetArg) error {
 	return nil
 }
 
-// resolvDNSByLocalClient 本地解析DNS
-// 此函数由客户端使用
+// resolvDNSByLocal 本地解析DNS
 // 此函数主要完成缓存功能
 // 当缓存不命中则进一步调用 DNS._resolvDNSByLocalClient
-func (d DNS) resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
-	node, loaded := dnsLocalCache.Get(e.Domain)
+func (d DNS) resolvDNSByLocal(e *NetArg) (err error) {
+	node, loaded := d.getCacheNodeOfLocal(e.Domain)
 	if loaded {
 		e.IP, err = node.Wait()
 	} else {
-		err = d._resolvDNSByLocalClient(et, e)
+		err = d._resolvDNSByLocal(e)
 		if err != nil {
-			dnsLocalCache.Delete(e.Domain)
+			d.dnsLocalCache.Delete(e.Domain)
 		} else {
-			dnsLocalCache.Update(e.Domain, e.IP)
+			d.dnsLocalCache.Update(e.Domain, e.IP)
 		}
 	}
 	return err
@@ -156,54 +177,14 @@ func (d DNS) resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
 
 // _resolvDNSByLocalClient 本地解析DNS
 // 实际完成DNS的解析动作
-func (d DNS) _resolvDNSByLocalClient(et *ET, e *NetArg) (err error) {
-	e.IP, err = mynet.ResolvIPv4(e.Domain)
+func (d DNS) _resolvDNSByLocal(e *NetArg) (err error) {
+	e.IP, err = d.dnsResolver(e.Domain)
 	// 本地解析失败应该让用户察觉，手动添加DNS白名单
 	if err != nil {
 		logger.Warning("fail to resolv dns by local, ",
 			"consider adding this domain to your whitelist_domain.txt: ",
 			e.Domain)
 		return err
-	}
-
-	// 判断IP所在位置是否适合代理
-	l := et.subSenders[EtLOCATION].(Location)
-	l.Send(et, e)
-	if !l.CheckProxyByLocation(e.Location) {
-		return nil
-	}
-	// 更新IP为Relayer端的解析结果
-	ne := NetArg{Domain: e.Domain}
-	err = d.resolvDNSByProxy(et, &ne)
-	e.IP = ne.IP
-	return err
-}
-
-// resolvDNSByLocalServer 本地解析DNS
-// 此函数由服务端使用
-// 此函数完成缓存相关的工作
-// 当缓存不命中则进一步调用 DNS._resolvDNSByLocalServer
-func (d DNS) resolvDNSByLocalServer(e *NetArg) (err error) {
-	node, loaded := dnsLocalCache.Get(e.Domain)
-	if loaded {
-		e.IP, err = node.Wait()
-	} else {
-		err = d._resolvDNSByLocalServer(e)
-		if err != nil {
-			dnsLocalCache.Delete(e.Domain)
-		} else {
-			dnsLocalCache.Update(e.Domain, e.IP)
-		}
-	}
-	return
-}
-
-// _resolvDNSByLocalServer 本地解析DNS
-// 实际完成DNS的解析动作
-func (d DNS) _resolvDNSByLocalServer(e *NetArg) (err error) {
-	e.IP, err = mynet.ResolvIPv4(e.Domain)
-	if err != nil {
-		logger.Warning(err)
 	}
 	return err
 }

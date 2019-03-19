@@ -22,7 +22,7 @@ import (
 type TCP struct {
 	arg  *Arg
 	dns  DNS
-	dns6 DNS6
+	dns6 DNS
 }
 
 // Send 发送请求
@@ -154,7 +154,13 @@ func (t TCP) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	}
 	ip := reqs[1]
 	port := reqs[2]
-	e := NetArg{IP: ip, Port: port, Tunnel: tunnel}
+	e := NetArg{
+		NetConnArg: NetConnArg{
+			IP:   ip,
+			Port: port,
+		},
+		Tunnel: tunnel,
+	}
 	err := t.sendTCPReq2Server(&e)
 	if err != nil {
 		tunnel.WriteLeft([]byte("nok"))

@@ -43,8 +43,8 @@ func CreateET(arg *Arg) *ET {
 		arg:        arg,
 		subSenders: make(map[int]Sender),
 	}
-	dns := DNS{arg: arg}
-	dns6 := DNS6{arg: arg}
+	dns := DNS{arg: arg, dnsResolver: mynet.ResolvIPv4}
+	dns6 := DNS{arg: arg, dnsResolver: mynet.ResolvIPv6}
 	tcp := TCP{
 		arg:  arg,
 		dns:  dns,

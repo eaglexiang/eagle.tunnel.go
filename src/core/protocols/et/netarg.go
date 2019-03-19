@@ -39,13 +39,18 @@ const (
 // NetArg ET协议工作需要的参数集
 // 此参数集用于在协议间传递消息
 type NetArg struct {
+	NetConnArg
 	TheType      int
-	Domain       string
-	IP           string
-	Port         string // 端口号
 	Location     string // 所在地，用于识别是否使用代理
 	BindDelegate func() // BIND操作会用到的委托
 	Tunnel       *mytunnel.Tunnel
+}
+
+// NetConnArg NetArg中关于连接的部分
+type NetConnArg struct {
+	Domain string
+	IP     string
+	Port   string
 }
 
 // 将net网络操作类型转化为ET网络操作类型
