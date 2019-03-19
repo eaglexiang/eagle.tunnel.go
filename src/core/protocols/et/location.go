@@ -29,14 +29,14 @@ type Location struct {
 
 func (l *Location) getCacheClient(ip string) (node *cache.CacheNode, loaded bool) {
 	if l.cacheClient == nil {
-		l.cacheClient = cache.CreateTextCache()
+		l.cacheClient = cache.CreateTextCache(0)
 	}
 	return l.cacheClient.Get(ip)
 }
 
 func (l *Location) getCacheServer(ip string) (node *cache.CacheNode, loaded bool) {
 	if l.cacheServer == nil {
-		l.cacheServer = cache.CreateTextCache()
+		l.cacheServer = cache.CreateTextCache(0)
 	}
 	return l.cacheServer.Get(ip)
 }
