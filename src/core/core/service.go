@@ -18,11 +18,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-
 	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
-	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/httpproxy"
-	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/socks5"
+	httpproxy "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/httpproxy"
+	socks5 "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/socks5"
+	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mycipher "github.com/eaglexiang/go-cipher"
 	settings "github.com/eaglexiang/go-settings"
 	myuser "github.com/eaglexiang/go-user"
@@ -59,24 +58,32 @@ func createCipher() mycipher.Cipher {
 	}
 }
 
-func createETArg() *myet.Arg {
+// CreateETArg 构建ET.Arg
+func CreateETArg() *myet.Arg {
 	users := myet.UsersArg{
 		LocalUser:  LocalUser,
 		ValidUsers: Users,
 	}
-	return &myet.Arg{
+	connArg := myet.ConnArg{
+		RemoteIPE: settings.Get("relay"),
+		Timeout:   Timeout,
+		Head:      settings.Get("head"),
+	}
+	smartArg := myet.SmartArg{
 		ProxyStatus:   ProxyStatus,
-		IPType:        settings.Get("ip-type"),
-		Head:          settings.Get("head"),
-		RemoteET:      settings.Get("relayer"), // relayer即relay
 		LocalLocation: settings.Get("location"),
-		Users:         users,
-		Timeout:       Timeout,
+	}
+
+	return &myet.Arg{
+		ConnArg:  connArg,
+		SmartArg: smartArg,
+		UsersArg: users,
+		IPType:   settings.Get("ip-type"),
 	}
 }
 
 func setHandlersAndSender(service *Service) {
-	et := myet.CreateET(createETArg())
+	et := myet.CreateET(CreateETArg())
 
 	// 添加后端协议Handler
 	if settings.Get("et") == "on" {

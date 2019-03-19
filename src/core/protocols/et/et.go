@@ -14,10 +14,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-
-	"github.com/eaglexiang/go-bytebuffer"
-
+	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	bytebuffer "github.com/eaglexiang/go-bytebuffer"
 	mycipher "github.com/eaglexiang/go-cipher"
 	mynet "github.com/eaglexiang/go-net"
 	mytunnel "github.com/eaglexiang/go-tunnel"
@@ -174,7 +172,7 @@ func (et *ET) Name() string {
 
 // connect2Relayer 连接到下一个Relayer，完成版本校验和用户校验两个步骤
 func (et *ET) connect2Relayer(tunnel *mytunnel.Tunnel) error {
-	conn, err := net.DialTimeout("tcp", et.arg.RemoteET, et.arg.Timeout)
+	conn, err := net.DialTimeout("tcp", et.arg.RemoteIPE, et.arg.Timeout)
 	if err != nil {
 		logger.Warning(err)
 		return err
@@ -226,10 +224,10 @@ func (et *ET) checkHeaderOfReq(
 }
 
 func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
-	if et.arg.Users.LocalUser.ID() == "null" {
+	if et.arg.LocalUser.ID() == "null" {
 		return nil // no need to check
 	}
-	user := et.arg.Users.LocalUser.ToString()
+	user := et.arg.LocalUser.ToString()
 	_, err = tunnel.WriteRight([]byte(user))
 	if err != nil {
 		return err
@@ -239,12 +237,12 @@ func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
 		logger.Error("invalid reply for check local user: ", reply)
 		return errors.New("invalid reply")
 	}
-	tunnel.SpeedLimiter = et.arg.Users.LocalUser.SpeedLimiter()
+	tunnel.SpeedLimiter = et.arg.LocalUser.SpeedLimiter()
 	return nil
 }
 
 func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
-	if et.arg.Users.ValidUsers == nil {
+	if et.arg.ValidUsers == nil {
 		return nil
 	}
 	// 接收用户信息
@@ -263,7 +261,7 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 		logger.Warning("invalid user: null")
 		return errors.New("invalid user")
 	}
-	validUser, ok := et.arg.Users.ValidUsers[user2Check.ID]
+	validUser, ok := et.arg.ValidUsers[user2Check.ID]
 	if !ok {
 		// 找不到该用户
 		tunnel.WriteLeft([]byte("incorrent username or password"))

@@ -142,7 +142,7 @@ func (t *TCP) sendTCPReq2Server(e *NetArg) error {
 	e.Tunnel.Right = conn
 	e.Tunnel.EncryptRight = nil
 	e.Tunnel.DecryptRight = nil
-	e.Tunnel.SpeedLimiter = t.arg.Users.LocalUser.SpeedLimiter()
+	e.Tunnel.SpeedLimiter = t.arg.LocalUser.SpeedLimiter()
 	return nil
 }
 

@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"time"
 
 	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/core"
 	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
@@ -101,19 +100,7 @@ func createET() *myet.ET {
 		}
 	}
 
-	users := myet.UsersArg{
-		LocalUser:  etcore.LocalUser,
-		ValidUsers: etcore.Users,
-	}
-	e := myet.Arg{
-		ProxyStatus:   myet.ProxyENABLE,
-		IPType:        settings.Get("ip-type"),
-		Head:          settings.Get("head"),
-		RemoteET:      settings.Get("relayer"),
-		LocalLocation: settings.Get("location"),
-		Users:         users,
-		Timeout:       time.Second * time.Duration(etcore.Timeout),
-	}
-	et := myet.CreateET(&e)
+	e := etcore.CreateETArg()
+	et := myet.CreateET(e)
 	return et
 }
