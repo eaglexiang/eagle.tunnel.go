@@ -1,5 +1,8 @@
 #!/bin/bash
 
 systemctl daemon-reload
-firewall-cmd --add-port=8080/tcp --permanent
-firewall-cmd --reload
+
+if hash firewall-cmd 2>/dev/null; then
+    firewall-cmd --add-port=8080/tcp --permanent
+    firewall-cmd --reload
+fi
