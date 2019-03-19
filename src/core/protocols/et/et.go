@@ -21,6 +21,7 @@ import (
 	mytunnel "github.com/eaglexiang/go-tunnel"
 	myuser "github.com/eaglexiang/go-user"
 	version "github.com/eaglexiang/go-version"
+	"go.uber.org/ratelimit"
 )
 
 // ProtocolVersion 作为Sender使用的协议版本号
@@ -243,39 +244,54 @@ func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
 
 func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 	if et.arg.ValidUsers == nil {
+		// 未启用用户校验
 		return nil
 	}
-	// 接收用户信息
+	var user2Check *myuser.ReqUser
+	if user2Check, err = findReqUser(tunnel); err != nil {
+		logger.Warning(err)
+		return err
+	}
+	if tunnel.SpeedLimiter, err = et._checkUserOfReq(user2Check); err == nil {
+		_, err = tunnel.WriteLeft([]byte("valid"))
+	}
+	return err
+}
+
+func findReqUser(tunnel *mytunnel.Tunnel) (*myuser.ReqUser, error) {
 	userStr, err := tunnel.ReadLeftStr()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	// 获取用户IP
-	ip := strings.Split(tunnel.Left.RemoteAddr().String(), ":")[0]
-	user2Check, err := myuser.ParseReqUser(userStr, ip)
-	if err != nil {
-		tunnel.WriteLeft([]byte(err.Error()))
-		return err
-	}
-	if user2Check.ID == "null" {
-		logger.Warning("invalid user: null")
-		return errors.New("invalid user")
-	}
+	user2Check, err := parseReqUser(
+		userStr,
+		mynet.GetIPOfConnRemote(tunnel.Left))
+	return user2Check, err
+}
+
+func (et *ET) _checkUserOfReq(user2Check *myuser.ReqUser) (limiter *ratelimit.Limiter, err error) {
 	validUser, ok := et.arg.ValidUsers[user2Check.ID]
 	if !ok {
-		// 找不到该用户
-		tunnel.WriteLeft([]byte("incorrent username or password"))
 		logger.Warning("user not found: ", user2Check.ID)
-		return errors.New("user not found")
+		return nil, errors.New("user not found")
 	}
-	err = validUser.CheckAuth(user2Check)
+	if err = validUser.CheckAuth(user2Check); err == nil {
+		limiter = validUser.SpeedLimiter()
+	} else {
+		logger.Warning(err)
+	}
+	return
+}
+
+func parseReqUser(userStr, ip string) (*myuser.ReqUser, error) {
+	user2Check, err := myuser.ParseReqUser(userStr, ip)
 	if err != nil {
-		tunnel.WriteLeft([]byte(err.Error()))
-		return err
+		return nil, err
 	}
-	tunnel.WriteLeft([]byte("valid"))
-	tunnel.SpeedLimiter = validUser.SpeedLimiter()
-	return nil
+	if user2Check.ID == "null" {
+		return nil, errors.New("invalid user")
+	}
+	return user2Check, nil
 }
 
 // 查询类请求的发射过程都是类似的

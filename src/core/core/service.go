@@ -41,7 +41,6 @@ type Service struct {
 	stopRunning chan interface{}
 	reqs        chan net.Conn
 	relay       Relay
-	MaxClients  int              // 最大客户数量
 	clients     chan interface{} // 当前客户，用来统计当前客户数量
 }
 
