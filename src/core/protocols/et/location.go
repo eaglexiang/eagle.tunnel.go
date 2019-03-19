@@ -14,55 +14,65 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-
+	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mynet "github.com/eaglexiang/go-net"
+	cache "github.com/eaglexiang/go-textcache"
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
-// iPGeoCacheClient Client持有的IP-Geo数据缓存
-var iPGeoCacheClient = CreateLocationCache() // [ip string, location string]
-// iPGeoCacheServer Server持有的IP-Geo数据缓存
-var iPGeoCacheServer = CreateLocationCache() // [ip string, location string]
-
 // Location ET-LOCATION子协议的实现
 type Location struct {
-	arg *Arg
+	arg         *Arg
+	cacheClient *cache.TextCache
+	cacheServer *cache.TextCache
+}
+
+func (l *Location) getCacheClient(ip string) (node *cache.CacheNode, loaded bool) {
+	if l.cacheClient == nil {
+		l.cacheClient = cache.CreateTextCache()
+	}
+	return l.cacheClient.Get(ip)
+}
+
+func (l *Location) getCacheServer(ip string) (node *cache.CacheNode, loaded bool) {
+	if l.cacheServer == nil {
+		l.cacheServer = cache.CreateTextCache()
+	}
+	return l.cacheServer.Get(ip)
 }
 
 // Send 发送ET-LOCATION请求 解析IP的地理位置，结果存放于e.Reply
+// 本方法完成缓存查询功能，查询不命中则进一步调用_Send
 func (l Location) Send(et *ET, e *NetArg) (err error) {
-	node, loaded := iPGeoCacheClient.Get(e.IP)
+	node, loaded := l.getCacheClient(e.IP)
 	if loaded {
-		// 缓存命中
 		e.Location, err = node.Wait()
 	} else {
-		// 缓存不命中
-		switch mynet.TypeOfAddr(e.IP) {
-		case mynet.IPv6Addr:
-			// IPv6 默认代理
-			e.Location = "Ipv6"
-			iPGeoCacheClient.Update(e.IP, e.Location)
-		case mynet.IPv4Addr:
-			// IPv4 需要进一步判断
-			if mynet.CheckPrivateIPv4(e.IP) {
-				// 保留地址不适合代理
-				e.Location = "1;ZZ;ZZZ;Reserved"
-				iPGeoCacheClient.Update(e.IP, e.Location)
-			} else {
-				err = l.checkLocationByRemote(et, e)
-				if err != nil {
-					// 解析失败
-					e.Location = "0;;;WRONG INPUT"
-					iPGeoCacheClient.Delete(e.IP)
-				} else {
-					iPGeoCacheClient.Update(e.IP, e.Location)
-				}
-			}
-		default:
-			logger.Warning("invalid ip: ", e.IP)
-			err = errors.New("invalid ip")
+		l._Send(et, e, node)
+	}
+	return
+}
+
+func (l Location) _Send(et *ET, e *NetArg, node *cache.CacheNode) (err error) {
+	switch mynet.TypeOfAddr(e.IP) {
+	case mynet.IPv6Addr:
+		// IPv6 默认代理
+		e.Location = "Ipv6"
+		node.Update(e.Location)
+	case mynet.IPv4Addr:
+		if mynet.CheckPrivateIPv4(e.IP) {
+			// 保留地址不适合代理
+			e.Location = "1;ZZ;ZZZ;Reserved"
+			node.Update(e.Location)
+		} else if err = l.checkLocationByRemote(et, e); err == nil {
+			node.Update(e.Location)
+		} else {
+			e.Location = "0;;;WRONG INPUT"
+			l.cacheClient.Delete(e.IP)
 		}
+	default:
+		logger.Warning("invalid ip: ", e.IP)
+		err = errors.New("invalid ip")
 	}
 	return
 }
@@ -82,32 +92,28 @@ func (l *Location) checkLocationByRemote(et *ET, e *NetArg) error {
 // Handle 处理ET-LOCATION请求
 // 此方法完成缓存的读取
 // 如果缓存不命中则进一步调用CheckLocationByWeb
-func (l Location) Handle(req string, tunnel *mytunnel.Tunnel) error {
+func (l Location) Handle(req string, tunnel *mytunnel.Tunnel) (err error) {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
 		return errors.New("Location.Handle -> req is too short")
 	}
 	ip := reqs[1]
 
-	// check by cache
-	node, loaded := iPGeoCacheServer.Get(ip)
+	node, loaded := l.getCacheServer(ip)
+	var location string
 	if loaded {
-		location, err := node.Wait()
+		location, err = node.Wait()
+	} else {
+		location, err = CheckLocationByWeb(ip)
 		if err != nil {
-			return err
+			l.cacheServer.Delete(ip)
+		} else {
+			node.Update(location)
 		}
-		_, err = tunnel.WriteLeft([]byte(location))
-		return err
 	}
-
-	// check by web
-	location, err := CheckLocationByWeb(ip)
 	if err != nil {
-		iPGeoCacheServer.Delete(ip)
-		tunnel.WriteLeft([]byte(err.Error()))
 		return err
 	}
-	iPGeoCacheServer.Update(ip, location)
 	_, err = tunnel.WriteLeft([]byte(location))
 	return err
 }

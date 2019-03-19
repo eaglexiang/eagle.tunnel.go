@@ -13,9 +13,9 @@ import (
 	"net"
 	"strings"
 
-	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-
-	dnscache "github.com/eaglexiang/go-dnscache"
+	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	"github.com/eaglexiang/go-textcache"
+	cache "github.com/eaglexiang/go-textcache"
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
@@ -28,8 +28,8 @@ var WhitelistDomains []string
 // DNS ET-DNS子协议的实现
 type DNS struct {
 	arg            *Arg
-	dnsRemoteCache *dnscache.DNSCache
-	dnsLocalCache  *dnscache.DNSCache
+	dnsRemoteCache *cache.TextCache
+	dnsLocalCache  *cache.TextCache
 	dnsResolver    func(string) (string, error)
 }
 
@@ -112,16 +112,16 @@ func (d DNS) Type() int {
 	return EtDNS
 }
 
-func (d *DNS) getCacheNodeOfRemote(domain string) (node *dnscache.CacheNode, loaded bool) {
+func (d *DNS) getCacheNodeOfRemote(domain string) (node *textcache.CacheNode, loaded bool) {
 	if d.dnsRemoteCache == nil {
-		d.dnsRemoteCache = dnscache.CreateDNSCache()
+		d.dnsRemoteCache = cache.CreateTextCache()
 	}
 	return d.dnsRemoteCache.Get(domain)
 }
 
-func (d *DNS) getCacheNodeOfLocal(domain string) (node *dnscache.CacheNode, loaded bool) {
+func (d *DNS) getCacheNodeOfLocal(domain string) (node *cache.CacheNode, loaded bool) {
 	if d.dnsLocalCache == nil {
-		d.dnsLocalCache = dnscache.CreateDNSCache()
+		d.dnsLocalCache = cache.CreateTextCache()
 	}
 	return d.dnsLocalCache.Get(domain)
 }
@@ -138,7 +138,7 @@ func (d DNS) resolvDNSByProxy(et *ET, e *NetArg) (err error) {
 		if err != nil {
 			d.dnsRemoteCache.Delete(e.Domain)
 		} else {
-			d.dnsRemoteCache.Update(e.Domain, e.IP)
+			node.Update(e.IP)
 		}
 	}
 	return err
@@ -169,7 +169,7 @@ func (d DNS) resolvDNSByLocal(e *NetArg) (err error) {
 		if err != nil {
 			d.dnsLocalCache.Delete(e.Domain)
 		} else {
-			d.dnsLocalCache.Update(e.Domain, e.IP)
+			node.Update(e.IP)
 		}
 	}
 	return err
