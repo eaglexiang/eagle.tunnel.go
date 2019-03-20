@@ -145,7 +145,6 @@ func (s *Service) Start() (err error) {
 	ipe := settings.Get("listen")
 	s.listener, err = net.Listen("tcp", ipe)
 	if err != nil {
-		logger.Error(err)
 		return err
 	}
 	fmt.Println("start to listen: ", ipe)
