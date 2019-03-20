@@ -21,15 +21,20 @@ import (
 var service *etcore.Service
 
 func main() {
-	args := os.Args
-	if len(args) < 2 {
+	args := os.Args[1:]
+	if len(args) == 0 {
 		fmt.Println("error: no arg for Eagle Tunnel")
+		return
 	}
 
-	switch args[1] {
+	switch args[0] {
 	case "check":
-		Init(args[2:])
-		mycmd.Check(args[:3])
+		err := Init(args[2:])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		mycmd.Check(args[1])
 	default:
 		err := Init(args)
 		if err != nil {
@@ -41,12 +46,12 @@ func main() {
 		fmt.Println(settings.ToString())
 		service = etcore.CreateService()
 		go core()
-		fmt.Println("press Ctrl + C to quit")
 		checkSig()
 	}
 }
 
 func checkSig() {
+	fmt.Println("press Ctrl + C to quit")
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
@@ -57,7 +62,10 @@ func checkSig() {
 // Init 初始化参数系统
 func Init(args []string) error {
 	err := mycmd.ImportArgs(args)
-	return err
+	if err != nil {
+		return err
+	}
+	return etcore.ExecConfig()
 }
 
 func core() {

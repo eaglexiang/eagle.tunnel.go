@@ -10,7 +10,6 @@
 package cmd
 
 import (
-	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/core"
 	et "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	settings "github.com/eaglexiang/go-settings"
@@ -21,12 +20,11 @@ import (
 
 // ImportArgs 解析并导入参数
 func ImportArgs(argStrs []string) error {
-	for i := 1; i < len(argStrs); i++ {
-		if i%2 == 0 {
-			// 奇数为参数名，偶数为参数值
-			continue
-		}
+	if len(argStrs) == 0 {
+		return errors.New("need more arg(s)")
+	}
 
+	for i := 0; i < len(argStrs); i += 2 {
 		argStrs[i] = toLongArg(argStrs[i])
 		switch argStrs[i] {
 		case "--help":
@@ -45,13 +43,7 @@ func ImportArgs(argStrs []string) error {
 			}
 		}
 	}
-
-	err := etcore.ExecConfig()
-	if err != nil {
-		return err
-	}
-
-	return err
+	return nil
 }
 
 func toLongArg(shortArg string) string {

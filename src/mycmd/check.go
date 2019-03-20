@@ -21,12 +21,8 @@ import (
 )
 
 // Check check命令
-func Check(args []string) {
-	if len(args) < 3 {
-		fmt.Println("no cmd for et-check")
-		return
-	}
-	theType := myet.ParseEtCheckType(args[2])
+func Check(arg string) {
+	theType := myet.ParseEtCheckType(arg)
 	switch theType {
 	case myet.EtCheckPING:
 		ping()

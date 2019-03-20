@@ -81,7 +81,7 @@ func ExecConfig() (err error) {
 	err = execUserSystem()
 
 	SetListen(settings.Get("listen"))
-	SetRelayer(settings.Get("relayer"))
+	SetRelayer(settings.Get("relay"))
 
 	err = SetProxyStatus(settings.Get("proxy-status"))
 	if err != nil {
@@ -235,7 +235,7 @@ func SetRelayer(remoteIpe string) {
 			remoteIpe += ":8080"
 		}
 	}
-	settings.Set("relayer", remoteIpe)
+	settings.Set("relay", remoteIpe)
 }
 
 // SetListen 设定本地监听地址
