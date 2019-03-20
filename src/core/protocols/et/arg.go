@@ -26,8 +26,8 @@ type Arg struct {
 
 // UsersArg 用户系统使用的参数集
 type UsersArg struct {
-	LocalUser  *myuser.User
-	ValidUsers map[string]*myuser.User
+	LocalUser  *myuser.ValidUser
+	ValidUsers map[string]*myuser.ValidUser
 }
 
 // ConnArg 连接相关参数集

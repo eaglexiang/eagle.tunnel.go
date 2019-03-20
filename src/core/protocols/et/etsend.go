@@ -44,7 +44,7 @@ func (et *ET) checkVersionOfRelayer(tunnel *mytunnel.Tunnel) error {
 }
 
 func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
-	if et.arg.LocalUser.ID() == "null" {
+	if et.arg.LocalUser.ID == "null" {
 		return nil // no need to check
 	}
 	user := et.arg.LocalUser.ToString()

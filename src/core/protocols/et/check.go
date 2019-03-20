@@ -104,7 +104,7 @@ func (c Check) Type() int {
 // SendEtCheckAuthReq 发射 ET-CHECK-AUTH 请求
 func SendEtCheckAuthReq(et *ET) string {
 	// null代表未启用本地用户
-	if et.arg.LocalUser.ID() == "null" {
+	if et.arg.LocalUser.ID == "null" {
 		return "no local user"
 	}
 
@@ -116,7 +116,7 @@ func SendEtCheckAuthReq(et *ET) string {
 		return err.Error()
 	}
 
-	return "AUTH OK with local user: " + et.arg.LocalUser.ID()
+	return "AUTH OK with local user: " + et.arg.LocalUser.ID
 }
 
 // SendEtCheckVersionReq 发射 ET-CHECK-VERSION 请求
@@ -186,7 +186,7 @@ func SendEtCheckUsersReq(et *ET) (string, error) {
 func (c Check) handleEtCheckUsersReq(tunnel *mytunnel.Tunnel) {
 	var reply string
 	for _, user := range c.arg.ValidUsers {
-		line := user.ID() + ": " + user.Count()
+		line := user.ID + ": " + user.Count()
 		reply += line + "\n"
 	}
 	tunnel.WriteLeft([]byte(reply))
