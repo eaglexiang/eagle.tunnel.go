@@ -52,7 +52,10 @@ func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
 	if err != nil {
 		return err
 	}
-	reply, _ := tunnel.ReadRightStr()
+	reply, err := tunnel.ReadRightStr()
+	if err != nil {
+		return err
+	}
 	if reply != "valid" {
 		logger.Error("invalid reply for check local user: ", reply)
 		return errors.New("invalid reply")
