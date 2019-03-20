@@ -19,10 +19,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-
 	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
-	"github.com/eaglexiang/go-settings"
+	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	settings "github.com/eaglexiang/go-settings"
 	myuser "github.com/eaglexiang/go-user"
 )
 
@@ -76,13 +75,19 @@ func readConfig(filePath string) error {
 func ExecConfig() (err error) {
 	// 读取配置文件
 	if settings.Exsit("config") {
-		readConfig(settings.Get("config"))
+		err = readConfig(settings.Get("config"))
+	}
+	if err != nil {
+		return err
 	}
 
 	err = execUserSystem()
+	if err != nil {
+		return err
+	}
 
 	SetListen(settings.Get("listen"))
-	SetRelayer(settings.Get("relayer"))
+	SetRelayer(settings.Get("relay"))
 
 	err = SetProxyStatus(settings.Get("proxy-status"))
 	if err != nil {
@@ -163,7 +168,7 @@ func execMods() (err error) {
 
 //SetUser 设置本地用户
 func SetUser(user string) error {
-	localUser, err := myuser.ParseUser(user)
+	localUser, err := myuser.ParseValidUser(user)
 	if err != nil {
 		return err
 	}
@@ -205,18 +210,18 @@ func readLines(filePath string) ([]string, error) {
 }
 
 func importUsers(usersPath string) error {
-	Users = make(map[string]*myuser.User)
+	Users = make(map[string]*myuser.ValidUser)
 	userLines, err := readLines(usersPath)
 	if err != nil {
 		return nil
 	}
-	var user *myuser.User
+	var user *myuser.ValidUser
 	for _, line := range userLines {
-		user, err = myuser.ParseUser(line)
+		user, err = myuser.ParseValidUser(line)
 		if err != nil {
 			return err
 		}
-		Users[user.ID()] = user
+		Users[user.ID] = user
 	}
 	return err
 }
@@ -236,7 +241,7 @@ func SetRelayer(remoteIpe string) {
 			remoteIpe += ":8080"
 		}
 	}
-	settings.Set("relayer", remoteIpe)
+	settings.Set("relay", remoteIpe)
 }
 
 // SetListen 设定本地监听地址

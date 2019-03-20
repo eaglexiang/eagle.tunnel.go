@@ -116,7 +116,7 @@ func findReqUser(tunnel *mytunnel.Tunnel) (*myuser.ReqUser, error) {
 	return user2Check, err
 }
 
-func (et *ET) _checkUserOfReq(user2Check *myuser.ReqUser) (limiter *ratelimit.Limiter, err error) {
+func (et *ET) _checkUserOfReq(user2Check *myuser.ReqUser) (limiter ratelimit.Limiter, err error) {
 	validUser, ok := et.arg.ValidUsers[user2Check.ID]
 	if !ok {
 		logger.Warning("user not found: ", user2Check.ID)

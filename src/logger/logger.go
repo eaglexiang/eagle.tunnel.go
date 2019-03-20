@@ -11,7 +11,6 @@ package logger
 
 import (
 	"log"
-	"runtime/debug"
 
 	"github.com/eaglexiang/go-settings"
 )
@@ -28,7 +27,7 @@ const (
 var logText []string
 
 func init() {
-	log.SetFlags(log.Ldate)
+	log.SetFlags(log.Ldate | log.Ltime)
 	logText = append(logText, "off")
 	logText = append(logText, "error")
 	logText = append(logText, "warning")
@@ -56,7 +55,6 @@ func printLog(grade uint, v ...interface{}) {
 // Error 错误日志
 func Error(v ...interface{}) {
 	printLog(ErrorLogType, v...)
-	debug.PrintStack()
 }
 
 // Warning 警告日志

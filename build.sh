@@ -1,11 +1,9 @@
 source ./scripts/env_build.sh
 
 # 清理旧的临时文件
-echo "begin to clean tmp files for build"
 if [ -d ${PublishPath} ]; then
+    echo "begin to clean tmp files for build"
     rm -rf ${PublishPath}
-else
-    echo "nothing to clean"
 fi
 
 if [ $# -gt 0 ]; then

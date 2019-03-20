@@ -28,10 +28,10 @@ import (
 )
 
 // LocalUser 本地用户
-var LocalUser *myuser.User
+var LocalUser *myuser.ValidUser
 
 // Users 所有授权用户
-var Users map[string]*myuser.User
+var Users map[string]*myuser.ValidUser
 
 // Service ET服务
 // 必须使用CreateService方法进行构造
@@ -145,7 +145,6 @@ func (s *Service) Start() (err error) {
 	ipe := settings.Get("listen")
 	s.listener, err = net.Listen("tcp", ipe)
 	if err != nil {
-		logger.Error(err)
 		return err
 	}
 	fmt.Println("start to listen: ", ipe)

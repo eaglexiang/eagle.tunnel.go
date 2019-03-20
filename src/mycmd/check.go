@@ -21,12 +21,8 @@ import (
 )
 
 // Check check命令
-func Check(args []string) {
-	if len(args) < 3 {
-		fmt.Println("no cmd for et-check")
-		return
-	}
-	theType := myet.ParseEtCheckType(args[2])
+func Check(arg string) {
+	theType := myet.ParseEtCheckType(arg)
 	switch theType {
 	case myet.EtCheckPING:
 		ping()
@@ -74,8 +70,12 @@ func auth() {
 
 func version() {
 	et := createET()
-	reply := myet.SendEtCheckVersionReq(et)
-	fmt.Println(reply)
+	reply, err := myet.SendEtCheckVersionReq(et)
+	if err != nil {
+		fmt.Println(reply)
+	} else {
+		fmt.Println(reply)
+	}
 }
 
 func users() {
@@ -83,8 +83,12 @@ func users() {
 	fmt.Println("--- ---")
 
 	et := createET()
-	reply := myet.SendEtCheckUsersReq(et)
-	fmt.Println(reply)
+	reply, err := myet.SendEtCheckUsersReq(et)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(reply)
+	}
 }
 
 func createET() *myet.ET {

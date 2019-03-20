@@ -17,7 +17,7 @@ ET提供了简易的插件接口，凡是符合ET插件格式的动态链接库�
 ET整体的工作流程可分为五步：
 
 1. 获取握手消息，判断协议类型，分发业务
-2. 业务处理者提取目标地址（IP:Port）
+2. 业务处理者提取目标地址（IP:Port），注册可能需要的委托
 3. 由业务发送者连接该目标地址
 4. 完成由业务处理者在第2步注册的委托行为
 5. 开始数据的透明流动
@@ -25,7 +25,7 @@ ET整体的工作流程可分为五步：
 ## 插件的格式
 
 每个插件必须实现`业务处理者`这个接口，其接口定义在[handler.go
-](https://github.com/eaglexiang/eagle.tunnel.go/blob/master/src/etcore/handler.go)中：
+](https://github.com/eaglexiang/eagle.tunnel.go/blob/master/src/core/core/handler.go)中：
 
 ```go
 package etcore
@@ -58,10 +58,10 @@ import tunnel "github.com/eaglexiang/go-tunnel"
 
 // Arg 网络业务会用到的参数集
 type Arg struct {
-	Msg       []byte         // 消息
-	Host      string         // 主机地址:端口
-	Tunnel    *tunnel.Tunnel // 数据隧道
-	TheType   int            // 业务类型
-	Delegates []func()       // 委托队列
+	Msg       []byte             // 消息
+	Host      string             // 主机地址:端口
+	Tunnel    *tunnel.Tunnel     // 数据隧道
+	TheType   int                // 业务类型
+	Delegates []func() bool      // 委托队列
 }
 ```

@@ -146,12 +146,12 @@ func (d DNS) resolvDNSByProxy(et *ET, e *NetArg) (err error) {
 
 // _resolvDNSByProxy 使用代理服务器进行DNS的解析
 // 实际完成DNS查询操作
-func (d DNS) _resolvDNSByProxy(et *ET, e *NetArg) error {
+func (d DNS) _resolvDNSByProxy(et *ET, e *NetArg) (err error) {
 	req := FormatEtType(EtDNS) + " " + e.Domain
-	e.IP = sendQueryReq(et, req)
+	e.IP, err = sendQueryReq(et, req)
 	ip := net.ParseIP(e.IP)
 	if ip == nil {
-		logger.Warning("resolv dns by proxy: ", e.IP)
+		logger.Warning("fail to resolv dns by proxy: ", e.IP)
 		return errors.New("invalid reply")
 	}
 	return nil

@@ -13,7 +13,6 @@ import (
 	"errors"
 
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-	bytebuffer "github.com/eaglexiang/go-bytebuffer"
 	mynet "github.com/eaglexiang/go-net"
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
@@ -54,7 +53,7 @@ func (et *ET) checkVersionOfRelayer(tunnel *mytunnel.Tunnel) error {
 }
 
 func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
-	if et.arg.LocalUser.ID() == "null" {
+	if et.arg.LocalUser.ID == "null" {
 		return nil // no need to check
 	}
 	user := et.arg.LocalUser.ToString()
@@ -62,7 +61,10 @@ func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
 	if err != nil {
 		return err
 	}
-	reply, _ := tunnel.ReadRightStr()
+	reply, err := tunnel.ReadRightStr()
+	if err != nil {
+		return err
+	}
 	if reply != "valid" {
 		logger.Error("invalid reply for check local user: ", reply)
 		return errors.New("invalid reply")
@@ -74,27 +76,20 @@ func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
 // 查询类请求的发射过程都是类似的
 // 连接 - 发送请求 - 得到反馈 - 关闭连接
 // 区别仅仅在请求命令的内容
-func sendQueryReq(et *ET, req string) string {
+func sendQueryReq(et *ET, req string) (string, error) {
 	tunnel := mytunnel.GetTunnel()
 	defer mytunnel.PutTunnel(tunnel)
 	err := et.connect2Relayer(tunnel)
 	if err != nil {
-		return "sendNormalEtCheckReq-> " + err.Error()
+		return "", err
 	}
 
 	// 发送请求
 	_, err = tunnel.WriteRight([]byte(req))
 	if err != nil {
-		return "sendNormalEtCheckReq-> " + err.Error()
+		return "", err
 	}
 
 	// 接受回复
-	buffer := bytebuffer.GetKBBuffer()
-	defer bytebuffer.PutKBBuffer(buffer)
-	buffer.Length, err = tunnel.ReadRight(buffer.Buf())
-	if err != nil {
-		return "sendNormalEtCheckReq-> " + err.Error()
-	}
-	reply := buffer.String()
-	return reply
+	return tunnel.ReadRightStr()
 }

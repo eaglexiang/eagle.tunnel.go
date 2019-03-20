@@ -43,7 +43,7 @@ et --listen 0.0.0.0 --et on
 客户端
 
 ```shell
-et --listen 0.0.0.0 --http on --relayer [服务端IP]
+et --listen 0.0.0.0 --http on --relay [服务端IP]
 ```
 
 此时本地HTTP代理服务地址为`127.0.0.1:8080`。
@@ -52,7 +52,7 @@ et --listen 0.0.0.0 --http on --relayer [服务端IP]
 
 ## 下载
 
-[最新发布](https://github.com/eaglexiang/eagle.tunnel.go/releases/latest)
+- [Github Releases](https://github.com/eaglexiang/eagle.tunnel.go/releases)
 
 ## 详细
 
