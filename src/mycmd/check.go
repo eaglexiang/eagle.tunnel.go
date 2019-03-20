@@ -74,8 +74,12 @@ func auth() {
 
 func version() {
 	et := createET()
-	reply := myet.SendEtCheckVersionReq(et)
-	fmt.Println(reply)
+	reply, err := myet.SendEtCheckVersionReq(et)
+	if err != nil {
+		fmt.Println(reply)
+	} else {
+		fmt.Println(reply)
+	}
 }
 
 func users() {
@@ -83,8 +87,12 @@ func users() {
 	fmt.Println("--- ---")
 
 	et := createET()
-	reply := myet.SendEtCheckUsersReq(et)
-	fmt.Println(reply)
+	reply, err := myet.SendEtCheckUsersReq(et)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(reply)
+	}
 }
 
 func createET() *myet.ET {

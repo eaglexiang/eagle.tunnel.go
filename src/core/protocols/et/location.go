@@ -82,11 +82,10 @@ func (l Location) Type() int {
 	return EtLOCATION
 }
 
-func (l *Location) checkLocationByRemote(et *ET, e *NetArg) error {
+func (l *Location) checkLocationByRemote(et *ET, e *NetArg) (err error) {
 	req := FormatEtType(EtLOCATION) + " " + e.IP
-	reply := sendQueryReq(et, req)
-	e.Location = reply
-	return nil
+	e.Location, err = sendQueryReq(et, req)
+	return
 }
 
 // Handle 处理ET-LOCATION请求

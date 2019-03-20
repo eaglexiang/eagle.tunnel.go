@@ -120,12 +120,11 @@ func SendEtCheckAuthReq(et *ET) string {
 }
 
 // SendEtCheckVersionReq 发射 ET-CHECK-VERSION 请求
-func SendEtCheckVersionReq(et *ET) string {
+func SendEtCheckVersionReq(et *ET) (reply string, err error) {
 	req := FormatEtType(EtCHECK) + " " +
 		formatEtCheckType(EtCheckVERSION) + " " +
 		ProtocolVersion.Raw
-	reply := sendQueryReq(et, req)
-	return reply
+	return sendQueryReq(et, req)
 }
 
 // SendEtCheckPingReq 发射ET-CHECK-PING请求
@@ -134,9 +133,13 @@ func SendEtCheckPingReq(et *ET, sig chan string) {
 	start := time.Now() // 开始计时
 
 	req := FormatEtType(EtCHECK) + " " + formatEtCheckType(EtCheckPING)
-	reply := sendQueryReq(et, req)
+	reply, err := sendQueryReq(et, req)
+	if err != nil {
+		logger.Warning(err)
+		return
+	}
 	if reply != "ok" {
-		sig <- "SendEtCheckPingReq-> invalid reply: " + reply
+		sig <- "invalid PING reply: " + reply
 		return
 	}
 
@@ -174,11 +177,10 @@ func handleEtCheckVersionReq(tunnel *mytunnel.Tunnel, reqs []string) {
 }
 
 // SendEtCheckUsersReq 发射 ET-CHECK-USERS 请求
-func SendEtCheckUsersReq(et *ET) string {
+func SendEtCheckUsersReq(et *ET) (string, error) {
 	req := FormatEtType(EtCHECK) + " " +
 		formatEtCheckType(EtCheckUSERS)
-	reply := sendQueryReq(et, req)
-	return reply
+	return sendQueryReq(et, req)
 }
 
 func (c Check) handleEtCheckUsersReq(tunnel *mytunnel.Tunnel) {
