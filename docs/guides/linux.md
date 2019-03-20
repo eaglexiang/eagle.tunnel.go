@@ -35,7 +35,7 @@ sudo systemctl start eagle-tunnel-server
 完成后可通过以下指令检查其执行状态：
 
 ```shell
-sudo systemctl status eagle-tunnel-server
+systemctl status eagle-tunnel-server
 ```
 
 ## 客户端
@@ -94,7 +94,7 @@ wlp8s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
 
 ### 配置客户端
 
-由于客户端并不知道你的服务端运行在哪里，所以你至少要为客户端配置一个参数（`relayer`)告诉它这一点。
+由于客户端并不知道你的服务端运行在哪里，所以你至少要为客户端配置一个参数（`relay`)告诉它这一点。
 
 ```shell
 # 使用任何你喜欢或习惯的文本编辑器打开/etc/eagle-tunnel.d/client.conf文件
@@ -104,14 +104,14 @@ sudo nano /etc/eagle-tunnel.d/client.conf
 一个典型的客户端配置模板为：
 
 > listen=0.0.0.0  
-> relayer=  
+> relay=  
 > http=on  
 > socks=on
 
-我们需要将服务端的IP填在`relayer`中，假设其IP为上文的`41.22.248.101`，则配置过后的文件应该为：
+我们需要将服务端的IP填在`relay`中，假设其IP为上文的`41.22.248.101`，则配置过后的文件应该为：
 
 > listen=0.0.0.0  
-> relayer=41.22.248.101  
+> relay=41.22.248.101  
 > http=on  
 > socks=on
 
@@ -127,7 +127,7 @@ sudo systemctl start eagle-tunnel-client
 完成后可通过以下指令检查其执行状态：
 
 ```shell
-sudo systemctl status eagle-tunnel-client
+systemctl status eagle-tunnel-client
 ```
 
 ## 验证
@@ -140,9 +140,7 @@ et check ping -c [配置文件]
 
 配置文件的默认安装位置为`/etc/eagle-tunnel.d`，如果服务正常，应该会返回类似以下结果：
 
-> ping to x.x.x.x:8080 time=99ms
-
-`time`指的是你的客户端到服务端的时延
+> PING 99 ms
 
 ## 更多参数
 
