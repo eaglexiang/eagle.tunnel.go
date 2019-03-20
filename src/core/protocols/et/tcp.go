@@ -116,8 +116,8 @@ func (t *TCP) sendTCPReq2Remote(et *ET, e *NetArg) error {
 	}
 	reply, err := e.Tunnel.ReadRightStr()
 	if reply != "ok" {
-		logger.Warning("invalid reply for tcp.sendTcpReq2Remote: ", reply)
-		err = errors.New("TCP.sendTCPReq2Remote -> failed 2 connect 2 server by relayer")
+		logger.Warning("invalid reply for ", req, ": ", reply)
+		err = errors.New("failed 2 connect 2 server by relayer")
 	}
 	return err
 }
@@ -163,7 +163,7 @@ func (t TCP) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	}
 	err := t.sendTCPReq2Server(&e)
 	if err != nil {
-		tunnel.WriteLeft([]byte("nok"))
+		tunnel.WriteLeft([]byte(err.Error()))
 		return err
 
 	}

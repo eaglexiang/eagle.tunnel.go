@@ -75,10 +75,16 @@ func readConfig(filePath string) error {
 func ExecConfig() (err error) {
 	// 读取配置文件
 	if settings.Exsit("config") {
-		readConfig(settings.Get("config"))
+		err = readConfig(settings.Get("config"))
+	}
+	if err != nil {
+		return err
 	}
 
 	err = execUserSystem()
+	if err != nil {
+		return err
+	}
 
 	SetListen(settings.Get("listen"))
 	SetRelayer(settings.Get("relay"))
