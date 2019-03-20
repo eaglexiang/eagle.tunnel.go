@@ -28,7 +28,7 @@ const (
 var logText []string
 
 func init() {
-	log.SetFlags(log.Ldate)
+	log.SetFlags(log.Ldate | log.Ltime)
 	logText = append(logText, "off")
 	logText = append(logText, "error")
 	logText = append(logText, "warning")
