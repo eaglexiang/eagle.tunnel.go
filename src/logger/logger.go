@@ -11,7 +11,6 @@ package logger
 
 import (
 	"log"
-	"runtime/debug"
 
 	"github.com/eaglexiang/go-settings"
 )
@@ -56,7 +55,6 @@ func printLog(grade uint, v ...interface{}) {
 // Error 错误日志
 func Error(v ...interface{}) {
 	printLog(ErrorLogType, v...)
-	debug.PrintStack()
 }
 
 // Warning 警告日志
