@@ -20,9 +20,8 @@ import (
 )
 
 // ET ET代理协议的实现
-// 必须使用CreateET来构造该结构
-type ET struct {
-}
+// 必须使用NewET进行初始化
+type ET struct{}
 
 // NewET 构造ET
 func NewET(arg *comm.Arg) *ET {
@@ -83,7 +82,7 @@ func (et *ET) connect2Relayer(tunnel *mytunnel.Tunnel) error {
 	}
 	tunnel.EncryptRight = c.Encrypt
 	tunnel.DecryptRight = c.Decrypt
-	return et.checkUserOfLocal(tunnel)
+	return et.checkLocalUser(tunnel)
 }
 
 func (et *ET) sendQueryReq(req string) (string, error) {

@@ -204,7 +204,7 @@ func readLines(filePath string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-func importUsers(usersPath string) error {
+func importUsers(usersPath string) (err error) {
 	Users = make(map[string]*myuser.ValidUser)
 	userLines, err := readLines(usersPath)
 	if err != nil {
@@ -218,7 +218,8 @@ func importUsers(usersPath string) error {
 		}
 		Users[user.ID] = user
 	}
-	return err
+	logger.Info(len(Users), " users imported")
+	return
 }
 
 // SetIPE 补全端口号

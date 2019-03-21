@@ -49,7 +49,7 @@ func (et *ET) checkVersionOfRelayer(tunnel *mytunnel.Tunnel) error {
 	return nil
 }
 
-func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
+func (et *ET) checkLocalUser(tunnel *mytunnel.Tunnel) (err error) {
 	if comm.ETArg.LocalUser.ID == "null" {
 		return nil // no need to check
 	}
