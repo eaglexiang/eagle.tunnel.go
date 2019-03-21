@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-29 15:00:05
- * @LastEditTime: 2019-02-21 17:56:00
+ * @LastEditTime: 2019-03-21 19:22:28
  -->
 # Eagle Tunnel Go
 
@@ -52,7 +52,7 @@ et --listen 0.0.0.0 --http on --relay [服务端IP]
 
 ## 下载
 
-- [Github Releases](https://github.com/eaglexiang/eagle.tunnel.go/releases)
+- [Github Releases](https://github.com/eaglexiang/eagle.tunnel.go/releases/latest)
 
 ## 详细
 
