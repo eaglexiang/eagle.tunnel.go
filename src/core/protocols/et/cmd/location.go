@@ -6,7 +6,7 @@
  * @LastEditTime: 2019-03-17 17:32:04
  */
 
-package et
+package cmd
 
 import (
 	"errors"
@@ -14,27 +14,27 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mynet "github.com/eaglexiang/go-net"
 	cache "github.com/eaglexiang/go-textcache"
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
-// location ET-LOCATION子协议的实现
-type location struct {
-	arg         *Arg
+// Location ET-LOCATION子协议的实现
+type Location struct {
 	cacheClient *cache.TextCache
 	cacheServer *cache.TextCache
 }
 
-func (l *location) getCacheClient(ip string) (node *cache.CacheNode, loaded bool) {
+func (l *Location) getCacheClient(ip string) (node *cache.CacheNode, loaded bool) {
 	if l.cacheClient == nil {
 		l.cacheClient = cache.CreateTextCache(0)
 	}
 	return l.cacheClient.Get(ip)
 }
 
-func (l *location) getCacheServer(ip string) (node *cache.CacheNode, loaded bool) {
+func (l *Location) getCacheServer(ip string) (node *cache.CacheNode, loaded bool) {
 	if l.cacheServer == nil {
 		l.cacheServer = cache.CreateTextCache(0)
 	}
@@ -43,17 +43,17 @@ func (l *location) getCacheServer(ip string) (node *cache.CacheNode, loaded bool
 
 // Send 发送ET-LOCATION请求 解析IP的地理位置，结果存放于e.Reply
 // 本方法完成缓存查询功能，查询不命中则进一步调用_Send
-func (l location) Send(et *ET, e *NetArg) (err error) {
+func (l Location) Send(e *comm.NetArg) (err error) {
 	node, loaded := l.getCacheClient(e.IP)
 	if loaded {
 		e.Location, err = node.Wait()
 	} else {
-		l._Send(et, e, node)
+		l._Send(e, node)
 	}
 	return
 }
 
-func (l location) _Send(et *ET, e *NetArg, node *cache.CacheNode) (err error) {
+func (l Location) _Send(e *comm.NetArg, node *cache.CacheNode) (err error) {
 	switch mynet.TypeOfAddr(e.IP) {
 	case mynet.IPv6Addr:
 		// IPv6 默认代理
@@ -64,7 +64,7 @@ func (l location) _Send(et *ET, e *NetArg, node *cache.CacheNode) (err error) {
 			// 保留地址不适合代理
 			e.Location = "1;ZZ;ZZZ;Reserved"
 			node.Update(e.Location)
-		} else if err = l.checkLocationByRemote(et, e); err == nil {
+		} else if err = l.checkLocationByRemote(e); err == nil {
 			node.Update(e.Location)
 		} else {
 			e.Location = "0;;;WRONG INPUT"
@@ -78,65 +78,55 @@ func (l location) _Send(et *ET, e *NetArg, node *cache.CacheNode) (err error) {
 }
 
 // Type ET子协议的类型
-func (l location) Type() int {
-	return EtLOCATION
+func (l Location) Type() int {
+	return comm.EtLOCATION
 }
 
 // Name ET子协议的名字
-func (l location) Name() string {
-	return EtNameLOCATION
+func (l Location) Name() string {
+	return comm.EtNameLOCATION
 }
 
-func (l *location) checkLocationByRemote(et *ET, e *NetArg) (err error) {
-	req := FormatEtType(EtLOCATION) + " " + e.IP
-	e.Location, err = sendQueryReq(et, req)
+func (l Location) checkLocationByRemote(e *comm.NetArg) (err error) {
+	e.Location, err = sendQuery(l, e.IP)
 	return
 }
 
 // Handle 处理ET-LOCATION请求
 // 此方法完成缓存的读取
 // 如果缓存不命中则进一步调用CheckLocationByWeb
-func (l location) Handle(req string, tunnel *mytunnel.Tunnel) (err error) {
+func (l Location) Handle(req string, tunnel *mytunnel.Tunnel) (err error) {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
-		return errors.New("location.Handle -> req is too short")
+		return errors.New("Location.Handle -> req is too short")
 	}
 	ip := reqs[1]
 
 	node, loaded := l.getCacheServer(ip)
-	var location string
+	var Location string
 	if loaded {
-		location, err = node.Wait()
+		Location, err = node.Wait()
 	} else {
-		location, err = CheckLocationByWeb(ip)
+		Location, err = CheckLocationByWeb(ip)
 		if err != nil {
 			l.cacheServer.Delete(ip)
 		} else {
-			node.Update(location)
+			node.Update(Location)
 		}
 	}
 	if err != nil {
 		return err
 	}
-	_, err = tunnel.WriteLeft([]byte(location))
+	_, err = tunnel.WriteLeft([]byte(Location))
 	return err
 }
 
-// Match 判断业务是否匹配
-func (l location) Match(req string) bool {
-	args := strings.Split(req, " ")
-	if args[0] == "LOCATION" {
-		return true
-	}
-	return false
-}
-
-// CheckProxyByLocation 本地解析IP是否需要使用代理
-func (l *location) CheckProxyByLocation(location string) bool {
-	switch location {
+// checkProxyByLocation 本地解析IP是否需要使用代理
+func checkProxyByLocation(Location string) bool {
+	switch Location {
 	case "0;;;WRONG INPUT":
 		return true
-	case "1;ZZ;ZZZ;Reserved", l.arg.LocalLocation:
+	case "1;ZZ;ZZZ;Reserved", comm.ETArg.LocalLocation:
 		return false
 	default:
 		return true

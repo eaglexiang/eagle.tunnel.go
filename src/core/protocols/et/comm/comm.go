@@ -1,13 +1,8 @@
-package et
+package comm
 
 import (
 	"errors"
-	"net"
 	"strings"
-
-	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-	mycipher "github.com/eaglexiang/go-cipher"
-	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
 // ET子协议的类型
@@ -46,20 +41,6 @@ const (
 	ErrorProxyStatusText = "ERROR"
 )
 
-// handler ET子协议的handler接口
-type handler interface {
-	Handle(req string, tunnel *mytunnel.Tunnel) error // 处理业务
-	Type() int                                        // ET子协议的类型
-	Name() string                                     // ET子协议的名字
-}
-
-// sender ET子协议的sender
-type sender interface {
-	Send(et *ET, e *NetArg) error //发送流程
-	Type() int                    // ET子协议的类型
-	Name() string                 // ET子协议的名字
-}
-
 // EtTypes ET子协议的类型
 var EtTypes map[string]int
 
@@ -71,6 +52,12 @@ var EtProxyStatus map[string]int
 
 // EtProxyStatusText ET代理状态对应的文本
 var EtProxyStatusText map[int]string
+
+// HostsCache 本地Hosts
+var HostsCache = make(map[string]string)
+
+// WhitelistDomains 需要被智能解析的DNS域名列表
+var WhitelistDomains []string
 
 func init() {
 	EtTypes = make(map[string]int)
@@ -100,27 +87,6 @@ func init() {
 	EtProxyStatusText = make(map[int]string)
 	EtProxyStatusText[ProxyENABLE] = ProxyEnableText
 	EtProxyStatusText[ProxySMART] = ProxySmartText
-}
-
-// connect2Relayer 连接到下一个Relayer，完成版本校验和用户校验两个步骤
-func (et *ET) connect2Relayer(tunnel *mytunnel.Tunnel) error {
-	conn, err := net.DialTimeout("tcp", et.arg.RemoteIPE, et.arg.Timeout)
-	if err != nil {
-		logger.Warning(err)
-		return err
-	}
-	tunnel.Right = conn
-	err = et.checkVersionOfRelayer(tunnel)
-	if err != nil {
-		return err
-	}
-	c := mycipher.DefaultCipher()
-	if c == nil {
-		panic("cipher is nil")
-	}
-	tunnel.EncryptRight = c.Encrypt
-	tunnel.DecryptRight = c.Decrypt
-	return et.checkUserOfLocal(tunnel)
 }
 
 // ParseProxyStatus 识别ProxyStatus

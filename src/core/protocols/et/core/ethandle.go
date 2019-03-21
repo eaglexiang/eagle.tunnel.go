@@ -11,9 +11,9 @@ package et
 
 import (
 	"errors"
-	"reflect"
 	"strings"
 
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mycipher "github.com/eaglexiang/go-cipher"
 	mynet "github.com/eaglexiang/go-net"
@@ -44,19 +44,19 @@ func (et *ET) Handle(e *mynet.Arg) (err error) {
 		return err
 	}
 	// 只有TCP子协议需要继续运行
-	if reflect.TypeOf(h) != reflect.TypeOf(tCP{}) {
+	if h.Type() != comm.EtTCP {
 		return errors.New("no need to continue")
 	}
 	return nil
 }
 
 func (et *ET) subShake(tunnel *mytunnel.Tunnel) (subReq string,
-	h handler, err error) {
+	h comm.Handler, err error) {
 	subReq, err = tunnel.ReadLeftStr()
 	if err != nil {
 		return "", nil, err
 	}
-	h, err = et.getHandler(subReq)
+	h, err = comm.GetHandler(strings.Split(subReq, " ")[0])
 	if err != nil {
 		logger.Warning(err)
 	}
@@ -79,7 +79,7 @@ func (et *ET) checkHeaderOfReq(
 	switch {
 	case len(headers) < 1:
 		return errors.New("checkHeaderOfReq -> nil req")
-	case headers[0] != et.arg.Head:
+	case headers[0] != comm.ETArg.Head:
 		logger.Warning("invalid header of req: ", headers[0])
 		return errors.New("checkHeaderOfReq -> wrong head")
 	default:
@@ -90,7 +90,7 @@ func (et *ET) checkHeaderOfReq(
 }
 
 func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
-	if et.arg.ValidUsers == nil {
+	if comm.ETArg.ValidUsers == nil {
 		// 未启用用户校验
 		return nil
 	}
@@ -117,7 +117,7 @@ func findReqUser(tunnel *mytunnel.Tunnel) (*myuser.ReqUser, error) {
 }
 
 func (et *ET) _checkUserOfReq(user2Check *myuser.ReqUser) (limiter ratelimit.Limiter, err error) {
-	validUser, ok := et.arg.ValidUsers[user2Check.ID]
+	validUser, ok := comm.ETArg.ValidUsers[user2Check.ID]
 	if !ok {
 		logger.Warning("user not found: ", user2Check.ID)
 		return nil, errors.New("user not found")

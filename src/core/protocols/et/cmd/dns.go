@@ -6,41 +6,35 @@
  * @LastEditTime: 2019-03-17 17:00:52
  */
 
-package et
+package cmd
 
 import (
 	"errors"
 	"net"
 	"strings"
 
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	"github.com/eaglexiang/go-textcache"
 	cache "github.com/eaglexiang/go-textcache"
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
-// HostsCache 本地Hosts
-var HostsCache = make(map[string]string)
-
-// WhitelistDomains 需要被智能解析的DNS域名列表
-var WhitelistDomains []string
-
-// dNS ET-DNS子协议的实现
-type dNS struct {
-	dnsType        int
-	arg            *Arg
+// DNS ET-DNS子协议的实现
+type DNS struct {
+	DNSType        int
 	dnsRemoteCache *cache.TextCache
 	dnsLocalCache  *cache.TextCache
-	dnsResolver    func(string) (string, error)
+	DNSResolver    func(string) (string, error) `label:"DNS解析器"`
 }
 
 // Handle 处理ET-DNS请求
-func (d dNS) Handle(req string, tunnel *mytunnel.Tunnel) error {
+func (d DNS) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
 		return errors.New("ETDNS.Handle -> req is too short")
 	}
-	e := NetArg{NetConnArg: NetConnArg{Domain: reqs[1]}}
+	e := comm.NetArg{NetConnArg: comm.NetConnArg{Domain: reqs[1]}}
 	err := d.resolvDNSByLocal(&e)
 	if err != nil {
 		return err
@@ -53,17 +47,17 @@ func (d dNS) Handle(req string, tunnel *mytunnel.Tunnel) error {
 }
 
 // Send 发送ET-DNS请求
-func (d dNS) Send(et *ET, e *NetArg) (err error) {
-	ip, result := HostsCache[e.Domain]
+func (d DNS) Send(e *comm.NetArg) (err error) {
+	ip, result := comm.HostsCache[e.Domain]
 	if result {
 		e.IP = ip
 		return nil
 	}
-	switch d.arg.ProxyStatus {
-	case ProxySMART:
-		err = d.smartSend(et, e)
-	case ProxyENABLE:
-		err = d.proxySend(et, e)
+	switch comm.ETArg.ProxyStatus {
+	case comm.ProxySMART:
+		err = d.smartSend(e)
+	case comm.ProxyENABLE:
+		err = d.proxySend(e)
 	default:
 		logger.Error("dns.send invalid proxy-status")
 		err = errors.New("invalid proxy-status")
@@ -74,49 +68,48 @@ func (d dNS) Send(et *ET, e *NetArg) (err error) {
 // smartSend 智能模式
 // 智能模式会先检查域名是否存在于白名单
 // 白名单内域名将转入强制代理模式
-func (d dNS) smartSend(et *ET, e *NetArg) (err error) {
+func (d DNS) smartSend(e *comm.NetArg) (err error) {
 	white := IsWhiteDomain(e.Domain)
 	if white {
-		err = d.resolvDNSByProxy(et, e)
+		err = d.resolvDNSByProxy(e)
 	} else {
 		err = d.resolvDNSByLocal(e)
 		// 判断IP所在位置是否适合代理
-		l := et.subSenders[EtLOCATION].(location)
-		l.Send(et, e)
-		if !l.CheckProxyByLocation(e.Location) {
+		comm.SubSenders[comm.EtLOCATION].Send(e)
+		if !checkProxyByLocation(e.Location) {
 			return nil
 		}
 		// 更新IP为Relay端的解析结果
-		ne := NetArg{NetConnArg: NetConnArg{Domain: e.Domain}}
-		err = d.resolvDNSByProxy(et, &ne)
+		ne := &comm.NetArg{NetConnArg: comm.NetConnArg{Domain: e.Domain}}
+		err = d.resolvDNSByProxy(ne)
 		e.IP = ne.IP
 	}
 	return err
 }
 
 // proxySend 强制代理模式
-func (d dNS) proxySend(et *ET, e *NetArg) error {
-	return d.resolvDNSByProxy(et, e)
+func (d DNS) proxySend(e *comm.NetArg) error {
+	return d.resolvDNSByProxy(e)
 }
 
 // Type ET子协议类型
-func (d dNS) Type() int {
-	return d.dnsType
+func (d DNS) Type() int {
+	return d.DNSType
 }
 
 // Name ET子协议的名字
-func (d dNS) Name() string {
-	return FormatEtType(d.dnsType)
+func (d DNS) Name() string {
+	return comm.FormatEtType(d.DNSType)
 }
 
-func (d *dNS) getCacheNodeOfRemote(domain string) (node *textcache.CacheNode, loaded bool) {
+func (d *DNS) getCacheNodeOfRemote(domain string) (node *textcache.CacheNode, loaded bool) {
 	if d.dnsRemoteCache == nil {
 		d.dnsRemoteCache = cache.CreateTextCache()
 	}
 	return d.dnsRemoteCache.Get(domain)
 }
 
-func (d *dNS) getCacheNodeOfLocal(domain string) (node *cache.CacheNode, loaded bool) {
+func (d *DNS) getCacheNodeOfLocal(domain string) (node *cache.CacheNode, loaded bool) {
 	if d.dnsLocalCache == nil {
 		d.dnsLocalCache = cache.CreateTextCache()
 	}
@@ -125,13 +118,13 @@ func (d *dNS) getCacheNodeOfLocal(domain string) (node *cache.CacheNode, loaded 
 
 // resolvDNSByProxy 使用代理服务器进行DNS的解析
 // 此函数主要完成缓存功能
-// 当缓存不命中则调用 dNS._resolvDNSByProxy
-func (d dNS) resolvDNSByProxy(et *ET, e *NetArg) (err error) {
+// 当缓存不命中则调用 DNS._resolvDNSByProxy
+func (d DNS) resolvDNSByProxy(e *comm.NetArg) (err error) {
 	node, loaded := d.getCacheNodeOfRemote(e.Domain)
 	if loaded {
 		e.IP, err = node.Wait()
 	} else {
-		err = d._resolvDNSByProxy(et, e)
+		err = d._resolvDNSByProxy(e)
 		if err != nil {
 			d.dnsRemoteCache.Delete(e.Domain)
 		} else {
@@ -143,9 +136,8 @@ func (d dNS) resolvDNSByProxy(et *ET, e *NetArg) (err error) {
 
 // _resolvDNSByProxy 使用代理服务器进行DNS的解析
 // 实际完成DNS查询操作
-func (d dNS) _resolvDNSByProxy(et *ET, e *NetArg) (err error) {
-	req := FormatEtType(EtDNS) + " " + e.Domain
-	e.IP, err = sendQueryReq(et, req)
+func (d DNS) _resolvDNSByProxy(e *comm.NetArg) (err error) {
+	e.IP, err = sendQuery(d, e.Domain)
 	ip := net.ParseIP(e.IP)
 	if ip == nil {
 		logger.Warning("fail to resolv dns by proxy: ", e.Domain, " -> ", e.IP)
@@ -156,8 +148,8 @@ func (d dNS) _resolvDNSByProxy(et *ET, e *NetArg) (err error) {
 
 // resolvDNSByLocal 本地解析DNS
 // 此函数主要完成缓存功能
-// 当缓存不命中则进一步调用 dNS._resolvDNSByLocalClient
-func (d dNS) resolvDNSByLocal(e *NetArg) (err error) {
+// 当缓存不命中则进一步调用 DNS._resolvDNSByLocalClient
+func (d DNS) resolvDNSByLocal(e *comm.NetArg) (err error) {
 	node, loaded := d.getCacheNodeOfLocal(e.Domain)
 	if loaded {
 		e.IP, err = node.Wait()
@@ -174,8 +166,8 @@ func (d dNS) resolvDNSByLocal(e *NetArg) (err error) {
 
 // _resolvDNSByLocalClient 本地解析DNS
 // 实际完成DNS的解析动作
-func (d dNS) _resolvDNSByLocal(e *NetArg) (err error) {
-	e.IP, err = d.dnsResolver(e.Domain)
+func (d DNS) _resolvDNSByLocal(e *comm.NetArg) (err error) {
+	e.IP, err = d.DNSResolver(e.Domain)
 	// 本地解析失败应该让用户察觉，手动添加DNS白名单
 	if err != nil {
 		logger.Warning("fail to resolv dns by local, ",
@@ -187,7 +179,7 @@ func (d dNS) _resolvDNSByLocal(e *NetArg) (err error) {
 
 // IsWhiteDomain 判断域名是否是白名域名
 func IsWhiteDomain(host string) (isWhite bool) {
-	for _, line := range WhitelistDomains {
+	for _, line := range comm.WhitelistDomains {
 		if strings.HasSuffix(host, line) {
 			return true
 		}

@@ -6,7 +6,7 @@
  * @LastEditTime: 2019-03-17 16:42:10
  */
 
-package et
+package cmd
 
 import (
 	"errors"
@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-
 	mytunnel "github.com/eaglexiang/go-tunnel"
 	version "github.com/eaglexiang/go-version"
 )
@@ -29,10 +29,8 @@ const (
 	EtCheckUSERS
 )
 
-// check ET-Check协议的实现
-type check struct {
-	arg *Arg
-}
+// Check Check子协议
+type Check struct{}
 
 // ParseEtCheckType 将字符串转换为EtCHECK请求的类型
 func ParseEtCheckType(src string) int {
@@ -67,7 +65,7 @@ func formatEtCheckType(src int) string {
 }
 
 // Handle 处理ET-Check请求
-func (c check) Handle(req string, tunnel *mytunnel.Tunnel) error {
+func (c Check) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
 		return errors.New("Check.Handle -> no value for req")
@@ -81,64 +79,55 @@ func (c check) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	case EtCheckUSERS:
 		c.handleEtCheckUsersReq(tunnel)
 	default:
-		logger.Warning("invalid et check type: ", reqs[1])
-		return errors.New("Check.Handle -> invalid check type")
+		logger.Warning("invalid et Check type: ", reqs[1])
+		return errors.New("Check.Handle -> invalid Check type")
 	}
 	return nil
 }
 
-// Match 判断是否匹配
-func (c check) Match(req string) bool {
-	args := strings.Split(req, " ")
-	if args[0] == "CHECK" {
-		return true
-	}
-	return false
-}
-
 // Type ET子协议的类型
-func (c check) Type() int {
-	return EtCHECK
+func (c Check) Type() int {
+	return comm.EtCHECK
 }
 
 // Name ET子协议的名字
-func (c check) Name() string {
-	return EtNameCHECK
+func (c Check) Name() string {
+	return comm.EtNameCHECK
 }
 
 // SendEtCheckAuthReq 发射 ET-CHECK-AUTH 请求
-func SendEtCheckAuthReq(et *ET) string {
+func SendEtCheckAuthReq() string {
 	// null代表未启用本地用户
-	if et.arg.LocalUser.ID == "null" {
+	if comm.ETArg.LocalUser.ID == "null" {
 		return "no local user"
 	}
 
 	// 当connect2Relayer成功，则说明鉴权成功
 	tunnel := mytunnel.GetTunnel()
 	defer mytunnel.PutTunnel(tunnel)
-	err := et.connect2Relayer(tunnel)
+	err := comm.Connect2Remote(tunnel)
 	if err != nil {
 		return err.Error()
 	}
 
-	return "AUTH OK with local user: " + et.arg.LocalUser.ID
+	return "AUTH OK with local user: " + comm.ETArg.LocalUser.ID
 }
 
 // SendEtCheckVersionReq 发射 ET-CHECK-VERSION 请求
-func SendEtCheckVersionReq(et *ET) (reply string, err error) {
-	req := FormatEtType(EtCHECK) + " " +
+func SendEtCheckVersionReq() (reply string, err error) {
+	req := comm.FormatEtType(comm.EtCHECK) + " " +
 		formatEtCheckType(EtCheckVERSION) + " " +
-		ProtocolVersion.Raw
-	return sendQueryReq(et, req)
+		comm.ProtocolVersion.Raw
+	return comm.SendQueryReq(req)
 }
 
 // SendEtCheckPingReq 发射ET-CHECK-PING请求
-func SendEtCheckPingReq(et *ET, sig chan string) {
+func SendEtCheckPingReq(sig chan string) {
 
 	start := time.Now() // 开始计时
 
-	req := FormatEtType(EtCHECK) + " " + formatEtCheckType(EtCheckPING)
-	reply, err := sendQueryReq(et, req)
+	req := comm.FormatEtType(comm.EtCHECK) + " " + formatEtCheckType(EtCheckPING)
+	reply, err := comm.SendQueryReq(req)
 	if err != nil {
 		logger.Warning(err)
 		return
@@ -172,7 +161,7 @@ func handleEtCheckVersionReq(tunnel *mytunnel.Tunnel, reqs []string) {
 		tunnel.WriteLeft([]byte(reply))
 		return
 	}
-	if versionOfReq.IsLessThan(ProtocolCompatibleVersion) {
+	if versionOfReq.IsLessThan(comm.ProtocolCompatibleVersion) {
 		reply := "the version of protocol may be incompatible"
 		tunnel.WriteLeft([]byte(reply))
 		return
@@ -182,15 +171,15 @@ func handleEtCheckVersionReq(tunnel *mytunnel.Tunnel, reqs []string) {
 }
 
 // SendEtCheckUsersReq 发射 ET-CHECK-USERS 请求
-func SendEtCheckUsersReq(et *ET) (string, error) {
-	req := FormatEtType(EtCHECK) + " " +
+func SendEtCheckUsersReq() (string, error) {
+	req := comm.FormatEtType(comm.EtCHECK) + " " +
 		formatEtCheckType(EtCheckUSERS)
-	return sendQueryReq(et, req)
+	return comm.SendQueryReq(req)
 }
 
-func (c check) handleEtCheckUsersReq(tunnel *mytunnel.Tunnel) {
+func (c Check) handleEtCheckUsersReq(tunnel *mytunnel.Tunnel) {
 	var reply string
-	for _, user := range c.arg.ValidUsers {
+	for _, user := range comm.ETArg.ValidUsers {
 		line := user.ID + ": " + user.Count()
 		reply += line + "\n"
 	}

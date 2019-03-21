@@ -7,38 +7,40 @@
  * @LastEditTime: 2019-03-17 16:36:52
  */
 
-package et
+package cmd
 
 import (
 	"errors"
 	"strings"
 
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-
 	"github.com/eaglexiang/go-tunnel"
 )
 
-type bind struct {
+// Bind BIND子协议
+type Bind struct {
 }
 
 // Type 类型
-func (b bind) Type() int {
-	return EtBIND
+func (b Bind) Type() int {
+	return comm.EtBIND
 }
 
 // Name ET子协议的名字
-func (b bind) Name() string {
-	return EtNameBIND
+func (b Bind) Name() string {
+	return comm.EtNameBIND
 }
 
-func (b bind) Send(et *ET, e *NetArg) error {
+// Send 发送请求
+func (b Bind) Send(e *comm.NetArg) error {
 	// 连接远端
-	err := et.connect2Relayer(e.Tunnel)
+	err := comm.Connect2Remote(e.Tunnel)
 	if err != nil {
 		return err
 	}
 	// 发送请求
-	req := FormatEtType(EtBIND) + " " + e.Port
+	req := comm.FormatEtType(comm.EtBIND) + " " + e.Port
 	_, err = e.Tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err
@@ -54,7 +56,8 @@ func (b bind) Send(et *ET, e *NetArg) error {
 	return nil
 }
 
-func (b bind) Handle(req string, tunnel *tunnel.Tunnel) (err error) {
+// Handle 处理请求
+func (b Bind) Handle(req string, tunnel *tunnel.Tunnel) (err error) {
 	// reqs := strings.Split(req, " ")
 	// if len(reqs) != 2 {
 	// 	return errors.New("bind.Handle -> invalid req: " + req)

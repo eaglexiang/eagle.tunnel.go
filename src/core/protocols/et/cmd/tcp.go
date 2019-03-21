@@ -6,115 +6,113 @@
  * @LastEditTime: 2019-03-17 20:00:01
  */
 
-package et
+package cmd
 
 import (
 	"errors"
 	"net"
 	"strings"
 
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mynet "github.com/eaglexiang/go-net"
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
-// tCP ET-TCP子协议的实现
-type tCP struct {
-	arg  *Arg
-	dns  dNS
-	dns6 dNS
+// TCP ET-TCP子协议的实现
+type TCP struct {
 }
 
 // Send 发送请求
-func (t tCP) Send(et *ET, e *NetArg) (err error) {
+func (t TCP) Send(e *comm.NetArg) (err error) {
 	// 检查目的地址是否合法
 	if e.IP == "" && e.Domain == "" {
 		// 不存在可供使用的IP或域名
-		return errors.New("tCP.Send -> no des host")
+		return errors.New("TCP.Send -> no des host")
 	}
 
 	if e.IP == "" {
 		// IP不存在，解析域名
-		err = t.resolvDNS(et, e)
+		err = t.resolvDNS(e)
 		if err != nil {
 			return err
 		}
 	}
 
 	// 建立连接
-	switch t.arg.ProxyStatus {
-	case ProxySMART:
-		err = t.smartSend(et, e)
-	case ProxyENABLE:
-		err = t.proxySend(et, e)
+	switch comm.ETArg.ProxyStatus {
+	case comm.ProxySMART:
+		err = t.smartSend(e)
+	case comm.ProxyENABLE:
+		err = t.proxySend(e)
 	default:
 		err = errors.New("invalid proxy-status")
 	}
 
 	if err != nil {
-		return errors.New("tCP.Send -> ")
+		return errors.New("TCP.Send -> ")
 	}
 	return nil
 }
 
-func (t tCP) resolvDNS(et *ET, e *NetArg) (err error) {
+func (t TCP) resolvDNS(e *comm.NetArg) (err error) {
 	// 调用DNS Sender解析Domain为IP
-	switch t.arg.IPType {
+	switch comm.ETArg.IPType {
 	case "4":
-		err = t.dns.Send(et, e)
+		err = comm.SubSenders[comm.EtDNS].Send(e)
 	case "6":
-		err = t.dns6.Send(et, e)
+		err = comm.SubSenders[comm.EtDNS6].Send(e)
 	case "46":
-		err = t.dns.Send(et, e)
+		err = comm.SubSenders[comm.EtDNS].Send(e)
 		if err != nil {
-			err = t.dns6.Send(et, e)
+			err = comm.SubSenders[comm.EtDNS6].Send(e)
 		}
 	case "64":
-		err = t.dns6.Send(et, e)
+		err = comm.SubSenders[comm.EtDNS6].Send(e)
 		if err != nil {
-			err = t.dns.Send(et, e)
+			err = comm.SubSenders[comm.EtDNS].Send(e)
 		}
 	default:
-		logger.Warning("invalid ip-type: ", t.arg.IPType)
-		err = errors.New("tCP.Send -> invalid ip-type")
+		logger.Warning("invalid ip-type: ", comm.ETArg.IPType)
+		err = errors.New("TCP.Send -> invalid ip-type")
 	}
 	return err
 }
 
-func (t *tCP) smartSend(et *ET, e *NetArg) (err error) {
-	l := et.subSenders[EtLOCATION].(location)
-	err = l.Send(et, e)
+func (t *TCP) smartSend(e *comm.NetArg) (err error) {
+	l := comm.SubSenders[comm.EtLOCATION]
+	err = l.Send(e)
 	if err != nil {
 		return err
 	}
-	if l.CheckProxyByLocation(e.Location) {
-		err = t.sendTCPReq2Remote(et, e)
+	if checkProxyByLocation(e.Location) {
+		err = t.sendTCPReq2Remote(e)
 	} else {
 		err = t.sendTCPReq2Server(e)
 	}
 	return err
 }
 
-func (t *tCP) proxySend(et *ET, e *NetArg) error {
-	return t.sendTCPReq2Remote(et, e)
+func (t TCP) proxySend(e *comm.NetArg) error {
+	return t.sendTCPReq2Remote(e)
 }
 
 // Type ET子协议的类型
-func (t tCP) Type() int {
-	return EtTCP
+func (t TCP) Type() int {
+	return comm.EtTCP
 }
 
 // Name ET子协议的名字
-func (t tCP) Name() string {
-	return EtNameTCP
+func (t TCP) Name() string {
+	return comm.EtNameTCP
 }
 
-func (t *tCP) sendTCPReq2Remote(et *ET, e *NetArg) error {
-	err := et.connect2Relayer(e.Tunnel)
+func (t *TCP) sendTCPReq2Remote(e *comm.NetArg) error {
+	err := comm.Connect2Remote(e.Tunnel)
 	if err != nil {
 		return err
 	}
-	req := FormatEtType(EtTCP) + " " + e.IP + " " + e.Port
+	req := comm.FormatEtType(comm.EtTCP) + " " + e.IP + " " + e.Port
 	_, err = e.Tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err
@@ -127,7 +125,7 @@ func (t *tCP) sendTCPReq2Remote(et *ET, e *NetArg) error {
 	return err
 }
 
-func (t *tCP) sendTCPReq2Server(e *NetArg) error {
+func (t *TCP) sendTCPReq2Server(e *comm.NetArg) error {
 	if e.IP == "0.0.0.0" || e.IP == "::" {
 		logger.Info("invalid ip: ", e.IP)
 		return errors.New("invalid ip")
@@ -139,7 +137,7 @@ func (t *tCP) sendTCPReq2Server(e *NetArg) error {
 	} else {
 		ipe = "[" + e.IP + "]:" + e.Port // [ipv6]:port
 	}
-	conn, err := net.DialTimeout("tcp", ipe, t.arg.Timeout)
+	conn, err := net.DialTimeout("tcp", ipe, comm.ETArg.Timeout)
 	if err != nil {
 		logger.Warning(err)
 		return err
@@ -147,20 +145,20 @@ func (t *tCP) sendTCPReq2Server(e *NetArg) error {
 	e.Tunnel.Right = conn
 	e.Tunnel.EncryptRight = nil
 	e.Tunnel.DecryptRight = nil
-	e.Tunnel.SpeedLimiter = t.arg.LocalUser.SpeedLimiter()
+	e.Tunnel.SpeedLimiter = comm.ETArg.LocalUser.SpeedLimiter()
 	return nil
 }
 
 // Handle 处理ET-TCP请求
-func (t tCP) Handle(req string, tunnel *mytunnel.Tunnel) error {
+func (t TCP) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 3 {
-		return errors.New("tCP.Handle -> no des ip for tcp req")
+		return errors.New("TCP.Handle -> no des ip for tcp req")
 	}
 	ip := reqs[1]
 	port := reqs[2]
-	e := NetArg{
-		NetConnArg: NetConnArg{
+	e := comm.NetArg{
+		NetConnArg: comm.NetConnArg{
 			IP:   ip,
 			Port: port,
 		},
@@ -177,13 +175,4 @@ func (t tCP) Handle(req string, tunnel *mytunnel.Tunnel) error {
 		return err
 	}
 	return nil
-}
-
-// Match 判断是否匹配
-func (t tCP) Match(req string) bool {
-	args := strings.Split(req, " ")
-	if args[0] == "tCP" {
-		return true
-	}
-	return false
 }

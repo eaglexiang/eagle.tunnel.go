@@ -7,7 +7,7 @@
  * @LastEditTime: 2019-02-21 23:08:25
  */
 
-package et
+package comm
 
 import (
 	"net"
@@ -15,8 +15,8 @@ import (
 	"time"
 
 	mynet "github.com/eaglexiang/go-net"
-	mytunnel "github.com/eaglexiang/go-tunnel"
-	myuser "github.com/eaglexiang/go-user"
+	"github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go-user"
 )
 
 // Arg 启动ET协议需要的的参数集
@@ -30,8 +30,8 @@ type Arg struct {
 
 // UsersArg 用户系统使用的参数集
 type UsersArg struct {
-	LocalUser  *myuser.ValidUser
-	ValidUsers map[string]*myuser.ValidUser
+	LocalUser  *user.ValidUser
+	ValidUsers map[string]*user.ValidUser
 }
 
 // ConnArg 连接相关参数集
@@ -54,7 +54,7 @@ type NetArg struct {
 	TheType      int
 	Location     string // 所在地，用于识别是否使用代理
 	BindDelegate func() // BIND操作会用到的委托
-	Tunnel       *mytunnel.Tunnel
+	Tunnel       *tunnel.Tunnel
 }
 
 // NetConnArg NetArg中关于连接的部分
@@ -64,9 +64,9 @@ type NetConnArg struct {
 	Port   string
 }
 
-// 将net网络操作类型转化为ET网络操作类型
+// NetOPType2ETOPType 将net网络操作类型转化为ET网络操作类型
 // 此函数供sender使用
-func netOPType2ETOPType(netOPType int) int {
+func NetOPType2ETOPType(netOPType int) int {
 	switch netOPType {
 	case mynet.CONNECT:
 		return EtTCP
@@ -77,10 +77,10 @@ func netOPType2ETOPType(netOPType int) int {
 	}
 }
 
-// parseNetArg 将通用的net.Arg转化为ET专用NetArg
-func parseNetArg(e *mynet.Arg) (*NetArg, error) {
+// ParseNetArg 将通用的net.Arg转化为ET专用NetArg
+func ParseNetArg(e *mynet.Arg) (*NetArg, error) {
 	ne := NetArg{
-		TheType: netOPType2ETOPType(e.TheType),
+		TheType: NetOPType2ETOPType(e.TheType),
 		Tunnel:  e.Tunnel,
 	}
 	ipe := strings.Split(e.Host, ":")
@@ -94,3 +94,6 @@ func parseNetArg(e *mynet.Arg) (*NetArg, error) {
 	}
 	return &ne, nil
 }
+
+// ETArg 运行ET协议所需的公共参数集
+var ETArg *Arg

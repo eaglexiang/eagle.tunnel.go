@@ -1,3 +1,5 @@
+#!/bin/bash
+
 source ./scripts/env_build.sh
 
 # 清理旧的临时文件

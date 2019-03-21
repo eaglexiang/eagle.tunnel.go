@@ -15,22 +15,24 @@ import (
 	"strconv"
 
 	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/core"
-	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/cmd"
+	et "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/core"
+	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/core"
 	cipher "github.com/eaglexiang/go-cipher"
 	settings "github.com/eaglexiang/go-settings"
 )
 
 // Check check命令
 func Check(arg string) {
-	theType := myet.ParseEtCheckType(arg)
+	theType := cmd.ParseEtCheckType(arg)
 	switch theType {
-	case myet.EtCheckPING:
+	case cmd.EtCheckPING:
 		ping()
-	case myet.EtCheckAUTH:
+	case cmd.EtCheckAUTH:
 		auth()
-	case myet.EtCheckVERSION:
+	case cmd.EtCheckVERSION:
 		version()
-	case myet.EtCheckUSERS:
+	case cmd.EtCheckUSERS:
 		users()
 	default:
 		fmt.Println("invalid check command")
@@ -40,12 +42,12 @@ func Check(arg string) {
 
 // ping 发送Ping请求并打印结果
 func ping() {
-	et := createET()
+	createET()
 	var time int
 	var success int
 	timeSig := make(chan string)
 	for i := 0; i < 10; i++ {
-		go myet.SendEtCheckPingReq(et, timeSig)
+		go cmd.SendEtCheckPingReq(timeSig)
 	}
 	for i := 0; i < 10; i++ {
 		timeStr := <-timeSig
@@ -63,14 +65,14 @@ func ping() {
 }
 
 func auth() {
-	et := createET()
-	reply := myet.SendEtCheckAuthReq(et)
+	createET()
+	reply := cmd.SendEtCheckAuthReq()
 	fmt.Println(reply)
 }
 
 func version() {
-	et := createET()
-	reply, err := myet.SendEtCheckVersionReq(et)
+	createET()
+	reply, err := cmd.SendEtCheckVersionReq()
 	if err != nil {
 		fmt.Println(reply)
 	} else {
@@ -82,8 +84,8 @@ func users() {
 	fmt.Println("USERS: ")
 	fmt.Println("--- ---")
 
-	et := createET()
-	reply, err := myet.SendEtCheckUsersReq(et)
+	createET()
+	reply, err := cmd.SendEtCheckUsersReq()
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -105,6 +107,6 @@ func createET() *myet.ET {
 	}
 
 	e := etcore.CreateETArg()
-	et := myet.CreateET(e)
+	et := et.NewET(e)
 	return et
 }

@@ -12,6 +12,7 @@ package et
 import (
 	"errors"
 
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mynet "github.com/eaglexiang/go-net"
 	mytunnel "github.com/eaglexiang/go-tunnel"
@@ -20,21 +21,21 @@ import (
 // Send 发送ET请求
 func (et *ET) Send(e *mynet.Arg) error {
 	// 选择Sender
-	newE, err := parseNetArg(e)
+	newE, err := comm.ParseNetArg(e)
 	if err != nil {
 		return err
 	}
-	sender, ok := et.subSenders[newE.TheType]
+	sender, ok := comm.SubSenders[newE.TheType]
 	if !ok {
 		logger.Error("no tcp sender")
 		return errors.New("no tcp sender")
 	}
 	// 进入子协议业务
-	return sender.Send(et, newE)
+	return sender.Send(newE)
 }
 
 func (et *ET) checkVersionOfRelayer(tunnel *mytunnel.Tunnel) error {
-	req := et.arg.Head
+	req := comm.ETArg.Head
 	_, err := tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err
@@ -49,10 +50,10 @@ func (et *ET) checkVersionOfRelayer(tunnel *mytunnel.Tunnel) error {
 }
 
 func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
-	if et.arg.LocalUser.ID == "null" {
+	if comm.ETArg.LocalUser.ID == "null" {
 		return nil // no need to check
 	}
-	user := et.arg.LocalUser.ToString()
+	user := comm.ETArg.LocalUser.ToString()
 	_, err = tunnel.WriteRight([]byte(user))
 	if err != nil {
 		return err
@@ -65,27 +66,6 @@ func (et *ET) checkUserOfLocal(tunnel *mytunnel.Tunnel) (err error) {
 		logger.Error("invalid reply for check local user: ", reply)
 		return errors.New("invalid reply")
 	}
-	tunnel.SpeedLimiter = et.arg.LocalUser.SpeedLimiter()
+	tunnel.SpeedLimiter = comm.ETArg.LocalUser.SpeedLimiter()
 	return nil
-}
-
-// 查询类请求的发射过程都是类似的
-// 连接 - 发送请求 - 得到反馈 - 关闭连接
-// 区别仅仅在请求命令的内容
-func sendQueryReq(et *ET, req string) (string, error) {
-	tunnel := mytunnel.GetTunnel()
-	defer mytunnel.PutTunnel(tunnel)
-	err := et.connect2Relayer(tunnel)
-	if err != nil {
-		return "", err
-	}
-
-	// 发送请求
-	_, err = tunnel.WriteRight([]byte(req))
-	if err != nil {
-		return "", err
-	}
-
-	// 接受回复
-	return tunnel.ReadRightStr()
 }

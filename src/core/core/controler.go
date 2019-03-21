@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	settings "github.com/eaglexiang/go-settings"
 	myuser "github.com/eaglexiang/go-user"
@@ -100,7 +100,7 @@ func readConfigDir() (err error) {
 	}
 	// DNS解析白名单
 	whiteDomainsPath := settings.Get("config-dir") + "/whitelist_domain.txt"
-	myet.WhitelistDomains, _ = readLines(whiteDomainsPath)
+	comm.WhitelistDomains, _ = readLines(whiteDomainsPath)
 	// hosts文件
 	err = execHosts()
 	if err != nil {
@@ -175,7 +175,7 @@ func SetUser(user string) error {
 
 //SetProxyStatus 设置Proxy-Status，enable/smart
 func SetProxyStatus(status string) (err error) {
-	ProxyStatus, err = myet.ParseProxyStatus(status)
+	ProxyStatus, err = comm.ParseProxyStatus(status)
 	if err != nil {
 		logger.Error(err)
 	}
@@ -281,7 +281,7 @@ func handleSingleHost(host string) (err error) {
 	ip := strings.TrimSpace(items[0])
 	domain := strings.TrimSpace(items[1])
 	if domain != "" && ip != "" {
-		myet.HostsCache[domain] = ip
+		comm.HostsCache[domain] = ip
 	} else {
 		panic("invalid hosts line: " + host)
 	}

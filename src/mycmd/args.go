@@ -10,7 +10,7 @@
 package cmd
 
 import (
-	et "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et"
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	settings "github.com/eaglexiang/go-settings"
 
@@ -33,8 +33,8 @@ func ImportArgs(argStrs []string) error {
 		case "--version":
 			PrintVersion(
 				ProgramVersion.Raw,
-				et.ProtocolVersion.Raw,
-				et.ProtocolCompatibleVersion.Raw)
+				comm.ProtocolVersion.Raw,
+				comm.ProtocolCompatibleVersion.Raw)
 			return errors.New("no need to continue")
 		default:
 			err := importArg(argStrs, i)
