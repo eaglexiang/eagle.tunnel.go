@@ -135,7 +135,7 @@ func (relay *Relay) shake(tunnel *mytunnel.Tunnel) (
 	}
 	handler, err = getHandler(buffer, relay.handlers)
 	if err != nil {
-		logger.Warning(err)
+		logger.Warning(err, ": ", buffer.String())
 		return nil, nil, err
 	}
 	return buffer, handler, nil
