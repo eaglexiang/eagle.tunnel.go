@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"path/filepath"
 	"plugin"
 	"strconv"
 	"strings"
@@ -95,12 +96,15 @@ func ExecConfig() (err error) {
 }
 
 func readConfigDir() (err error) {
-	if !settings.Exsit("config-dir") {
+	if !finishConfigDir() {
 		return nil
 	}
 	// DNS解析白名单
 	whiteDomainsPath := settings.Get("config-dir") + "/whitelist_domain.txt"
-	comm.WhitelistDomains, _ = readLines(whiteDomainsPath)
+	comm.WhitelistDomains, err = readLines(whiteDomainsPath)
+	if err != nil {
+		return
+	}
 	// hosts文件
 	err = execHosts()
 	if err != nil {
@@ -109,6 +113,18 @@ func readConfigDir() (err error) {
 	execTimeout()
 	// 导入Mods
 	return execMods()
+}
+
+// finishConfigDir 补全config-dir
+// 返回值表示是否有可用的config-dir
+func finishConfigDir() bool {
+	if !settings.Exsit("config-dir") {
+		if !settings.Exsit("config") {
+			return false
+		}
+		settings.Set("config-dir", filepath.Dir(settings.Get("config")))
+	}
+	return true
 }
 
 func execUserSystem() error {
