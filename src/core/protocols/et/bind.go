@@ -21,18 +21,14 @@ import (
 type bind struct {
 }
 
-// Match 判断是否匹配
-func (b bind) Match(req string) bool {
-	reqs := strings.Split(req, " ")
-	if reqs[0] == "BIND" {
-		return true
-	}
-	return false
-}
-
 // Type 类型
 func (b bind) Type() int {
 	return EtBIND
+}
+
+// Name ET子协议的名字
+func (b bind) Name() string {
+	return EtNameBIND
 }
 
 func (b bind) Send(et *ET, e *NetArg) error {

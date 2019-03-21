@@ -21,11 +21,7 @@ func (et *ET) Send(e *mynet.Arg) error {
 		return errors.New("no tcp sender")
 	}
 	// 进入子协议业务
-	err = sender.Send(et, newE)
-	if err != nil {
-		return err
-	}
-	return nil
+	return sender.Send(et, newE)
 }
 
 func (et *ET) checkVersionOfRelayer(tunnel *mytunnel.Tunnel) error {

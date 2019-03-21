@@ -9,6 +9,8 @@
 package et
 
 import (
+	"errors"
+
 	mynet "github.com/eaglexiang/go-net"
 	version "github.com/eaglexiang/go-version"
 )
@@ -23,25 +25,26 @@ var ProtocolCompatibleVersion, _ = version.CreateVersion("1.3")
 // 必须使用CreateET来构造该结构
 type ET struct {
 	arg         *Arg
-	subHandlers []Handler
-	subSenders  map[int]Sender
+	subHandlers map[string]handler
+	subSenders  map[int]sender
 }
 
 // CreateET 构造ET
 func CreateET(arg *Arg) *ET {
 	et := ET{
-		arg:        arg,
-		subSenders: make(map[int]Sender),
+		arg:         arg,
+		subHandlers: make(map[string]handler),
+		subSenders:  make(map[int]sender),
 	}
-	dns := DNS{arg: arg, dnsResolver: mynet.ResolvIPv4}
-	dns6 := DNS{arg: arg, dnsResolver: mynet.ResolvIPv6}
-	tcp := TCP{
+	dns := dNS{arg: arg, dnsResolver: mynet.ResolvIPv4, dnsType: EtDNS}
+	dns6 := dNS{arg: arg, dnsResolver: mynet.ResolvIPv6, dnsType: EtDNS6}
+	tcp := tCP{
 		arg:  arg,
 		dns:  dns,
 		dns6: dns6,
 	}
-	location := Location{arg: arg}
-	check := Check{arg: arg}
+	location := location{arg: arg}
+	check := check{arg: arg}
 
 	// 添加子协议的handler
 	et.AddSubHandler(tcp)
@@ -59,13 +62,13 @@ func CreateET(arg *Arg) *ET {
 }
 
 // AddSubHandler 添加ET子协议handler
-func (et *ET) AddSubHandler(handler Handler) {
-	et.subHandlers = append(et.subHandlers, handler)
+func (et *ET) AddSubHandler(h handler) {
+	et.subHandlers[h.Name()] = h
 }
 
 // AddSubSender 添加子协议Sender
-func (et *ET) AddSubSender(sender Sender) {
-	et.subSenders[sender.Type()] = sender
+func (et *ET) AddSubSender(s sender) {
+	et.subSenders[s.Type()] = s
 }
 
 // Match 判断请求消息是否匹配该业务
@@ -74,15 +77,12 @@ func (et *ET) Match(firstMsg []byte) bool {
 	return firstMsgStr == et.arg.Head
 }
 
-func getHandler(subReq string, subHandlers []Handler) Handler {
-	var handler Handler
-	for _, h := range subHandlers {
-		if h.Match(subReq) {
-			handler = h
-			break
-		}
+func (et *ET) getHandler(subReq string) (handler, error) {
+	h, ok := et.subHandlers[subReq]
+	if !ok {
+		return nil, errors.New("handler not found")
 	}
-	return handler
+	return h, nil
 }
 
 // Name Sender的名字

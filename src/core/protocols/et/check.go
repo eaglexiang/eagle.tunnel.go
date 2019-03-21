@@ -29,8 +29,8 @@ const (
 	EtCheckUSERS
 )
 
-// Check ET-Check协议的实现
-type Check struct {
+// check ET-Check协议的实现
+type check struct {
 	arg *Arg
 }
 
@@ -67,7 +67,7 @@ func formatEtCheckType(src int) string {
 }
 
 // Handle 处理ET-Check请求
-func (c Check) Handle(req string, tunnel *mytunnel.Tunnel) error {
+func (c check) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
 		return errors.New("Check.Handle -> no value for req")
@@ -88,7 +88,7 @@ func (c Check) Handle(req string, tunnel *mytunnel.Tunnel) error {
 }
 
 // Match 判断是否匹配
-func (c Check) Match(req string) bool {
+func (c check) Match(req string) bool {
 	args := strings.Split(req, " ")
 	if args[0] == "CHECK" {
 		return true
@@ -97,8 +97,13 @@ func (c Check) Match(req string) bool {
 }
 
 // Type ET子协议的类型
-func (c Check) Type() int {
+func (c check) Type() int {
 	return EtCHECK
+}
+
+// Name ET子协议的名字
+func (c check) Name() string {
+	return EtNameCHECK
 }
 
 // SendEtCheckAuthReq 发射 ET-CHECK-AUTH 请求
@@ -183,7 +188,7 @@ func SendEtCheckUsersReq(et *ET) (string, error) {
 	return sendQueryReq(et, req)
 }
 
-func (c Check) handleEtCheckUsersReq(tunnel *mytunnel.Tunnel) {
+func (c check) handleEtCheckUsersReq(tunnel *mytunnel.Tunnel) {
 	var reply string
 	for _, user := range c.arg.ValidUsers {
 		line := user.ID + ": " + user.Count()

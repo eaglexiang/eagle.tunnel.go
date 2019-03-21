@@ -18,19 +18,19 @@ import (
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
-// TCP ET-TCP子协议的实现
-type TCP struct {
+// tCP ET-TCP子协议的实现
+type tCP struct {
 	arg  *Arg
-	dns  DNS
-	dns6 DNS
+	dns  dNS
+	dns6 dNS
 }
 
 // Send 发送请求
-func (t TCP) Send(et *ET, e *NetArg) (err error) {
+func (t tCP) Send(et *ET, e *NetArg) (err error) {
 	// 检查目的地址是否合法
 	if e.IP == "" && e.Domain == "" {
 		// 不存在可供使用的IP或域名
-		return errors.New("TCP.Send -> no des host")
+		return errors.New("tCP.Send -> no des host")
 	}
 
 	if e.IP == "" {
@@ -52,12 +52,12 @@ func (t TCP) Send(et *ET, e *NetArg) (err error) {
 	}
 
 	if err != nil {
-		return errors.New("TCP.Send -> ")
+		return errors.New("tCP.Send -> ")
 	}
 	return nil
 }
 
-func (t TCP) resolvDNS(et *ET, e *NetArg) (err error) {
+func (t tCP) resolvDNS(et *ET, e *NetArg) (err error) {
 	// 调用DNS Sender解析Domain为IP
 	switch t.arg.IPType {
 	case "4":
@@ -76,13 +76,13 @@ func (t TCP) resolvDNS(et *ET, e *NetArg) (err error) {
 		}
 	default:
 		logger.Warning("invalid ip-type: ", t.arg.IPType)
-		err = errors.New("TCP.Send -> invalid ip-type")
+		err = errors.New("tCP.Send -> invalid ip-type")
 	}
 	return err
 }
 
-func (t *TCP) smartSend(et *ET, e *NetArg) (err error) {
-	l := et.subSenders[EtLOCATION].(Location)
+func (t *tCP) smartSend(et *ET, e *NetArg) (err error) {
+	l := et.subSenders[EtLOCATION].(location)
 	err = l.Send(et, e)
 	if err != nil {
 		return err
@@ -95,16 +95,21 @@ func (t *TCP) smartSend(et *ET, e *NetArg) (err error) {
 	return err
 }
 
-func (t *TCP) proxySend(et *ET, e *NetArg) error {
+func (t *tCP) proxySend(et *ET, e *NetArg) error {
 	return t.sendTCPReq2Remote(et, e)
 }
 
 // Type ET子协议的类型
-func (t TCP) Type() int {
+func (t tCP) Type() int {
 	return EtTCP
 }
 
-func (t *TCP) sendTCPReq2Remote(et *ET, e *NetArg) error {
+// Name ET子协议的名字
+func (t tCP) Name() string {
+	return EtNameTCP
+}
+
+func (t *tCP) sendTCPReq2Remote(et *ET, e *NetArg) error {
 	err := et.connect2Relayer(e.Tunnel)
 	if err != nil {
 		return err
@@ -122,7 +127,7 @@ func (t *TCP) sendTCPReq2Remote(et *ET, e *NetArg) error {
 	return err
 }
 
-func (t *TCP) sendTCPReq2Server(e *NetArg) error {
+func (t *tCP) sendTCPReq2Server(e *NetArg) error {
 	if e.IP == "0.0.0.0" || e.IP == "::" {
 		logger.Info("invalid ip: ", e.IP)
 		return errors.New("invalid ip")
@@ -147,10 +152,10 @@ func (t *TCP) sendTCPReq2Server(e *NetArg) error {
 }
 
 // Handle 处理ET-TCP请求
-func (t TCP) Handle(req string, tunnel *mytunnel.Tunnel) error {
+func (t tCP) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 3 {
-		return errors.New("TCP.Handle -> no des ip for tcp req")
+		return errors.New("tCP.Handle -> no des ip for tcp req")
 	}
 	ip := reqs[1]
 	port := reqs[2]
@@ -175,9 +180,9 @@ func (t TCP) Handle(req string, tunnel *mytunnel.Tunnel) error {
 }
 
 // Match 判断是否匹配
-func (t TCP) Match(req string) bool {
+func (t tCP) Match(req string) bool {
 	args := strings.Split(req, " ")
-	if args[0] == "TCP" {
+	if args[0] == "tCP" {
 		return true
 	}
 	return false

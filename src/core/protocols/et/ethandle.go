@@ -25,33 +25,33 @@ func (et *ET) Handle(e *mynet.Arg) (err error) {
 		return err
 	}
 	// 选择子协议handler
-	subReq, handler, err := et.subShake(e.Tunnel)
+	subReq, h, err := et.subShake(e.Tunnel)
 	if err != nil {
 		return err
 	}
 	// 进入子协议业务
-	err = handler.Handle(subReq, e.Tunnel)
+	err = h.Handle(subReq, e.Tunnel)
 	if err != nil {
 		return err
 	}
 	// 只有TCP子协议需要继续运行
-	if reflect.TypeOf(handler) != reflect.TypeOf(TCP{}) {
+	if reflect.TypeOf(h) != reflect.TypeOf(tCP{}) {
 		return errors.New("no need to continue")
 	}
 	return nil
 }
 
 func (et *ET) subShake(tunnel *mytunnel.Tunnel) (subReq string,
-	handler Handler, err error) {
+	h handler, err error) {
 	subReq, err = tunnel.ReadLeftStr()
 	if err != nil {
 		return "", nil, err
 	}
-	handler = getHandler(subReq, et.subHandlers)
-	if handler == nil {
-		logger.Warning("invalid req: ", subReq)
+	h, err = et.getHandler(subReq)
+	if err != nil {
+		logger.Warning(err)
 	}
-	return subReq, handler, nil
+	return subReq, h, err
 }
 
 func createCipher(tunnel *mytunnel.Tunnel) {
