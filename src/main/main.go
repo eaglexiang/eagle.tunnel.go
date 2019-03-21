@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-16 15:14:41
+ * @LastEditTime: 2019-03-21 19:47:50
  */
 
 package main
@@ -13,9 +13,9 @@ import (
 	"os"
 	"os/signal"
 
+	mycmd "github.com/eaglexiang/eagle.tunnel.go/src/cmd"
 	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/core"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-	mycmd "github.com/eaglexiang/eagle.tunnel.go/src/mycmd"
 	settings "github.com/eaglexiang/go-settings"
 )
 
