@@ -126,23 +126,23 @@ func finishConfigDir() bool {
 	return true
 }
 
-func execUserSystem() error {
+func execUserSystem() (err error) {
 	// 读取用户列表
 	if settings.Get("user-check") == "on" {
 		usersPath := settings.Get("config-dir") + "/users.list"
-		err := importUsers(usersPath)
+		err = importUsers(usersPath)
 		if err != nil {
-			return err
+			return
 		}
 	}
 
 	// 读取本地用户
-	err := SetUser(settings.Get("user"))
-	if err != nil {
-		return err
+	if !settings.Exsit("user") {
+		SetUser("null:null")
+	} else {
+		err = SetUser(settings.Get("user"))
 	}
-
-	return nil
+	return err
 }
 
 func execTimeout() error {
@@ -179,13 +179,9 @@ func execMods() (err error) {
 }
 
 //SetUser 设置本地用户
-func SetUser(user string) error {
-	localUser, err := myuser.ParseValidUser(user)
-	if err != nil {
-		return err
-	}
-	LocalUser = localUser
-	return err
+func SetUser(user string) (err error) {
+	LocalUser, err = myuser.ParseValidUser(user)
+	return
 }
 
 //SetProxyStatus 设置Proxy-Status，enable/smart
