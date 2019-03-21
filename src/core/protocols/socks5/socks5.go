@@ -127,11 +127,7 @@ func (conn *Socks5) Handle(e *mynet.Arg) (err error) {
 	if err != nil {
 		return err
 	}
-	err = cmd.Handle(req.Cut(), e)
-	if err != nil {
-		return err
-	}
-	return nil
+	return cmd.Handle(req.Cut(), e)
 }
 
 func getHost(request []byte) (host string, err error) {
