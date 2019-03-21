@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 20:11:16
+ * @LastEditTime: 2019-03-21 19:18:31
  */
 
 package cmd
@@ -55,7 +55,7 @@ func toLongArg(shortArg string) string {
 	case "-l":
 		return "--listen"
 	case "-r":
-		return "--relayer"
+		return "--relay"
 	case "-s":
 		return "--proxy-status"
 	case "-u":
@@ -83,7 +83,8 @@ func importArg(argStrs []string, indexOfArg int) (err error) {
 	}
 	indexOfValue := indexOfArg + 1
 	if indexOfValue == len(argStrs) {
-		return err
+		logger.Error("no value for key: ", key)
+		return errors.New("no value for key")
 	}
 	value := argStrs[indexOfValue]
 	settings.Set(key, value)
