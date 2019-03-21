@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 16:31:56
+ * @LastEditTime: 2019-03-19 20:48:32
  */
 
 package core
@@ -39,7 +39,6 @@ func (relay *Relay) SetSender(sender Sender) {
 // Handle 处理请求连接
 func (relay *Relay) Handle(conn net.Conn) {
 	tunnel := mytunnel.GetTunnel()
-	defer mytunnel.PutTunnel(tunnel)
 	tunnel.Left = conn
 	tunnel.Timeout = Timeout
 	firstMsg, handler, err := relay.shake(tunnel)
@@ -67,6 +66,7 @@ func (relay *Relay) handleReqs(handler Handler,
 	if need2Continue {
 		tunnel.Flow()
 	}
+	mytunnel.PutTunnel(tunnel)
 }
 
 // 使用sender业务向远端发起请求
