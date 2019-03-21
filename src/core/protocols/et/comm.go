@@ -39,6 +39,13 @@ const (
 	ErrorProxyStatus
 )
 
+// 代理状态对应的文本
+const (
+	ProxyEnableText      = "ENABLE"
+	ProxySmartText       = "SMART"
+	ErrorProxyStatusText = "ERROR"
+)
+
 // handler ET子协议的handler接口
 type handler interface {
 	Handle(req string, tunnel *mytunnel.Tunnel) error // 处理业务
@@ -59,6 +66,12 @@ var EtTypes map[string]int
 // EtNames ET子协议的名字
 var EtNames map[int]string
 
+// EtProxyStatus ET代理状态
+var EtProxyStatus map[string]int
+
+// EtProxyStatusText ET代理状态对应的文本
+var EtProxyStatusText map[int]string
+
 func init() {
 	EtTypes = make(map[string]int)
 	EtTypes[EtNameTCP] = EtTCP
@@ -75,6 +88,14 @@ func init() {
 	EtNames[EtLOCATION] = EtNameLOCATION
 	EtNames[EtCHECK] = EtNameCHECK
 	EtNames[EtBIND] = EtNameBIND
+
+	EtProxyStatus = make(map[string]int)
+	EtProxyStatus[ProxyEnableText] = ProxyENABLE
+	EtProxyStatus[ProxySmartText] = ProxySMART
+
+	EtProxyStatusText = make(map[int]string)
+	EtProxyStatusText[ProxyENABLE] = ProxyEnableText
+	EtProxyStatusText[ProxySMART] = ProxySmartText
 }
 
 // connect2Relayer 连接到下一个Relayer，完成版本校验和用户校验两个步骤
@@ -100,29 +121,21 @@ func (et *ET) connect2Relayer(tunnel *mytunnel.Tunnel) error {
 
 // ParseProxyStatus 识别ProxyStatus
 func ParseProxyStatus(status string) (int, error) {
-	status = strings.ToLower(status)
-	switch status {
-	case "smart":
-		return ProxySMART, nil
-	case "enable":
-		return ProxyENABLE, nil
-	default:
-		return 0, errors.New("invalid proxy status: " + status)
+	status = strings.ToUpper(status)
+	s, ok := EtProxyStatus[status]
+	if !ok {
+		return ErrorProxyStatus, errors.New(ErrorProxyStatusText)
 	}
+	return s, nil
 }
 
 // FormatProxyStatus 格式化ProxyStatus
 func FormatProxyStatus(status int) string {
-	switch status {
-	case ErrorProxyStatus:
-		return "ERROR"
-	case ProxyENABLE:
-		return "ENABLE"
-	case ProxySMART:
-		return "SMART"
-	default:
-		return "UNKNOWN"
+	s, ok := EtProxyStatusText[status]
+	if !ok {
+		return ErrorProxyStatusText
 	}
+	return s
 }
 
 // ParseEtType 得到字符串对应的ET请求类型
