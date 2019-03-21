@@ -79,11 +79,6 @@ func ExecConfig() (err error) {
 		return err
 	}
 
-	err = execUserSystem()
-	if err != nil {
-		return err
-	}
-
 	settings.Set("listen", SetIPE(settings.Get("listen")))
 	settings.Set("relay", SetIPE(settings.Get("relay")))
 
@@ -98,6 +93,10 @@ func ExecConfig() (err error) {
 func readConfigDir() (err error) {
 	if !finishConfigDir() {
 		return nil
+	}
+	err = execUserSystem()
+	if err != nil {
+		return err
 	}
 	// DNS解析白名单
 	whiteDomainsPath := settings.Get("config-dir") + "/whitelist_domain.txt"
