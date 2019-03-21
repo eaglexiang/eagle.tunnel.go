@@ -80,7 +80,9 @@ func init() {
 	EtTypes[EtNameLOCATION] = EtLOCATION
 	EtTypes[EtNameCHECK] = EtCHECK
 	EtTypes[EtNameBIND] = EtBIND
+}
 
+func init() {
 	EtNames = make(map[int]string)
 	EtNames[EtTCP] = EtNameTCP
 	EtNames[EtDNS] = EtNameDNS
@@ -88,7 +90,9 @@ func init() {
 	EtNames[EtLOCATION] = EtNameLOCATION
 	EtNames[EtCHECK] = EtNameCHECK
 	EtNames[EtBIND] = EtNameBIND
+}
 
+func init() {
 	EtProxyStatus = make(map[string]int)
 	EtProxyStatus[ProxyEnableText] = ProxyENABLE
 	EtProxyStatus[ProxySmartText] = ProxySMART

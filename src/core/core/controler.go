@@ -13,7 +13,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"path/filepath"
 	"plugin"
 	"strconv"
 	"strings"
@@ -56,11 +55,12 @@ func init() {
 }
 
 // readConfig 读取根据给定的配置文件
-func readConfig(filePath string) error {
-	ConfigPath = filePath
-	settings.SetDefault("config-dir", filepath.Dir(ConfigPath))
-	// 读取配置文件
-	allConfLines, err := readLines(ConfigPath)
+func readConfig() error {
+	if !settings.Exsit("config") {
+		return nil
+	}
+	filePath := settings.Get("config")
+	allConfLines, err := readLines(filePath)
 	if err != nil {
 		return err
 	}
@@ -73,10 +73,7 @@ func readConfig(filePath string) error {
 
 // ExecConfig 执行配置
 func ExecConfig() (err error) {
-	// 读取配置文件
-	if settings.Exsit("config") {
-		err = readConfig(settings.Get("config"))
-	}
+	err = readConfig()
 	if err != nil {
 		return err
 	}
@@ -86,14 +83,18 @@ func ExecConfig() (err error) {
 		return err
 	}
 
-	SetListen(settings.Get("listen"))
-	SetRelayer(settings.Get("relay"))
+	settings.Set("listen", SetIPE(settings.Get("listen")))
+	settings.Set("relay", SetIPE(settings.Get("relay")))
 
 	err = SetProxyStatus(settings.Get("proxy-status"))
 	if err != nil {
 		return err
 	}
 
+	return readConfigDir()
+}
+
+func readConfigDir() (err error) {
 	if !settings.Exsit("config-dir") {
 		return nil
 	}
@@ -103,15 +104,11 @@ func ExecConfig() (err error) {
 	// hosts文件
 	err = execHosts()
 	if err != nil {
-		return err
+		return
 	}
 	execTimeout()
 	// 导入Mods
-	err = execMods()
-	if err != nil {
-		return err
-	}
-	return nil
+	return execMods()
 }
 
 func execUserSystem() error {
@@ -181,10 +178,8 @@ func SetProxyStatus(status string) (err error) {
 	ProxyStatus, err = myet.ParseProxyStatus(status)
 	if err != nil {
 		logger.Error(err)
-		return
 	}
-	settings.Set("proxy-status", status)
-	return nil
+	return
 }
 
 func readLines(filePath string) ([]string, error) {
@@ -226,8 +221,8 @@ func importUsers(usersPath string) error {
 	return err
 }
 
-// SetRelayer 设置relayer地址
-func SetRelayer(remoteIpe string) {
+// SetIPE 补全端口号
+func SetIPE(remoteIpe string) string {
 	if strings.HasPrefix(remoteIpe, "[") {
 		// IPv6
 		if strings.HasSuffix(remoteIpe, "]") {
@@ -241,25 +236,7 @@ func SetRelayer(remoteIpe string) {
 			remoteIpe += ":8080"
 		}
 	}
-	settings.Set("relay", remoteIpe)
-}
-
-// SetListen 设定本地监听地址
-func SetListen(localIpe string) {
-	if strings.HasPrefix(localIpe, "[") {
-		// IPv6
-		if strings.HasSuffix(localIpe, "]") {
-			// 不包含端口号
-			localIpe += ":8080"
-		}
-	} else {
-		ip := net.ParseIP(localIpe)
-		if ip != nil {
-			// 不包含端口号
-			localIpe += ":8080"
-		}
-	}
-	settings.Set("listen", localIpe)
+	return remoteIpe
 }
 
 func readHosts(hostsDir string) error {
