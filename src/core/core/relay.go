@@ -11,7 +11,6 @@ package core
 import (
 	"errors"
 	"net"
-	"reflect"
 
 	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	"github.com/eaglexiang/go-bytebuffer"
@@ -58,7 +57,7 @@ func (relay *Relay) handleReqs(handler Handler,
 	e *mynet.Arg) {
 	// 判断是否是sender业务
 	var need2Continue bool
-	if reflect.TypeOf(relay.sender) == reflect.TypeOf(handler) {
+	if relay.sender.Name() == handler.Name() {
 		need2Continue = relay.handleSenderReqs(handler, e)
 	} else {
 		need2Continue = relay.handleOtherReqs(handler, tunnel, e)
@@ -135,7 +134,8 @@ func (relay *Relay) shake(tunnel *mytunnel.Tunnel) (
 	}
 	handler, err = getHandler(buffer, relay.handlers)
 	if err != nil {
-		logger.Info(err, ": ", buffer.String())
+		bytebuffer.PutKBBuffer(buffer)
+		logger.Warning(err, ": ", buffer.String())
 		return nil, nil, err
 	}
 	return buffer, handler, nil
