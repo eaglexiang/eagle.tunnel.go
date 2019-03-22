@@ -36,6 +36,7 @@ var Timeout time.Duration
 
 func init() {
 	settings.Bind("relayer", "relay")
+	settings.Bind("channel", "data-key")
 	// 设定参数默认值
 	settings.SetDefault("timeout", "0")
 	settings.SetDefault("location", "1;CN;CHN;China")

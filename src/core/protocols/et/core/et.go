@@ -48,7 +48,6 @@ func NewET(arg *comm.Arg) *ET {
 	comm.AddSubSender(location)
 
 	comm.Connect2Remote = et.connect2Relayer
-	comm.SendQueryReq = et.sendQueryReq
 
 	return &et
 }
@@ -83,22 +82,4 @@ func (et *ET) connect2Relayer(tunnel *mytunnel.Tunnel) error {
 	tunnel.EncryptRight = c.Encrypt
 	tunnel.DecryptRight = c.Decrypt
 	return et.checkLocalUser(tunnel)
-}
-
-func (et *ET) sendQueryReq(req string) (string, error) {
-	tunnel := mytunnel.GetTunnel()
-	defer mytunnel.PutTunnel(tunnel)
-	err := et.connect2Relayer(tunnel)
-	if err != nil {
-		return "", err
-	}
-
-	// 发送请求
-	_, err = tunnel.WriteRight([]byte(req))
-	if err != nil {
-		return "", err
-	}
-
-	// 接受回复
-	return tunnel.ReadRightStr()
 }

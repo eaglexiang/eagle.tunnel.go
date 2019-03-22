@@ -11,4 +11,20 @@ var Connect2Remote func(tunnel *tunnel.Tunnel) error
 // 查询类请求的发射过程都是类似的
 // 连接 - 发送请求 - 得到反馈 - 关闭连接
 // 区别仅仅在请求命令的内容
-var SendQueryReq func(req string) (string, error)
+func SendQueryReq(req string) (reply string, err error) {
+	t := tunnel.GetTunnel()
+	defer tunnel.PutTunnel(t)
+	err = Connect2Remote(t)
+	if err != nil {
+		return
+	}
+
+	// 发送请求
+	_, err = t.WriteRight([]byte(req))
+	if err != nil {
+		return "", err
+	}
+
+	// 接受回复
+	return t.ReadRightStr()
+}

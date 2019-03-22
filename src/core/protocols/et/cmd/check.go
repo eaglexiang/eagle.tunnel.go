@@ -20,7 +20,7 @@ import (
 	version "github.com/eaglexiang/go-version"
 )
 
-// EtASK请求的类型
+// Et-CHECK请求的类型
 const (
 	EtCheckUNKNOWN = iota
 	EtCheckAUTH
@@ -102,7 +102,7 @@ func SendEtCheckAuthReq() string {
 		return "no local user"
 	}
 
-	// 当connect2Relayer成功，则说明鉴权成功
+	// 当connect2Remote成功，则说明鉴权成功
 	tunnel := mytunnel.GetTunnel()
 	defer mytunnel.PutTunnel(tunnel)
 	err := comm.Connect2Remote(tunnel)
