@@ -26,6 +26,8 @@ const (
 	HTTPERROR
 )
 
+const re443 = "HTTP/1.1 200 Connection Established\r\n\r\n"
+
 // HTTPProxy HTTP代理
 type HTTPProxy struct {
 }
@@ -77,7 +79,6 @@ func (conn *HTTPProxy) Handle(e *mynet.Arg) error {
 }
 
 func (conn *HTTPProxy) handleConnect(e *mynet.Arg) {
-	re443 := "HTTP/1.1 200 Connection Established\r\n\r\n"
 	e.Delegates = append(e.Delegates, func() bool {
 		_, err := e.Tunnel.WriteLeft([]byte(re443))
 		return err == nil
