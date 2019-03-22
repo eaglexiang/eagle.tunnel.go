@@ -133,10 +133,11 @@ func (et *ET) _checkUserOfReq(user2Check *myuser.ReqUser) (limiter ratelimit.Lim
 func parseReqUser(userStr, ip string) (*myuser.ReqUser, error) {
 	user2Check, err := myuser.ParseReqUser(userStr, ip)
 	if err != nil {
+		logger.Warning("invalid user text: ", userStr)
 		return nil, err
 	}
 	if user2Check.ID == "null" {
-		return nil, errors.New("invalid user")
+		return nil, errors.New("invalid null req user")
 	}
 	return user2Check, nil
 }
