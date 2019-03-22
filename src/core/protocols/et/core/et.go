@@ -65,7 +65,7 @@ func (et *ET) Name() string {
 
 // connect2Relay 连接到下一个Relay，完成版本校验和用户校验两个步骤
 func (et *ET) connect2Relay(tunnel *mytunnel.Tunnel) error {
-	conn, err := net.DialTimeout("tcp", comm.ETArg.RemoteIPE, comm.ETArg.Timeout)
+	conn, err := net.DialTimeout("tcp", comm.ETArg.RemoteIPE, comm.Timeout)
 	if err != nil {
 		logger.Warning(err)
 		return err

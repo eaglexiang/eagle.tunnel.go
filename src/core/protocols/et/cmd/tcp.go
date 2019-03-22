@@ -137,7 +137,7 @@ func (t *TCP) sendTCPReq2Server(e *comm.NetArg) error {
 	} else {
 		ipe = "[" + e.IP + "]:" + e.Port // [ipv6]:port
 	}
-	conn, err := net.DialTimeout("tcp", ipe, comm.ETArg.Timeout)
+	conn, err := net.DialTimeout("tcp", ipe, comm.Timeout)
 	if err != nil {
 		logger.Warning(err)
 		return err

@@ -38,7 +38,7 @@ func init() {
 	settings.Bind("relayer", "relay")
 	settings.Bind("channel", "data-key")
 	// 设定参数默认值
-	settings.SetDefault("timeout", "0")
+	settings.SetDefault("timeout", "30")
 	settings.SetDefault("location", "1;CN;CHN;China")
 	settings.SetDefault("ip-type", "46")
 	settings.SetDefault("data-key", "34")
@@ -164,7 +164,7 @@ func execTimeout() error {
 		logger.Error("invalid timeout", _timeout)
 		return err
 	}
-	Timeout = time.Second * time.Duration(timeout)
+	comm.Timeout = time.Second * time.Duration(timeout)
 	return nil
 }
 
@@ -360,7 +360,6 @@ func CreateETArg() *comm.Arg {
 	}
 	connArg := comm.ConnArg{
 		RemoteIPE: settings.Get("relay"),
-		Timeout:   Timeout,
 		Head:      settings.Get("head"),
 	}
 	smartArg := comm.SmartArg{

@@ -14,6 +14,7 @@ var Connect2Remote func(tunnel *tunnel.Tunnel) error
 func SendQueryReq(req string) (reply string, err error) {
 	t := tunnel.GetTunnel()
 	defer tunnel.PutTunnel(t)
+	t.Timeout = Timeout
 	err = Connect2Remote(t)
 	if err != nil {
 		return

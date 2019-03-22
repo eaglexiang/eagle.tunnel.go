@@ -3,6 +3,7 @@ package comm
 import (
 	"errors"
 	"strings"
+	"time"
 )
 
 // ET子协议的类型
@@ -58,6 +59,9 @@ var HostsCache = make(map[string]string)
 
 // WhitelistDomains 需要被智能解析的DNS域名列表
 var WhitelistDomains []string
+
+// Timeout 超时长度
+var Timeout time.Duration
 
 func init() {
 	EtTypes = make(map[string]int)

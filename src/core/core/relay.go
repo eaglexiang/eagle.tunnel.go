@@ -39,7 +39,6 @@ func (relay *Relay) SetSender(sender Sender) {
 func (relay *Relay) Handle(conn net.Conn) {
 	tunnel := mytunnel.GetTunnel()
 	tunnel.Left = conn
-	tunnel.Timeout = Timeout
 	firstMsg, handler, err := relay.shake(tunnel)
 	defer bytebuffer.PutKBBuffer(firstMsg)
 	if err != nil {

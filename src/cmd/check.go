@@ -74,7 +74,7 @@ func version() {
 	createET()
 	reply, err := cmd.SendEtCheckVersionReq()
 	if err != nil {
-		fmt.Println(reply)
+		fmt.Println(err)
 	} else {
 		fmt.Println(reply)
 	}

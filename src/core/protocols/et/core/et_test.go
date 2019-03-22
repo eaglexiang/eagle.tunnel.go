@@ -22,7 +22,6 @@ func createETArg() *comm.Arg {
 	}
 	connArg := comm.ConnArg{
 		RemoteIPE: settings.Get("relay"),
-		Timeout:   0,
 		Head:      "testHead",
 	}
 	smartArg := comm.SmartArg{

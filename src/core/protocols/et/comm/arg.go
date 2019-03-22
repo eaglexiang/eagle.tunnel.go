@@ -12,7 +12,6 @@ package comm
 import (
 	"net"
 	"strings"
-	"time"
 
 	mynet "github.com/eaglexiang/go-net"
 	"github.com/eaglexiang/go-tunnel"
@@ -37,7 +36,6 @@ type UsersArg struct {
 // ConnArg 连接相关参数集
 type ConnArg struct {
 	RemoteIPE string // IP:Port
-	Timeout   time.Duration
 	Head      string // 协议头
 }
 
