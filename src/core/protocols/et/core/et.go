@@ -32,7 +32,7 @@ func NewET(arg *comm.Arg) *ET {
 	dns6 := cmd.DNS{DNSResolver: mynet.ResolvIPv6, DNSType: comm.EtDNS6}
 	tcp := cmd.TCP{}
 	location := cmd.Location{}
-	check := cmd.Check{}
+	check := cmd.NewCheck()
 
 	// 添加子协议的handler
 	comm.AddSubHandler(tcp)
@@ -47,7 +47,7 @@ func NewET(arg *comm.Arg) *ET {
 	comm.AddSubSender(dns6)
 	comm.AddSubSender(location)
 
-	comm.Connect2Remote = et.connect2Relayer
+	comm.Connect2Remote = et.connect2Relay
 
 	return &et
 }
@@ -63,8 +63,8 @@ func (et *ET) Name() string {
 	return "ET"
 }
 
-// connect2Relayer 连接到下一个Relayer，完成版本校验和用户校验两个步骤
-func (et *ET) connect2Relayer(tunnel *mytunnel.Tunnel) error {
+// connect2Relay 连接到下一个Relay，完成版本校验和用户校验两个步骤
+func (et *ET) connect2Relay(tunnel *mytunnel.Tunnel) error {
 	conn, err := net.DialTimeout("tcp", comm.ETArg.RemoteIPE, comm.ETArg.Timeout)
 	if err != nil {
 		logger.Warning(err)

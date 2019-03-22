@@ -16,6 +16,7 @@ import (
 
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	"github.com/eaglexiang/go-tunnel"
 	mytunnel "github.com/eaglexiang/go-tunnel"
 	version "github.com/eaglexiang/go-version"
 )
@@ -29,58 +30,79 @@ const (
 	EtCheckUSERS
 )
 
+// ET-CHECK请求类型的文本
+const (
+	EtCheckUnknownTEXT = "UNKNOWN"
+	EtCheckAuthTEXT    = "AUTH"
+	EtCheckPingTEXT    = "PING"
+	EtCheckVersionTEXT = "VERSION"
+	EtCheckUsersTEXT   = "USERS"
+)
+
+// ETCheckTypes ET-CHECK的类型
+var ETCheckTypes map[string]int
+
+// ETCheckTypeTexts ET-CHECK类型的文本
+var ETCheckTypeTexts map[int]string
+
+func init() {
+	ETCheckTypes = make(map[string]int)
+	ETCheckTypes[EtCheckAuthTEXT] = EtCheckAUTH
+	ETCheckTypes[EtCheckPingTEXT] = EtCheckPING
+	ETCheckTypes[EtCheckVersionTEXT] = EtCheckVERSION
+	ETCheckTypes[EtCheckUsersTEXT] = EtCheckUSERS
+
+	ETCheckTypeTexts = make(map[int]string)
+	ETCheckTypeTexts[EtCheckAUTH] = EtCheckAuthTEXT
+	ETCheckTypeTexts[EtCheckPING] = EtCheckPingTEXT
+	ETCheckTypeTexts[EtCheckVERSION] = EtCheckVersionTEXT
+	ETCheckTypeTexts[EtCheckUSERS] = EtCheckUsersTEXT
+}
+
 // Check Check子协议
-type Check struct{}
+// 必须使用NewCheck进行初始化
+type Check struct {
+	handlers map[int]func(reqs []string, t *tunnel.Tunnel)
+}
+
+// NewCheck 初始化Check
+func NewCheck() Check {
+	handlers := make(map[int]func([]string, *tunnel.Tunnel))
+	handlers[EtCheckPING] = handleEtCheckPingReq
+	handlers[EtCheckVERSION] = handleEtCheckVersionReq
+	handlers[EtCheckUSERS] = handleEtCheckUsersReq
+	return Check{handlers: handlers}
+}
 
 // ParseEtCheckType 将字符串转换为EtCHECK请求的类型
 func ParseEtCheckType(src string) int {
-	switch src {
-	case "AUTH", "auth":
-		return EtCheckAUTH
-	case "PING", "ping":
-		return EtCheckPING
-	case "VERSION", "version":
-		return EtCheckVERSION
-	case "USERS", "users":
-		return EtCheckUSERS
-	default:
-		return EtCheckUNKNOWN
+	src = strings.ToUpper(src)
+	if v, ok := ETCheckTypes[src]; ok {
+		return v
 	}
+	return EtCheckUNKNOWN
 }
 
 // formatEtCheckType 得到EtCHECK请求类型对应的字符串
 func formatEtCheckType(src int) string {
-	switch src {
-	case EtCheckAUTH:
-		return "AUTH"
-	case EtCheckPING:
-		return "PING"
-	case EtCheckVERSION:
-		return "VERSION"
-	case EtCheckUSERS:
-		return "USERS"
-	default:
-		return "UNKNOWN"
+	if t, ok := ETCheckTypeTexts[src]; ok {
+		return t
 	}
+	return EtCheckUnknownTEXT
 }
 
 // Handle 处理ET-Check请求
-func (c Check) Handle(req string, tunnel *mytunnel.Tunnel) error {
+func (c Check) Handle(req string, t *tunnel.Tunnel) error {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
-		return errors.New("Check.Handle -> no value for req")
+		return errors.New("no value for et-check req")
 	}
 	theType := ParseEtCheckType(reqs[1])
-	switch theType {
-	case EtCheckPING:
-		handleEtCheckPingReq(tunnel)
-	case EtCheckVERSION:
-		handleEtCheckVersionReq(tunnel, reqs)
-	case EtCheckUSERS:
-		c.handleEtCheckUsersReq(tunnel)
-	default:
-		logger.Warning("invalid et Check type: ", reqs[1])
-		return errors.New("Check.Handle -> invalid Check type")
+	if h, ok := c.handlers[theType]; ok {
+		h(reqs, t)
+	} else {
+		logger.Warning("et check type not found:", reqs[1])
+		return errors.New("et check type not found")
 	}
 	return nil
 }
@@ -103,9 +125,9 @@ func SendEtCheckAuthReq() string {
 	}
 
 	// 当connect2Remote成功，则说明鉴权成功
-	tunnel := mytunnel.GetTunnel()
-	defer mytunnel.PutTunnel(tunnel)
-	err := comm.Connect2Remote(tunnel)
+	t := tunnel.GetTunnel()
+	defer tunnel.PutTunnel(t)
+	err := comm.Connect2Remote(t)
 	if err != nil {
 		return err.Error()
 	}
@@ -144,30 +166,30 @@ func SendEtCheckPingReq(sig chan string) {
 	return
 }
 
-func handleEtCheckPingReq(tunnel *mytunnel.Tunnel) {
+func handleEtCheckPingReq(reqs []string, t *mytunnel.Tunnel) {
 	reply := "ok"
-	tunnel.WriteLeft([]byte(reply))
+	t.WriteLeft([]byte(reply))
 }
 
-func handleEtCheckVersionReq(tunnel *mytunnel.Tunnel, reqs []string) {
+func handleEtCheckVersionReq(reqs []string, t *tunnel.Tunnel) {
 	if len(reqs) < 3 {
 		reply := "no protocol version value"
-		tunnel.WriteLeft([]byte(reply))
+		t.WriteLeft([]byte(reply))
 		return
 	}
 	versionOfReq, err := version.CreateVersion(reqs[2])
 	if err != nil {
 		reply := err.Error()
-		tunnel.WriteLeft([]byte(reply))
+		t.WriteLeft([]byte(reply))
 		return
 	}
 	if versionOfReq.IsLessThan(comm.ProtocolCompatibleVersion) {
 		reply := "the version of protocol may be incompatible"
-		tunnel.WriteLeft([]byte(reply))
+		t.WriteLeft([]byte(reply))
 		return
 	}
 	reply := "Protocol Version OK"
-	tunnel.WriteLeft([]byte(reply))
+	t.WriteLeft([]byte(reply))
 }
 
 // SendEtCheckUsersReq 发射 ET-CHECK-USERS 请求
@@ -177,7 +199,7 @@ func SendEtCheckUsersReq() (string, error) {
 	return comm.SendQueryReq(req)
 }
 
-func (c Check) handleEtCheckUsersReq(tunnel *mytunnel.Tunnel) {
+func handleEtCheckUsersReq(reqs []string, tunnel *mytunnel.Tunnel) {
 	var reply string
 	for _, user := range comm.ETArg.ValidUsers {
 		line := user.ID + ": " + user.Count()
