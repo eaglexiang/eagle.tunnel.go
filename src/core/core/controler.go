@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 16:39:08
+ * @LastEditTime: 2019-03-21 19:18:10
  */
 
 package core
@@ -76,7 +76,7 @@ func readConfig() error {
 func ExecConfig() (err error) {
 	err = readConfig()
 	if err != nil {
-		return err
+		return
 	}
 
 	settings.Set("listen", SetIPE(settings.Get("listen")))
@@ -84,7 +84,12 @@ func ExecConfig() (err error) {
 
 	err = SetProxyStatus(settings.Get("proxy-status"))
 	if err != nil {
-		return err
+		return
+	}
+
+	err = initLocalUser()
+	if err != nil {
+		return
 	}
 
 	return readConfigDir()
@@ -94,7 +99,7 @@ func readConfigDir() (err error) {
 	if !finishConfigDir() {
 		return nil
 	}
-	err = execUserSystem()
+	err = initUserList()
 	if err != nil {
 		return err
 	}
@@ -126,8 +131,8 @@ func finishConfigDir() bool {
 	return true
 }
 
-func execUserSystem() (err error) {
-	// 读取用户列表
+// initUserList 初始化用户列表
+func initUserList() (err error) {
 	if settings.Get("user-check") == "on" {
 		usersPath := settings.Get("config-dir") + "/users.list"
 		err = importUsers(usersPath)
@@ -135,14 +140,17 @@ func execUserSystem() (err error) {
 			return
 		}
 	}
+	return err
+}
 
+func initLocalUser() (err error) {
 	// 读取本地用户
 	if !settings.Exsit("user") {
 		SetUser("null:null")
 	} else {
 		err = SetUser(settings.Get("user"))
 	}
-	return err
+	return
 }
 
 func execTimeout() error {
