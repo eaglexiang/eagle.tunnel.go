@@ -66,7 +66,7 @@ func (conn *HTTPProxy) Handle(e *mynet.Arg) error {
 	e.Host = host + ":" + port
 	switch reqType {
 	case HTTPCONNECT:
-		err = conn.handleConnect(e)
+		conn.handleConnect(e)
 	case HTTPOTHERS:
 		conn.handleOthers(e, reqStr)
 	default:
@@ -76,20 +76,19 @@ func (conn *HTTPProxy) Handle(e *mynet.Arg) error {
 	return err
 }
 
-func (conn *HTTPProxy) handleConnect(e *mynet.Arg) (err error) {
+func (conn *HTTPProxy) handleConnect(e *mynet.Arg) {
 	re443 := "HTTP/1.1 200 Connection Established\r\n\r\n"
-	_, err = e.Tunnel.WriteLeft([]byte(re443))
-	return
+	e.Delegates = append(e.Delegates, func() bool {
+		_, err := e.Tunnel.WriteLeft([]byte(re443))
+		return err == nil
+	})
 }
 
 func (conn *HTTPProxy) handleOthers(e *mynet.Arg, reqStr string) {
 	e.Delegates = append(e.Delegates, func() bool {
 		newReq := createNewRequest(reqStr)
 		_, err := e.Tunnel.WriteRight([]byte(newReq))
-		if err != nil {
-			return false
-		}
-		return true
+		return err == nil
 	})
 }
 
