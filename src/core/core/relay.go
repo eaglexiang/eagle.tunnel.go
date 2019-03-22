@@ -41,10 +41,11 @@ func (relay *Relay) Handle(conn net.Conn) {
 	tunnel.Left = conn
 	tunnel.Timeout = Timeout
 	firstMsg, handler, err := relay.shake(tunnel)
+	defer bytebuffer.PutKBBuffer(firstMsg)
 	if err != nil {
 		return
 	}
-	defer bytebuffer.PutKBBuffer(firstMsg)
+
 	e := &mynet.Arg{
 		Msg:    firstMsg.Data(),
 		Tunnel: tunnel,
@@ -125,18 +126,16 @@ func getHandler(firstMsg *bytebuffer.ByteBuffer, handlers []Handler) (Handler, e
 func (relay *Relay) shake(tunnel *mytunnel.Tunnel) (
 	msg *bytebuffer.ByteBuffer,
 	handler Handler, err error) {
-	buffer := bytebuffer.GetKBBuffer()
-	buffer.Length, err = tunnel.ReadLeft(buffer.Buf())
+	msg = bytebuffer.GetKBBuffer()
+	msg.Length, err = tunnel.ReadLeft(msg.Buf())
 	if err != nil {
-		bytebuffer.PutKBBuffer(buffer)
 		logger.Warning("fail to get first msg")
-		return nil, nil, err
+		return
 	}
-	handler, err = getHandler(buffer, relay.handlers)
+	handler, err = getHandler(msg, relay.handlers)
 	if err != nil {
-		bytebuffer.PutKBBuffer(buffer)
-		logger.Warning(err, ": ", buffer.String())
-		return nil, nil, err
+		logger.Warning(err, ": ", msg.String())
+		return
 	}
-	return buffer, handler, nil
+	return
 }
