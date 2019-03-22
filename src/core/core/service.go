@@ -18,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	et "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/core"
 	httpproxy "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/httpproxy"
 	socks5 "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/socks5"
@@ -55,30 +54,6 @@ func createCipher() mycipher.Cipher {
 	default:
 		logger.Error("invalid cipher: ", settings.Get("cipher"))
 		return nil
-	}
-}
-
-// CreateETArg 构建ET.Arg
-func CreateETArg() *comm.Arg {
-	users := comm.UsersArg{
-		LocalUser:  LocalUser,
-		ValidUsers: Users,
-	}
-	connArg := comm.ConnArg{
-		RemoteIPE: settings.Get("relay"),
-		Timeout:   Timeout,
-		Head:      settings.Get("head"),
-	}
-	smartArg := comm.SmartArg{
-		ProxyStatus:   ProxyStatus,
-		LocalLocation: settings.Get("location"),
-	}
-
-	return &comm.Arg{
-		ConnArg:  connArg,
-		SmartArg: smartArg,
-		UsersArg: users,
-		IPType:   settings.Get("ip-type"),
 	}
 }
 

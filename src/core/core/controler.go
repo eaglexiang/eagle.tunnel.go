@@ -342,3 +342,27 @@ func ImportMods(modsDir string) error {
 	}
 	return nil
 }
+
+// CreateETArg 构建ET.Arg
+func CreateETArg() *comm.Arg {
+	users := comm.UsersArg{
+		LocalUser:  LocalUser,
+		ValidUsers: Users,
+	}
+	connArg := comm.ConnArg{
+		RemoteIPE: settings.Get("relay"),
+		Timeout:   Timeout,
+		Head:      settings.Get("head"),
+	}
+	smartArg := comm.SmartArg{
+		ProxyStatus:   ProxyStatus,
+		LocalLocation: settings.Get("location"),
+	}
+
+	return &comm.Arg{
+		ConnArg:  connArg,
+		SmartArg: smartArg,
+		UsersArg: users,
+		IPType:   settings.Get("ip-type"),
+	}
+}
