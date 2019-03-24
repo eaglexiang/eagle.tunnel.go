@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 17:00:52
+ * @LastEditTime: 2019-03-24 23:27:37
  */
 
 package cmd
@@ -66,13 +66,18 @@ func (d DNS) Send(e *comm.NetArg) (err error) {
 }
 
 // smartSend 智能模式
-// 智能模式会先检查域名是否存在于白名单
-// 白名单内域名将转入强制代理模式
+// 智能模式会先检查域名是否存在于明确域名列表
+// 列表内域名将根据明确规则进行解析
 func (d DNS) smartSend(e *comm.NetArg) (err error) {
-	white := IsWhiteDomain(e.Domain)
-	if white {
+	switch e.DomainType {
+	case comm.DirectDomain:
+		logger.Info("resolv direct domain: ", e.Domain)
+		err = d.resolvDNSByLocal(e)
+	case comm.ProxyDomain:
+		logger.Info("resolv proxy domain: ", e.Domain)
 		err = d.resolvDNSByProxy(e)
-	} else {
+	default:
+		logger.Info("resolv uncertain domain: ", e.Domain)
 		err = d.resolvDNSByLocal(e)
 		// 判断IP所在位置是否适合代理
 		comm.SubSenders[comm.EtLOCATION].Send(e)
@@ -175,14 +180,4 @@ func (d DNS) _resolvDNSByLocal(e *comm.NetArg) (err error) {
 			e.Domain)
 	}
 	return err
-}
-
-// IsWhiteDomain 判断域名是否是白名域名
-func IsWhiteDomain(host string) (isWhite bool) {
-	for _, line := range comm.WhitelistDomains {
-		if strings.HasSuffix(host, line) {
-			return true
-		}
-	}
-	return false
 }

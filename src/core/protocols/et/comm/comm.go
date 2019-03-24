@@ -1,3 +1,11 @@
+/*
+ * @Author: EagleXiang
+ * @LastEditors: EagleXiang
+ * @Email: eagle.xiang@outlook.com
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2019-03-24 22:35:45
+ * @LastEditTime: 2019-03-24 23:36:30
+ */
 package comm
 
 import (
@@ -35,6 +43,13 @@ const (
 	ErrorProxyStatus
 )
 
+// 域名的类型
+const (
+	UncertainDomain = iota
+	ProxyDomain
+	DirectDomain
+)
+
 // 代理状态对应的文本
 const (
 	ProxyEnableText      = "ENABLE"
@@ -57,8 +72,11 @@ var EtProxyStatusText map[int]string
 // HostsCache 本地Hosts
 var HostsCache = make(map[string]string)
 
-// WhitelistDomains 需要被智能解析的DNS域名列表
-var WhitelistDomains []string
+// ProxyDomains 强制代理的域名列表
+var ProxyDomains []string
+
+// DirectDomains 强制直连的域名列表
+var DirectDomains []string
 
 // Timeout 超时长度
 var Timeout time.Duration
@@ -129,4 +147,27 @@ func FormatEtType(src int) string {
 		return EtNameUNKNOWN
 	}
 	return name
+}
+
+// TypeOfDomain 域名的类型（强制代理/强制直连/不确定）
+func TypeOfDomain(domain string) (status int) {
+	if ProxyDomains == nil {
+		panic("proxy domains is nil")
+	}
+	if DirectDomains == nil {
+		panic("direct domains is nil")
+	}
+
+	for _, d := range ProxyDomains {
+		if strings.HasSuffix(domain, d) {
+			return ProxyDomain
+		}
+
+	}
+	for _, d := range DirectDomains {
+		if strings.HasSuffix(domain, d) {
+			return DirectDomain
+		}
+	}
+	return UncertainDomain
 }

@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-21 19:18:10
+ * @LastEditTime: 2019-03-24 23:37:29
  */
 
 package core
@@ -104,9 +104,7 @@ func readConfigDir() (err error) {
 	if err != nil {
 		return err
 	}
-	// DNS解析白名单
-	whiteDomainsPath := settings.Get("config-dir") + "/whitelist_domain.txt"
-	comm.WhitelistDomains, err = readLines(whiteDomainsPath)
+	err = readClearDomains()
 	if err != nil {
 		return
 	}
@@ -118,6 +116,28 @@ func readConfigDir() (err error) {
 	execTimeout()
 	// 导入Mods
 	return execMods()
+}
+
+// readClearDomains 读取明确连接规则的域名列表
+func readClearDomains() error {
+	if err := readDirectlist(); err != nil {
+		return err
+	}
+	return readProxylist()
+}
+
+// readWhitelist 读取强制代理的域名列表
+func readProxylist() (err error) {
+	proxyDomainsPath := settings.Get("config-dir") + "/proxylist_domain.txt"
+	comm.ProxyDomains, err = readLines(proxyDomainsPath)
+	return
+}
+
+// readDirectlist 读取强制直连的域名列表
+func readDirectlist() (err error) {
+	directDomainsPath := settings.Get("config-dir") + "/directlist_domain.txt"
+	comm.DirectDomains, err = readLines(directDomainsPath)
+	return
 }
 
 // finishConfigDir 补全config-dir

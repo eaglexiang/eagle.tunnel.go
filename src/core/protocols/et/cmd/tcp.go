@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 20:00:01
+ * @LastEditTime: 2019-03-24 23:41:25
  */
 
 package cmd
@@ -30,6 +30,8 @@ func (t TCP) Send(e *comm.NetArg) (err error) {
 		// 不存在可供使用的IP或域名
 		return errors.New("TCP.Send -> no des host")
 	}
+
+	e.DomainType = comm.TypeOfDomain(e.Domain)
 
 	if e.IP == "" {
 		// IP不存在，解析域名
@@ -80,15 +82,25 @@ func (t TCP) resolvDNS(e *comm.NetArg) (err error) {
 }
 
 func (t *TCP) smartSend(e *comm.NetArg) (err error) {
-	l := comm.SubSenders[comm.EtLOCATION]
-	err = l.Send(e)
-	if err != nil {
-		return err
-	}
-	if checkProxyByLocation(e.Location) {
-		err = t.sendTCPReq2Remote(e)
-	} else {
+	switch e.DomainType {
+	case comm.DirectDomain:
+		logger.Info("try to connect direct domain ", e.Domain)
 		err = t.sendTCPReq2Server(e)
+	case comm.ProxyDomain:
+		logger.Info("try to connect proxy domain ", e.Domain)
+		err = t.sendTCPReq2Remote(e)
+	default:
+		logger.Info("try to connect uncertain domain ", e.Domain)
+		l := comm.SubSenders[comm.EtLOCATION]
+		err = l.Send(e)
+		if err != nil {
+			return err
+		}
+		if checkProxyByLocation(e.Location) {
+			err = t.sendTCPReq2Remote(e)
+		} else {
+			err = t.sendTCPReq2Server(e)
+		}
 	}
 	return err
 }

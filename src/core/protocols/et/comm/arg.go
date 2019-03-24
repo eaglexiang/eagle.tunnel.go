@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-21 18:37:43
- * @LastEditTime: 2019-02-21 23:08:25
+ * @LastEditTime: 2019-03-24 23:24:11
  */
 
 package comm
@@ -49,10 +49,16 @@ type SmartArg struct {
 // 此参数集用于在协议间传递消息
 type NetArg struct {
 	NetConnArg
-	TheType      int
-	Location     string // 所在地，用于识别是否使用代理
+	NetSmartArg
+	TheType      int    // 网络请求的类型
 	BindDelegate func() // BIND操作会用到的委托
 	Tunnel       *tunnel.Tunnel
+}
+
+// NetSmartArg 与智能分流相关的参数
+type NetSmartArg struct {
+	Location   string // 所在地，用于识别是否使用代理
+	DomainType int    // 域名的类型（强制代理/强制直连/不确定）
 }
 
 // NetConnArg NetArg中关于连接的部分
