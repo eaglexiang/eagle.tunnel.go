@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-24 23:41:25
+ * @LastEditTime: 2019-03-25 23:12:10
  */
 
 package cmd
@@ -91,16 +91,21 @@ func (t *TCP) smartSend(e *comm.NetArg) (err error) {
 		err = t.sendTCPReq2Remote(e)
 	default:
 		logger.Info("try to connect uncertain domain ", e.Domain)
-		l := comm.SubSenders[comm.EtLOCATION]
-		err = l.Send(e)
-		if err != nil {
-			return err
-		}
-		if checkProxyByLocation(e.Location) {
-			err = t.sendTCPReq2Remote(e)
-		} else {
-			err = t.sendTCPReq2Server(e)
-		}
+		err = t.sendTCPReqByLocation(e)
+	}
+	return err
+}
+
+func (t TCP) sendTCPReqByLocation(e *comm.NetArg) (err error) {
+	l := comm.SubSenders[comm.EtLOCATION]
+	err = l.Send(e)
+	if err != nil {
+		return err
+	}
+	if checkProxyByLocation(e.Location) {
+		err = t.sendTCPReq2Remote(e)
+	} else {
+		err = t.sendTCPReq2Server(e)
 	}
 	return err
 }

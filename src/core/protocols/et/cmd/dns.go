@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-24 23:27:37
+ * @LastEditTime: 2019-03-25 23:13:06
  */
 
 package cmd
@@ -78,18 +78,23 @@ func (d DNS) smartSend(e *comm.NetArg) (err error) {
 		err = d.resolvDNSByProxy(e)
 	default:
 		logger.Info("resolv uncertain domain: ", e.Domain)
-		err = d.resolvDNSByLocal(e)
-		// 判断IP所在位置是否适合代理
-		comm.SubSenders[comm.EtLOCATION].Send(e)
-		if !checkProxyByLocation(e.Location) {
-			return nil
-		}
-		// 更新IP为Relay端的解析结果
-		ne := &comm.NetArg{NetConnArg: comm.NetConnArg{Domain: e.Domain}}
-		err = d.resolvDNSByProxy(ne)
-		e.IP = ne.IP
+		err = d.resolvDNSByLocation(e)
 	}
 	return err
+}
+
+func (d DNS) resolvDNSByLocation(e *comm.NetArg) (err error) {
+	err = d.resolvDNSByLocal(e)
+	// 判断IP所在位置是否适合代理
+	comm.SubSenders[comm.EtLOCATION].Send(e)
+	if !checkProxyByLocation(e.Location) {
+		return nil
+	}
+	// 更新IP为Relay端的解析结果
+	ne := &comm.NetArg{NetConnArg: comm.NetConnArg{Domain: e.Domain}}
+	err = d.resolvDNSByProxy(ne)
+	e.IP = ne.IP
+	return
 }
 
 // proxySend 强制代理模式
