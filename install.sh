@@ -24,8 +24,18 @@ if [ -f ${ConfDesPath}/server.conf ]; then
 else
     cp ${ConfSrcPath}/server.conf ${ConfDesPath}
 fi
-cp -f ${ConfSrcPath}/proxylist_domain.txt ${ConfDesPath}
-cp -f ${ConfSrcPath}/directlist_domain.txt ${ConfDesPath}
+
+echo "installing clear domains"
+ProxyDomainsDir=${ConfDesPath}/proxylists
+DirectDomainsDir=${ConfDesPath}/directlists
+
+mkdir -p ${ProxyDomainsDir}
+mkdir -p ${DirectDomainsDir}
+
+cp -f ${ConfSrcPath}/proxylist.txt ${ProxyDomainsDir}
+cp -f ${ConfSrcPath}/directlist.txt ${DirectDomainsDir}
+
+echo "installing hosts"
 cp -rf ${ConfSrcPath}/hosts ${ConfDesPath}
 
 ./scripts/after-install.sh

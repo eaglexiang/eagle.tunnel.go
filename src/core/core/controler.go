@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-24 23:37:29
+ * @LastEditTime: 2019-03-25 23:08:02
  */
 
 package core
@@ -62,7 +62,7 @@ func readConfig() error {
 		return nil
 	}
 	filePath := settings.Get("config")
-	allConfLines, err := readLines(filePath)
+	allConfLines, err := readLinesFromFile(filePath)
 	if err != nil {
 		return err
 	}
@@ -128,15 +128,37 @@ func readClearDomains() error {
 
 // readWhitelist 读取强制代理的域名列表
 func readProxylist() (err error) {
-	proxyDomainsPath := settings.Get("config-dir") + "/proxylist_domain.txt"
-	comm.ProxyDomains, err = readLines(proxyDomainsPath)
+	proxyDomainsPath := settings.Get("config-dir") + "/proxylists"
+	comm.ProxyDomains, err = readLinesFromDir(proxyDomainsPath, ".txt")
+	logger.Info(len(comm.ProxyDomains), " proxy-domains found")
 	return
 }
 
 // readDirectlist 读取强制直连的域名列表
 func readDirectlist() (err error) {
-	directDomainsPath := settings.Get("config-dir") + "/directlist_domain.txt"
-	comm.DirectDomains, err = readLines(directDomainsPath)
+	directDomainsPath := settings.Get("config-dir") + "/directlists"
+	comm.DirectDomains, err = readLinesFromDir(directDomainsPath, ".txt")
+	logger.Info(len(comm.DirectDomains), " direct-domains found")
+	return
+}
+
+// readLinesFromDir 从目录读取所有文本行
+// filter表示后缀名
+func readLinesFromDir(dir string, filter string) (lines []string, err error) {
+	files, err := getFilesFromDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range files {
+		if !strings.HasSuffix(file, filter) {
+			continue
+		}
+		linesTmp, err := readLinesFromFile(dir + "/" + file)
+		if err != nil {
+			return nil, err
+		}
+		lines = append(lines, linesTmp...)
+	}
 	return
 }
 
@@ -190,10 +212,11 @@ func execTimeout() error {
 
 func execHosts() (err error) {
 	hostsDir := settings.Get("config-dir") + "/hosts"
-	err = readHosts(hostsDir)
+	count, err := readHosts(hostsDir)
 	if err != nil {
 		return err
 	}
+	logger.Info(count, " hosts lines imported")
 	return nil
 }
 
@@ -222,7 +245,11 @@ func SetProxyStatus(status string) (err error) {
 	return
 }
 
-func readLines(filePath string) ([]string, error) {
+// readLinesFromFile 从文件读取所有文本行
+// 所有制表符会被替换为空格
+// 首尾的空格会被去除
+// # 会注释掉所有所在行剩下的内容
+func readLinesFromFile(filePath string) ([]string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		logger.Error(err)
@@ -246,7 +273,7 @@ func readLines(filePath string) ([]string, error) {
 
 func importUsers(usersPath string) (err error) {
 	Users = make(map[string]*myuser.ValidUser)
-	userLines, err := readLines(usersPath)
+	userLines, err := readLinesFromFile(usersPath)
 	if err != nil {
 		return nil
 	}
@@ -280,29 +307,21 @@ func SetIPE(remoteIpe string) string {
 	return remoteIpe
 }
 
-func readHosts(hostsDir string) error {
-	hostsFiles, err := getHostsList(hostsDir)
+func readHosts(hostsDir string) (int, error) {
+	hosts, err := readLinesFromDir(hostsDir, ".hosts")
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	var hosts []string
-	for _, file := range hostsFiles {
-		newHosts, err := readLines(hostsDir + "/" + file)
-		if err != nil {
-			return err
-		}
-		hosts = append(hosts, newHosts...)
-	}
-
-	for index, host := range hosts {
+	var count int
+	for _, host := range hosts {
 		err = handleSingleHost(host)
 		if err != nil {
-			return err
+			return 0, err
 		}
-		hosts[index] = host
+		count++
 	}
-	return nil
+	return count, nil
 }
 
 func handleSingleHost(host string) (err error) {
@@ -313,6 +332,10 @@ func handleSingleHost(host string) (err error) {
 			break
 		}
 		host = newHost
+	}
+
+	if host == "" {
+		return nil
 	}
 
 	items := strings.Split(host, " ")
@@ -329,23 +352,22 @@ func handleSingleHost(host string) (err error) {
 	return nil
 }
 
-func getHostsList(hostsDir string) ([]string, error) {
-	files, err := ioutil.ReadDir(hostsDir)
+// getFilesFromDir 获取指定目录中的所有文件
+// 排除掉文件夹
+func getFilesFromDir(dir string) ([]string, error) {
+	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		logger.Error(err)
 		return nil, err
 	}
-	var hosts []string
+	var noDirFiles []string
 	for _, file := range files {
 		if file.IsDir() {
 			continue
 		}
-		filename := file.Name()
-		if strings.HasSuffix(filename, ".hosts") {
-			hosts = append(hosts, filename)
-		}
+		noDirFiles = append(noDirFiles, file.Name())
 	}
-	return hosts, nil
+	return noDirFiles, nil
 }
 
 // ImportMods 导入Mods
