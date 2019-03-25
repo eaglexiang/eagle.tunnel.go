@@ -15,14 +15,12 @@ cp -f ${ServiceSrcPath}/* ${ServiceDesPath}
 echo "installing config files"
 mkdir -p ${ConfDesPath}
 if [ -f ${ConfDesPath}/client.conf ]; then
-    echo "found old client.conf, new template will be named client.conf_new"
-    cp -f ${ConfSrcPath}/client.conf ${ConfDesPath}/client.conf_new
+    cp -f ${ConfSrcPath}/client.conf ${ConfDesPath}/client.conf_backup
 else
     cp ${ConfSrcPath}/client.conf ${ConfDesPath}
 fi
 if [ -f ${ConfDesPath}/server.conf ]; then
-    echo "found old server.conf, new template will be named server.conf_new"
-    cp -f ${ConfSrcPath}/server.conf ${ConfDesPath}/server.conf_new
+    cp -f ${ConfSrcPath}/server.conf ${ConfDesPath}/server.conf_backup
 else
     cp ${ConfSrcPath}/server.conf ${ConfDesPath}
 fi
