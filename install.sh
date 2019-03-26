@@ -26,14 +26,20 @@ else
 fi
 
 echo "installing clear domains"
-ProxyDomainsDir=${ConfDesPath}/proxylists
-DirectDomainsDir=${ConfDesPath}/directlists
+ProxyDomainsDir=proxylists
+DirectDomainsDir=directlists
 
-mkdir -p ${ProxyDomainsDir}
-mkdir -p ${DirectDomainsDir}
+ProxyDomainsDesDir=${ConfDesPath}/${ProxyDomainsDir}
+DirectDomainsDesDir=${ConfDesPath}/${DirectDomainsDir}
 
-cp -f ${ConfSrcPath}/proxylist.txt ${ProxyDomainsDir}
-cp -f ${ConfSrcPath}/directlist.txt ${DirectDomainsDir}
+ProxyDomainsSrcDir=${ConfSrcPath}/${ProxyDomainsDir}
+DirectDomainsSrcDir=${ConfSrcPath}/${DirectDomainsDir}
+
+mkdir -p ${ProxyDomainsDesDir}
+mkdir -p ${DirectDomainsDesDir}
+
+cp -f ${ProxyDomainsSrcDir}/* ${ProxyDomainsDesDir}
+cp -f ${DirectDomainsSrcDir}/* ${DirectDomainsDesDir}
 
 echo "installing hosts"
 cp -rf ${ConfSrcPath}/hosts ${ConfDesPath}

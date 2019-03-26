@@ -2,10 +2,14 @@
 
 echo "copy whitelist files..."
 
-mkdir -p ${ConfDesPath}
+ProxyDomainsDesDir=${ConfDesPath}/proxylists
+DirectDomainsDesDir=${ConfDesPath}/directlists
 
-cp ${ClearListSrcPath}/proxylist.txt ${ConfDesPath}
-cp ${ClearListSrcPath}/directlist.txt ${ConfDesPath}
+mkdir -p ${ProxyDomainsDesDir}
+mkdir -p ${DirectDomainsDesDir}
+
+cp ${ClearListSrcPath}/proxylist.txt ${ProxyDomainsDesDir}
+cp ${ClearListSrcPath}/directlist.txt ${DirectDomainsDesDir}
 
 
 echo "done"
