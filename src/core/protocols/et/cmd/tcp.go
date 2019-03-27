@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-25 23:12:10
+ * @LastEditTime: 2019-03-27 17:07:38
  */
 
 package cmd
@@ -84,13 +84,13 @@ func (t TCP) resolvDNS(e *comm.NetArg) (err error) {
 func (t *TCP) smartSend(e *comm.NetArg) (err error) {
 	switch e.DomainType {
 	case comm.DirectDomain:
-		logger.Info("try to connect direct domain ", e.Domain)
+		logger.Info("connect direct domain ", e.Domain)
 		err = t.sendTCPReq2Server(e)
 	case comm.ProxyDomain:
-		logger.Info("try to connect proxy domain ", e.Domain)
+		logger.Info("connect proxy domain ", e.Domain)
 		err = t.sendTCPReq2Remote(e)
 	default:
-		logger.Info("try to connect uncertain domain ", e.Domain)
+		logger.Info("connect uncertain domain ", e.Domain)
 		err = t.sendTCPReqByLocation(e)
 	}
 	return err
@@ -135,6 +135,9 @@ func (t *TCP) sendTCPReq2Remote(e *comm.NetArg) error {
 		return err
 	}
 	reply, err := e.Tunnel.ReadRightStr()
+	if err != nil {
+		return err
+	}
 	if reply != "ok" {
 		logger.Warning("invalid reply for ", req, ": ", reply)
 		err = errors.New("failed 2 connect 2 server by relayer")

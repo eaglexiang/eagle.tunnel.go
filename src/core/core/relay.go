@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-19 20:48:32
+ * @LastEditTime: 2019-03-27 17:05:44
  */
 
 package core
@@ -99,7 +99,7 @@ func (relay *Relay) handleOtherReqs(
 	// 发起连接
 	err = relay.sender.Send(e)
 	if err != nil {
-		logger.Warning("fail to connect")
+		logger.Warning("fail to connect ", e.Host)
 		return false
 	}
 	// 完成委托行为
