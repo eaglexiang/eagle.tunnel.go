@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:35
- * @LastEditTime: 2019-03-19 20:08:35
+ * @LastEditTime: 2019-03-27 19:13:07
  */
 
 package et
@@ -17,29 +17,30 @@ import (
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mycipher "github.com/eaglexiang/go-cipher"
 	mynet "github.com/eaglexiang/go-net"
-	mytunnel "github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go-tunnel"
 	myuser "github.com/eaglexiang/go-user"
 	"go.uber.org/ratelimit"
 )
 
 // Handle 处理ET请求
 func (et *ET) Handle(e *mynet.Arg) (err error) {
-	err = et.checkHeaderOfReq(string(e.Msg), e.Tunnel)
+	tunnel := e.Tunnel
+	err = et.checkHeaderOfReq(string(e.Msg), tunnel)
 	if err != nil {
 		return err
 	}
-	createCipher(e.Tunnel)
-	err = et.checkUserOfReq(e.Tunnel)
+	createCipher(tunnel)
+	err = et.checkUserOfReq(tunnel)
 	if err != nil {
 		return err
 	}
 	// 选择子协议handler
-	subReq, h, err := et.subShake(e.Tunnel)
+	subReq, h, err := et.subShake(tunnel)
 	if err != nil {
 		return err
 	}
 	// 进入子协议业务
-	err = h.Handle(subReq, e.Tunnel)
+	err = h.Handle(subReq, tunnel)
 	if err != nil {
 		return err
 	}
@@ -50,7 +51,7 @@ func (et *ET) Handle(e *mynet.Arg) (err error) {
 	return nil
 }
 
-func (et *ET) subShake(tunnel *mytunnel.Tunnel) (subReq string,
+func (et *ET) subShake(tunnel *tunnel.Tunnel) (subReq string,
 	h comm.Handler, err error) {
 	subReq, err = tunnel.ReadLeftStr()
 	if err != nil {
@@ -63,7 +64,7 @@ func (et *ET) subShake(tunnel *mytunnel.Tunnel) (subReq string,
 	return subReq, h, err
 }
 
-func createCipher(tunnel *mytunnel.Tunnel) {
+func createCipher(tunnel *tunnel.Tunnel) {
 	c := mycipher.DefaultCipher()
 	if c == nil {
 		panic("ET.Handle -> cipher is nil")
@@ -74,7 +75,7 @@ func createCipher(tunnel *mytunnel.Tunnel) {
 
 func (et *ET) checkHeaderOfReq(
 	header string,
-	tunnel *mytunnel.Tunnel) error {
+	tunnel *tunnel.Tunnel) error {
 	headers := strings.Split(header, " ")
 	switch {
 	case len(headers) < 1:
@@ -89,7 +90,7 @@ func (et *ET) checkHeaderOfReq(
 	}
 }
 
-func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
+func (et *ET) checkUserOfReq(tunnel *tunnel.Tunnel) (err error) {
 	if comm.ETArg.ValidUsers == nil {
 		// 未启用用户校验
 		return nil
@@ -105,7 +106,7 @@ func (et *ET) checkUserOfReq(tunnel *mytunnel.Tunnel) (err error) {
 	return err
 }
 
-func findReqUser(tunnel *mytunnel.Tunnel) (*myuser.ReqUser, error) {
+func findReqUser(tunnel *tunnel.Tunnel) (*myuser.ReqUser, error) {
 	userStr, err := tunnel.ReadLeftStr()
 	if err != nil {
 		return nil, err

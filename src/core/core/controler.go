@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-25 23:08:02
+ * @LastEditTime: 2019-03-27 23:02:49
  */
 
 package core
@@ -129,16 +129,28 @@ func readClearDomains() error {
 // readWhitelist 读取强制代理的域名列表
 func readProxylist() (err error) {
 	proxyDomainsPath := settings.Get("config-dir") + "/proxylists"
-	comm.ProxyDomains, err = readLinesFromDir(proxyDomainsPath, ".txt")
-	logger.Info(len(comm.ProxyDomains), " proxy-domains found")
+	proxyDomains, err := readLinesFromDir(proxyDomainsPath, ".txt")
+	if err != nil {
+		return err
+	}
+	for _, domain := range proxyDomains {
+		comm.ProxyDomains.ReverseGrow(domain)
+	}
+	logger.Info(comm.ProxyDomains.Count(), " proxy-domains imported")
 	return
 }
 
 // readDirectlist 读取强制直连的域名列表
 func readDirectlist() (err error) {
 	directDomainsPath := settings.Get("config-dir") + "/directlists"
-	comm.DirectDomains, err = readLinesFromDir(directDomainsPath, ".txt")
-	logger.Info(len(comm.DirectDomains), " direct-domains found")
+	directDomains, err := readLinesFromDir(directDomainsPath, ".txt")
+	if err != nil {
+		return err
+	}
+	for _, domain := range directDomains {
+		comm.DirectDomains.ReverseGrow(domain)
+	}
+	logger.Info(comm.DirectDomains.Count(), " direct-domains imported")
 	return
 }
 

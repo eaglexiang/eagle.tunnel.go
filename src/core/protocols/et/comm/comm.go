@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-24 22:35:45
- * @LastEditTime: 2019-03-24 23:36:30
+ * @LastEditTime: 2019-03-27 22:48:21
  */
 package comm
 
@@ -12,6 +12,8 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/eaglexiang/go-trie"
 )
 
 // ET子协议的类型
@@ -73,10 +75,10 @@ var EtProxyStatusText map[int]string
 var HostsCache = make(map[string]string)
 
 // ProxyDomains 强制代理的域名列表
-var ProxyDomains []string
+var ProxyDomains trie.StringTrie
 
 // DirectDomains 强制直连的域名列表
-var DirectDomains []string
+var DirectDomains trie.StringTrie
 
 // Timeout 超时长度
 var Timeout time.Duration
@@ -151,23 +153,11 @@ func FormatEtType(src int) string {
 
 // TypeOfDomain 域名的类型（强制代理/强制直连/不确定）
 func TypeOfDomain(domain string) (status int) {
-	if ProxyDomains == nil {
-		panic("proxy domains is nil")
+	if ProxyDomains.MatchSuffix(domain) {
+		return ProxyDomain
 	}
-	if DirectDomains == nil {
-		panic("direct domains is nil")
-	}
-
-	for _, d := range ProxyDomains {
-		if strings.HasSuffix(domain, d) {
-			return ProxyDomain
-		}
-
-	}
-	for _, d := range DirectDomains {
-		if strings.HasSuffix(domain, d) {
-			return DirectDomain
-		}
+	if DirectDomains.MatchSuffix(domain) {
+		return DirectDomain
 	}
 	return UncertainDomain
 }
