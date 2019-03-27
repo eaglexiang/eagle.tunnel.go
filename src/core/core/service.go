@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 16:34:08
+ * @LastEditTime: 2019-03-27 17:25:50
  */
 
 package core
@@ -182,4 +182,8 @@ func (s *Service) Close() {
 	s.stopRunning = nil
 	s.listener.Close()
 	close(s.reqs)
+	if s.clients != nil {
+		close(s.clients)
+		s.clients = nil
+	}
 }
