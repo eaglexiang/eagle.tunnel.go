@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-27 23:02:49
+ * @LastEditTime: 2019-03-29 00:14:19
  */
 
 package core
@@ -218,7 +218,8 @@ func execTimeout() error {
 		logger.Error("invalid timeout", _timeout)
 		return err
 	}
-	comm.Timeout = time.Second * time.Duration(timeout)
+	Timeout = time.Second * time.Duration(timeout)
+	comm.Timeout = Timeout
 	return nil
 }
 

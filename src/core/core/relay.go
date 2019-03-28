@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-27 17:05:44
+ * @LastEditTime: 2019-03-29 00:13:30
  */
 
 package core
@@ -38,6 +38,7 @@ func (relay *Relay) SetSender(sender Sender) {
 // Handle 处理请求连接
 func (relay *Relay) Handle(conn net.Conn) {
 	tunnel := mytunnel.GetTunnel()
+	tunnel.Timeout = Timeout
 	tunnel.Left = conn
 	firstMsg, handler, err := relay.shake(tunnel)
 	defer bytebuffer.PutKBBuffer(firstMsg)
