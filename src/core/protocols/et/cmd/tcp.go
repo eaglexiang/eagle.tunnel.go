@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-01 22:05:23
+ * @LastEditTime: 2019-04-01 22:12:46
  */
 
 package cmd
@@ -125,6 +125,7 @@ func (t TCP) Name() string {
 }
 
 func (t *TCP) sendTCPReq2Remote(e *comm.NetArg) error {
+	logger.Info("connect ", e.IP, " by proxy")
 	err := comm.Connect2Remote(e.Tunnel)
 	if err != nil {
 		return err
@@ -146,6 +147,8 @@ func (t *TCP) sendTCPReq2Remote(e *comm.NetArg) error {
 }
 
 func (t *TCP) sendTCPReq2Server(e *comm.NetArg) error {
+	logger.Info("connect ", e.IP, " by local")
+
 	if e.IP == "0.0.0.0" || e.IP == "::" {
 		logger.Info("invalid ip: ", e.IP)
 		return errors.New("invalid ip")
