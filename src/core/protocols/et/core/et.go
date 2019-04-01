@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-19 20:08:58
+ * @LastEditTime: 2019-04-01 22:09:05
  */
 
 package et
@@ -28,8 +28,8 @@ func NewET(arg *comm.Arg) *ET {
 	comm.ETArg = arg
 
 	et := ET{}
-	dns := cmd.DNS{DNSResolver: mynet.ResolvIPv4, DNSType: comm.EtDNS}
-	dns6 := cmd.DNS{DNSResolver: mynet.ResolvIPv6, DNSType: comm.EtDNS6}
+	dns := cmd.DNS{DNSResolver: mynet.ResolvIPv4, DNSType: comm.DNS}
+	dns6 := cmd.DNS{DNSResolver: mynet.ResolvIPv6, DNSType: comm.DNS6}
 	tcp := cmd.TCP{}
 	location := cmd.Location{}
 	check := cmd.NewCheck()

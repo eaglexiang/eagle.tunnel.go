@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-25 23:13:06
+ * @LastEditTime: 2019-04-01 22:03:57
  */
 
 package cmd
@@ -22,7 +22,7 @@ import (
 
 // DNS ET-DNS子协议的实现
 type DNS struct {
-	DNSType        int
+	DNSType        comm.CMDType
 	dnsRemoteCache *cache.TextCache
 	dnsLocalCache  *cache.TextCache
 	DNSResolver    func(string) (string, error) `label:"DNS解析器"`
@@ -86,7 +86,7 @@ func (d DNS) smartSend(e *comm.NetArg) (err error) {
 func (d DNS) resolvDNSByLocation(e *comm.NetArg) (err error) {
 	err = d.resolvDNSByLocal(e)
 	// 判断IP所在位置是否适合代理
-	comm.SubSenders[comm.EtLOCATION].Send(e)
+	comm.SubSenders[comm.LOCATION].Send(e)
 	if !checkProxyByLocation(e.Location) {
 		return nil
 	}
@@ -103,7 +103,7 @@ func (d DNS) proxySend(e *comm.NetArg) error {
 }
 
 // Type ET子协议类型
-func (d DNS) Type() int {
+func (d DNS) Type() comm.CMDType {
 	return d.DNSType
 }
 

@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-24 23:05:00
- * @LastEditTime: 2019-02-25 00:57:44
+ * @LastEditTime: 2019-04-01 21:56:12
  */
 
 package socks5
@@ -13,16 +13,19 @@ import (
 	mynet "github.com/eaglexiang/go-net"
 )
 
+// AddrType 地址类型
+type AddrType byte
+
 // 网络地址类型
 const (
-	AddrERROR  = 0
-	AddrV4     = 1
-	AddrDomain = 3
-	AddrV6     = 4
+	AddrERROR  AddrType = 0
+	AddrV4              = 1
+	AddrDomain          = 3
+	AddrV6              = 4
 )
 
-func netAddrType2SocksAddrType(netAddrType int) int {
-	switch netAddrType {
+func netAddrType2SocksAddrType(at mynet.AddrType) AddrType {
+	switch at {
 	case mynet.IPv4Addr:
 		return AddrV4
 	case mynet.DomainAddr:
@@ -34,8 +37,8 @@ func netAddrType2SocksAddrType(netAddrType int) int {
 	}
 }
 
-func socksAddrType2NetAddrType(socksAddrType int) int {
-	switch socksAddrType {
+func socksAddrType2NetAddrType(at AddrType) mynet.AddrType {
+	switch at {
 	case AddrV4:
 		return mynet.IPv4Addr
 	case AddrV6:
@@ -43,34 +46,34 @@ func socksAddrType2NetAddrType(socksAddrType int) int {
 	case AddrDomain:
 		return mynet.DomainAddr
 	default:
-		return mynet.ErrorAddr
+		return mynet.InvalidAddr
 	}
 }
 
 // NetOPType2SocksOPType 将net中的网络操作类型转换为socks5的网络操作类型
-func NetOPType2SocksOPType(netOPType int) int {
-	switch netOPType {
+func NetOPType2SocksOPType(ot mynet.OpType) CMDType {
+	switch ot {
 	case mynet.BIND:
-		return SOCKSBIND
+		return BIND
 	case mynet.CONNECT:
-		return SOCKSCONNECT
+		return CONNECT
 	case mynet.UDP:
-		return SOCKSUDP
+		return UDP
 	default:
-		return SOCKSERROR
+		return ERROR
 	}
 }
 
 // SocksOPType2NetOPType 将socks5的网络操作类型转换为net中的网络操作类型
-func SocksOPType2NetOPType(socksOPType int) int {
-	switch socksOPType {
-	case SOCKSBIND:
+func SocksOPType2NetOPType(ct CMDType) mynet.OpType {
+	switch ct {
+	case BIND:
 		return mynet.BIND
-	case SOCKSCONNECT:
+	case CONNECT:
 		return mynet.CONNECT
-	case SOCKSUDP:
+	case UDP:
 		return mynet.UDP
 	default:
-		return mynet.Error
+		return mynet.ERROR
 	}
 }

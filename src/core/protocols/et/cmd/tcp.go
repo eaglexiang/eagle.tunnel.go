@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-27 17:07:38
+ * @LastEditTime: 2019-04-01 22:05:23
  */
 
 package cmd
@@ -61,18 +61,18 @@ func (t TCP) resolvDNS(e *comm.NetArg) (err error) {
 	// 调用DNS Sender解析Domain为IP
 	switch comm.ETArg.IPType {
 	case "4":
-		err = comm.SubSenders[comm.EtDNS].Send(e)
+		err = comm.SubSenders[comm.DNS].Send(e)
 	case "6":
-		err = comm.SubSenders[comm.EtDNS6].Send(e)
+		err = comm.SubSenders[comm.DNS6].Send(e)
 	case "46":
-		err = comm.SubSenders[comm.EtDNS].Send(e)
+		err = comm.SubSenders[comm.DNS].Send(e)
 		if err != nil {
-			err = comm.SubSenders[comm.EtDNS6].Send(e)
+			err = comm.SubSenders[comm.DNS6].Send(e)
 		}
 	case "64":
-		err = comm.SubSenders[comm.EtDNS6].Send(e)
+		err = comm.SubSenders[comm.DNS6].Send(e)
 		if err != nil {
-			err = comm.SubSenders[comm.EtDNS].Send(e)
+			err = comm.SubSenders[comm.DNS].Send(e)
 		}
 	default:
 		logger.Warning("invalid ip-type: ", comm.ETArg.IPType)
@@ -97,7 +97,7 @@ func (t *TCP) smartSend(e *comm.NetArg) (err error) {
 }
 
 func (t TCP) sendTCPReqByLocation(e *comm.NetArg) (err error) {
-	l := comm.SubSenders[comm.EtLOCATION]
+	l := comm.SubSenders[comm.LOCATION]
 	err = l.Send(e)
 	if err != nil {
 		return err
@@ -115,13 +115,13 @@ func (t TCP) proxySend(e *comm.NetArg) error {
 }
 
 // Type ET子协议的类型
-func (t TCP) Type() int {
-	return comm.EtTCP
+func (t TCP) Type() comm.CMDType {
+	return comm.TCP
 }
 
 // Name ET子协议的名字
 func (t TCP) Name() string {
-	return comm.EtNameTCP
+	return comm.TCPTxt
 }
 
 func (t *TCP) sendTCPReq2Remote(e *comm.NetArg) error {
@@ -129,7 +129,7 @@ func (t *TCP) sendTCPReq2Remote(e *comm.NetArg) error {
 	if err != nil {
 		return err
 	}
-	req := comm.FormatEtType(comm.EtTCP) + " " + e.IP + " " + e.Port
+	req := comm.FormatEtType(comm.TCP) + " " + e.IP + " " + e.Port
 	_, err = e.Tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err

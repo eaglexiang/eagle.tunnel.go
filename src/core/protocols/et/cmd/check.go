@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 16:42:10
+ * @LastEditTime: 2019-04-01 22:03:16
  */
 
 package cmd
@@ -108,13 +108,13 @@ func (c Check) Handle(req string, t *tunnel.Tunnel) error {
 }
 
 // Type ET子协议的类型
-func (c Check) Type() int {
-	return comm.EtCHECK
+func (c Check) Type() comm.CMDType {
+	return comm.CHECK
 }
 
 // Name ET子协议的名字
 func (c Check) Name() string {
-	return comm.EtNameCHECK
+	return comm.CHECKTxt
 }
 
 // SendEtCheckAuthReq 发射 ET-CHECK-AUTH 请求
@@ -137,7 +137,7 @@ func SendEtCheckAuthReq() string {
 
 // SendEtCheckVersionReq 发射 ET-CHECK-VERSION 请求
 func SendEtCheckVersionReq() (reply string, err error) {
-	req := comm.FormatEtType(comm.EtCHECK) + " " +
+	req := comm.FormatEtType(comm.CHECK) + " " +
 		formatEtCheckType(EtCheckVERSION) + " " +
 		comm.ProtocolVersion.Raw
 	return comm.SendQueryReq(req)
@@ -148,7 +148,7 @@ func SendEtCheckPingReq(sig chan string) {
 
 	start := time.Now() // 开始计时
 
-	req := comm.FormatEtType(comm.EtCHECK) + " " + formatEtCheckType(EtCheckPING)
+	req := comm.FormatEtType(comm.CHECK) + " " + formatEtCheckType(EtCheckPING)
 	reply, err := comm.SendQueryReq(req)
 	if err != nil {
 		logger.Warning(err)
@@ -194,7 +194,7 @@ func handleEtCheckVersionReq(reqs []string, t *tunnel.Tunnel) {
 
 // SendEtCheckUsersReq 发射 ET-CHECK-USERS 请求
 func SendEtCheckUsersReq() (string, error) {
-	req := comm.FormatEtType(comm.EtCHECK) + " " +
+	req := comm.FormatEtType(comm.CHECK) + " " +
 		formatEtCheckType(EtCheckUSERS)
 	return comm.SendQueryReq(req)
 }

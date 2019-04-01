@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-24 22:53:52
- * @LastEditTime: 2019-03-17 16:36:52
+ * @LastEditTime: 2019-04-01 22:07:12
  */
 
 package cmd
@@ -23,13 +23,13 @@ type Bind struct {
 }
 
 // Type 类型
-func (b Bind) Type() int {
-	return comm.EtBIND
+func (b Bind) Type() comm.CMDType {
+	return comm.BIND
 }
 
 // Name ET子协议的名字
 func (b Bind) Name() string {
-	return comm.EtNameBIND
+	return comm.BINDTxt
 }
 
 // Send 发送请求
@@ -40,7 +40,7 @@ func (b Bind) Send(e *comm.NetArg) error {
 		return err
 	}
 	// 发送请求
-	req := comm.FormatEtType(comm.EtBIND) + " " + e.Port
+	req := comm.FormatEtType(comm.BIND) + " " + e.Port
 	_, err = e.Tunnel.WriteRight([]byte(req))
 	if err != nil {
 		return err

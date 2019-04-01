@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 17:32:04
+ * @LastEditTime: 2019-04-01 22:04:25
  */
 
 package cmd
@@ -60,7 +60,7 @@ func (l Location) _Send(e *comm.NetArg, node *cache.CacheNode) (err error) {
 		e.Location = "Ipv6"
 		node.Update(e.Location)
 	case mynet.IPv4Addr:
-		if mynet.CheckPrivateIPv4(e.IP) {
+		if mynet.IsPrivateIPv4(e.IP) {
 			// 保留地址不适合代理
 			e.Location = "1;ZZ;ZZZ;Reserved"
 			node.Update(e.Location)
@@ -78,13 +78,13 @@ func (l Location) _Send(e *comm.NetArg, node *cache.CacheNode) (err error) {
 }
 
 // Type ET子协议的类型
-func (l Location) Type() int {
-	return comm.EtLOCATION
+func (l Location) Type() comm.CMDType {
+	return comm.LOCATION
 }
 
 // Name ET子协议的名字
 func (l Location) Name() string {
-	return comm.EtNameLOCATION
+	return comm.LOCATIONTxt
 }
 
 func (l Location) checkLocationByRemote(e *comm.NetArg) (err error) {

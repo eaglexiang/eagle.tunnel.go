@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-24 18:40:56
- * @LastEditTime: 2019-03-17 17:34:22
+ * @LastEditTime: 2019-04-01 21:57:44
  */
 
 package socks5
@@ -30,18 +30,18 @@ func (b bind) Handle(req []byte, e *mynet.Arg) error {
 	}
 	port := strconv.FormatInt(int64(_port), 10)
 	e.Host = host + ":" + port
-	e.TheType = mynet.BIND
+	e.TheType = int(mynet.BIND)
 	// 根据BIND的结果对客户端进行反馈
 	e.Delegates = append(e.Delegates, func() bool {
 		var reply []byte
 		defer e.Tunnel.WriteLeft(reply)
 		if e.TheType != 0 {
-			reply = []byte{5, REPERROR, 0, 1, 0, 0, 0, 0, 0, 0}
+			reply = []byte{5, byte(REPERROR), 0, 1, 0, 0, 0, 0, 0, 0}
 			return false
 		}
-		var hostType int
+		var hostType AddrType
 		host, _port, hostType = dismantle(e.Host)
-		reply = []byte{5, REPSUCCESS, 0, byte(hostType)}
+		reply = []byte{5, byte(REPSUCCESS), 0, byte(hostType)}
 		switch hostType {
 		case AddrV4, AddrV6:
 			reply = append(reply, []byte(net.ParseIP(host))...) // host
@@ -50,14 +50,14 @@ func (b bind) Handle(req []byte, e *mynet.Arg) error {
 			reply = append(reply, portBytes...) // port
 			return true
 		default:
-			reply = []byte{5, REPERROR, 0, 0, 0, 0, 0, 0, 0, 0}
+			reply = []byte{5, byte(REPERROR), 0, 0, 0, 0, 0, 0, 0, 0}
 			return false
 		}
 	})
 	return nil
 }
 
-func dismantle(host string) (hostOnly string, port int, hostType int) {
+func dismantle(host string) (hostOnly string, port int, hostType AddrType) {
 	ipe := strings.Split(host, ":")
 	_port := ipe[len(ipe)-1]
 	port16, err := strconv.ParseInt(_port, 10, 16)
@@ -66,7 +66,6 @@ func dismantle(host string) (hostOnly string, port int, hostType int) {
 	}
 	port = int(port16)
 	hostOnly = strings.TrimSuffix(host, ":"+_port)
-	hostType = mynet.TypeOfAddr(host)
-	hostType = netAddrType2SocksAddrType(hostType)
+	hostType = netAddrType2SocksAddrType(mynet.TypeOfAddr(host))
 	return
 }

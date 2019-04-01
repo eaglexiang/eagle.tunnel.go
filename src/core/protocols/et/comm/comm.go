@@ -4,8 +4,9 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-24 22:35:45
- * @LastEditTime: 2019-03-27 22:48:21
+ * @LastEditTime: 2019-04-01 22:00:10
  */
+
 package comm
 
 import (
@@ -16,26 +17,29 @@ import (
 	"github.com/eaglexiang/go-trie"
 )
 
+// CMDType ET子协议的命令类型
+type CMDType int
+
 // ET子协议的类型
 const (
-	EtUNKNOWN = iota
-	EtTCP
-	EtDNS
-	EtDNS6
-	EtLOCATION
-	EtCHECK
-	EtBIND
+	UNKNOWN CMDType = iota
+	TCP
+	DNS
+	DNS6
+	LOCATION
+	CHECK
+	BIND
 )
 
 // ET子协议的名字
 const (
-	EtNameUNKNOWN  = "UNKNOWN"
-	EtNameTCP      = "TCP"
-	EtNameDNS      = "DNS"
-	EtNameDNS6     = "DNS6"
-	EtNameLOCATION = "LOCATION"
-	EtNameCHECK    = "CHECK"
-	EtNameBIND     = "BIND"
+	UNKNOWNTxt  = "UNKNOWN"
+	TCPTxt      = "TCP"
+	DNSTxt      = "DNS"
+	DNS6Txt     = "DNS6"
+	LOCATIONTxt = "LOCATION"
+	CHECKTxt    = "CHECK"
+	BINDTxt     = "BIND"
 )
 
 // 代理的状态
@@ -60,10 +64,10 @@ const (
 )
 
 // EtTypes ET子协议的类型
-var EtTypes map[string]int
+var EtTypes map[string]CMDType
 
 // EtNames ET子协议的名字
-var EtNames map[int]string
+var EtNames map[CMDType]string
 
 // EtProxyStatus ET代理状态
 var EtProxyStatus map[string]int
@@ -84,23 +88,23 @@ var DirectDomains trie.StringTrie
 var Timeout time.Duration
 
 func init() {
-	EtTypes = make(map[string]int)
-	EtTypes[EtNameTCP] = EtTCP
-	EtTypes[EtNameDNS] = EtDNS
-	EtTypes[EtNameDNS6] = EtDNS6
-	EtTypes[EtNameLOCATION] = EtLOCATION
-	EtTypes[EtNameCHECK] = EtCHECK
-	EtTypes[EtNameBIND] = EtBIND
+	EtTypes = make(map[string]CMDType)
+	EtTypes[TCPTxt] = TCP
+	EtTypes[DNSTxt] = DNS
+	EtTypes[DNS6Txt] = DNS6
+	EtTypes[LOCATIONTxt] = LOCATION
+	EtTypes[CHECKTxt] = CHECK
+	EtTypes[BINDTxt] = BIND
 }
 
 func init() {
-	EtNames = make(map[int]string)
-	EtNames[EtTCP] = EtNameTCP
-	EtNames[EtDNS] = EtNameDNS
-	EtNames[EtDNS6] = EtNameDNS6
-	EtNames[EtLOCATION] = EtNameLOCATION
-	EtNames[EtCHECK] = EtNameCHECK
-	EtNames[EtBIND] = EtNameBIND
+	EtNames = make(map[CMDType]string)
+	EtNames[TCP] = TCPTxt
+	EtNames[DNS] = DNSTxt
+	EtNames[DNS6] = DNS6Txt
+	EtNames[LOCATION] = LOCATIONTxt
+	EtNames[CHECK] = CHECKTxt
+	EtNames[BIND] = BINDTxt
 }
 
 func init() {
@@ -133,20 +137,20 @@ func FormatProxyStatus(status int) string {
 }
 
 // ParseEtType 得到字符串对应的ET请求类型
-func ParseEtType(src string) int {
+func ParseEtType(src string) CMDType {
 	src = strings.ToUpper(src)
 	theType, ok := EtTypes[src]
 	if !ok {
-		return EtUNKNOWN
+		return UNKNOWN
 	}
 	return theType
 }
 
 // FormatEtType 得到ET请求类型对应的字符串
-func FormatEtType(src int) string {
+func FormatEtType(src CMDType) string {
 	name, ok := EtNames[src]
 	if !ok {
-		return EtNameUNKNOWN
+		return UNKNOWNTxt
 	}
 	return name
 }

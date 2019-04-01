@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:49
- * @LastEditTime: 2019-03-19 20:08:51
+ * @LastEditTime: 2019-04-01 22:09:47
  */
 
 package et
@@ -25,7 +25,7 @@ func (et *ET) Send(e *mynet.Arg) error {
 	if err != nil {
 		return err
 	}
-	sender, ok := comm.SubSenders[newE.TheType]
+	sender, ok := comm.SubSenders[comm.CMDType(newE.TheType)]
 	if !ok {
 		logger.Error("no tcp sender")
 		return errors.New("no tcp sender")

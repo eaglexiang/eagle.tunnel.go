@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 20:09:53
+ * @LastEditTime: 2019-04-01 21:59:10
  */
 
 package socks5
@@ -21,24 +21,32 @@ import (
 	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
+// CMDType 命令类型
+type CMDType int
+
 // SOCKS请求的类型
 const (
-	SOCKSERROR = iota
-	SOCKSCONNECT
-	SOCKSBIND
-	SOCKSUDP
+	ERROR CMDType = iota
+	CONNECT
+	BIND
+	UDP
+)
 
-	// SOCKS请求是否成功的反馈
-	REPSUCCESS = iota
+//RepType 反馈的类型
+type RepType byte
+
+// SOCKS请求是否成功的反馈
+const (
+	REPSUCCESS RepType = iota
 	REPERROR
 )
 
-var commands map[byte]command
+var commands map[CMDType]command
 
 func init() {
-	commands = make(map[byte]command)
-	commands[SOCKSCONNECT] = connect{}
-	commands[SOCKSBIND] = bind{}
+	commands = make(map[CMDType]command)
+	commands[CONNECT] = connect{}
+	commands[BIND] = bind{}
 }
 
 // command SOCKS5的子命令
@@ -73,7 +81,7 @@ func checkTunnel(tunnel *mytunnel.Tunnel) error {
 	}
 	// 不接受来自公网IP的SOCKS5请求
 	ipOfReq := strings.Split(tunnel.Left.RemoteAddr().String(), ":")[0]
-	if !mynet.CheckPrivateIPv4(ipOfReq) {
+	if !mynet.IsPrivateIPv4(ipOfReq) {
 		logger.Warning("invalid public req from ", ipOfReq)
 		return errors.New("invalid public req")
 	}
@@ -82,7 +90,8 @@ func checkTunnel(tunnel *mytunnel.Tunnel) error {
 
 func getCommand(tunnel *mytunnel.Tunnel,
 	buffer *bytebuffer.ByteBuffer) (cmd command, err error) {
-	cmd, ok := commands[buffer.Buf()[1]]
+	t := CMDType(buffer.Buf()[1])
+	cmd, ok := commands[t]
 	if !ok {
 		return nil, errors.New("Socks5.Handle -> invalid req")
 	}

@@ -1,3 +1,12 @@
+/*
+ * @Author: EagleXiang
+ * @LastEditors: EagleXiang
+ * @Email: eagle.xiang@outlook.com
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2019-04-01 22:01:39
+ * @LastEditTime: 2019-04-01 22:07:56
+ */
+
 package comm
 
 import (
@@ -9,14 +18,14 @@ import (
 // Handler ET子协议的handler接口
 type Handler interface {
 	Handle(req string, tunnel *tunnel.Tunnel) error // 处理业务
-	Type() int                                      // ET子协议的类型
+	Type() CMDType                                  // ET子协议的类型
 	Name() string                                   // ET子协议的名字
 }
 
 // Sender ET子协议的sender
 type Sender interface {
 	Send(e *NetArg) error //发送流程
-	Type() int            // ET子协议的类型
+	Type() CMDType        // ET子协议的类型
 	Name() string         // ET子协议的名字
 }
 
@@ -24,7 +33,7 @@ type Sender interface {
 var SubHandlers map[string]Handler
 
 // SubSenders 子协议发射器
-var SubSenders map[int]Sender
+var SubSenders map[CMDType]Sender
 
 // AddSubHandler 添加ET子协议handler
 func AddSubHandler(h Handler) {
@@ -37,7 +46,7 @@ func AddSubHandler(h Handler) {
 // AddSubSender 添加子协议Sender
 func AddSubSender(s Sender) {
 	if SubSenders == nil {
-		SubSenders = make(map[int]Sender)
+		SubSenders = make(map[CMDType]Sender)
 	}
 	SubSenders[s.Type()] = s
 }

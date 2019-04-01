@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-21 18:37:43
- * @LastEditTime: 2019-03-24 23:24:11
+ * @LastEditTime: 2019-04-01 21:47:47
  */
 
 package comm
@@ -70,21 +70,21 @@ type NetConnArg struct {
 
 // NetOPType2ETOPType 将net网络操作类型转化为ET网络操作类型
 // 此函数供sender使用
-func NetOPType2ETOPType(netOPType int) int {
+func NetOPType2ETOPType(netOPType mynet.OpType) CMDType {
 	switch netOPType {
 	case mynet.CONNECT:
-		return EtTCP
+		return TCP
 	case mynet.BIND:
-		return EtBIND
+		return BIND
 	default:
-		return EtUNKNOWN
+		return UNKNOWN
 	}
 }
 
 // ParseNetArg 将通用的net.Arg转化为ET专用NetArg
 func ParseNetArg(e *mynet.Arg) (*NetArg, error) {
 	ne := NetArg{
-		TheType: NetOPType2ETOPType(e.TheType),
+		TheType: int(NetOPType2ETOPType(mynet.OpType(e.TheType))),
 		Tunnel:  e.Tunnel,
 	}
 	ipe := strings.Split(e.Host, ":")

@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:35
- * @LastEditTime: 2019-03-27 19:13:07
+ * @LastEditTime: 2019-04-01 22:09:19
  */
 
 package et
@@ -45,7 +45,7 @@ func (et *ET) Handle(e *mynet.Arg) (err error) {
 		return err
 	}
 	// 只有TCP子协议需要继续运行
-	if h.Type() != comm.EtTCP {
+	if h.Type() != comm.TCP {
 		return errors.New("no need to continue")
 	}
 	return nil

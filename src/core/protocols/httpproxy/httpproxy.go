@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 20:21:36
+ * @LastEditTime: 2019-04-01 21:48:38
  */
 
 package httpproxy
@@ -49,7 +49,7 @@ func checkTunnel(tunnel *mytunnel.Tunnel) error {
 	}
 	// 不接受来自公网IP的HTTP代理请求
 	ipOfReq := strings.Split(tunnel.Left.RemoteAddr().String(), ":")[0]
-	if !mynet.CheckPrivateIPv4(ipOfReq) {
+	if !mynet.IsPrivateIPv4(ipOfReq) {
 		logger.Warning("invalid public req from ", ipOfReq)
 		return errors.New("invlaid public req")
 	}
@@ -62,7 +62,7 @@ func (conn *HTTPProxy) Handle(e *mynet.Arg) error {
 	if err != nil {
 		return err
 	}
-	e.TheType = mynet.CONNECT
+	e.TheType = int(mynet.CONNECT)
 	reqStr := string(e.Msg)
 	reqType, host, port := dismantle(reqStr)
 	e.Host = host + ":" + port
