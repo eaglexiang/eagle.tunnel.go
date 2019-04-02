@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-01 22:04:25
+ * @LastEditTime: 2019-04-02 23:22:28
  */
 
 package cmd
@@ -29,6 +29,7 @@ type Location struct {
 
 func (l *Location) getCacheClient(ip string) (node *cache.CacheNode, loaded bool) {
 	if l.cacheClient == nil {
+		logger.Info("create textcache for location")
 		l.cacheClient = cache.CreateTextCache(0)
 	}
 	return l.cacheClient.Get(ip)
@@ -43,17 +44,19 @@ func (l *Location) getCacheServer(ip string) (node *cache.CacheNode, loaded bool
 
 // Send 发送ET-LOCATION请求 解析IP的地理位置，结果存放于e.Reply
 // 本方法完成缓存查询功能，查询不命中则进一步调用_Send
-func (l Location) Send(e *comm.NetArg) (err error) {
+func (l *Location) Send(e *comm.NetArg) (err error) {
+	logger.Info("resolv location for ip: ", e.IP)
 	node, loaded := l.getCacheClient(e.IP)
 	if loaded {
 		e.Location, err = node.Wait()
 	} else {
 		l._Send(e, node)
 	}
+	logger.Info("location for ", e.IP, " is ", e.Location)
 	return
 }
 
-func (l Location) _Send(e *comm.NetArg, node *cache.CacheNode) (err error) {
+func (l *Location) _Send(e *comm.NetArg, node *cache.CacheNode) (err error) {
 	switch mynet.TypeOfAddr(e.IP) {
 	case mynet.IPv6Addr:
 		// IPv6 默认代理
@@ -78,16 +81,16 @@ func (l Location) _Send(e *comm.NetArg, node *cache.CacheNode) (err error) {
 }
 
 // Type ET子协议的类型
-func (l Location) Type() comm.CMDType {
+func (l *Location) Type() comm.CMDType {
 	return comm.LOCATION
 }
 
 // Name ET子协议的名字
-func (l Location) Name() string {
+func (l *Location) Name() string {
 	return comm.LOCATIONTxt
 }
 
-func (l Location) checkLocationByRemote(e *comm.NetArg) (err error) {
+func (l *Location) checkLocationByRemote(e *comm.NetArg) (err error) {
 	e.Location, err = sendQuery(l, e.IP)
 	return
 }
@@ -95,7 +98,7 @@ func (l Location) checkLocationByRemote(e *comm.NetArg) (err error) {
 // Handle 处理ET-LOCATION请求
 // 此方法完成缓存的读取
 // 如果缓存不命中则进一步调用CheckLocationByWeb
-func (l Location) Handle(req string, tunnel *mytunnel.Tunnel) (err error) {
+func (l *Location) Handle(req string, tunnel *mytunnel.Tunnel) (err error) {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
 		return errors.New("Location.Handle -> req is too short")

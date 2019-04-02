@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-01 22:09:05
+ * @LastEditTime: 2019-04-02 23:23:28
  */
 
 package et
@@ -36,16 +36,16 @@ func NewET(arg *comm.Arg) *ET {
 
 	// 添加子协议的handler
 	comm.AddSubHandler(tcp)
-	comm.AddSubHandler(dns)
-	comm.AddSubHandler(dns6)
-	comm.AddSubHandler(location)
+	comm.AddSubHandler(&dns)
+	comm.AddSubHandler(&dns6)
+	comm.AddSubHandler(&location)
 	comm.AddSubHandler(check)
 
 	// 添加子协议的sender
 	comm.AddSubSender(tcp)
-	comm.AddSubSender(dns)
-	comm.AddSubSender(dns6)
-	comm.AddSubSender(location)
+	comm.AddSubSender(&dns)
+	comm.AddSubSender(&dns6)
+	comm.AddSubSender(&location)
 
 	comm.Connect2Remote = et.connect2Relay
 

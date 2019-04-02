@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-01 22:03:57
+ * @LastEditTime: 2019-04-02 23:21:32
  */
 
 package cmd
@@ -29,7 +29,7 @@ type DNS struct {
 }
 
 // Handle 处理ET-DNS请求
-func (d DNS) Handle(req string, tunnel *mytunnel.Tunnel) error {
+func (d *DNS) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
 		return errors.New("ETDNS.Handle -> req is too short")
@@ -47,10 +47,12 @@ func (d DNS) Handle(req string, tunnel *mytunnel.Tunnel) error {
 }
 
 // Send 发送ET-DNS请求
-func (d DNS) Send(e *comm.NetArg) (err error) {
+func (d *DNS) Send(e *comm.NetArg) (err error) {
+	logger.Info("resolv dns for domain: ", e.Domain)
 	ip, result := comm.HostsCache[e.Domain]
 	if result {
 		e.IP = ip
+		logger.Info("hosts found: ", e.Domain, " ", e.IP)
 		return nil
 	}
 	switch comm.ETArg.ProxyStatus {
@@ -62,13 +64,14 @@ func (d DNS) Send(e *comm.NetArg) (err error) {
 		logger.Error("dns.send invalid proxy-status")
 		err = errors.New("invalid proxy-status")
 	}
+	logger.Info("ip for ", e.Domain, " is ", e.IP)
 	return err
 }
 
 // smartSend 智能模式
 // 智能模式会先检查域名是否存在于明确域名列表
 // 列表内域名将根据明确规则进行解析
-func (d DNS) smartSend(e *comm.NetArg) (err error) {
+func (d *DNS) smartSend(e *comm.NetArg) (err error) {
 	switch e.DomainType {
 	case comm.DirectDomain:
 		logger.Info("resolv direct domain: ", e.Domain)
@@ -83,7 +86,7 @@ func (d DNS) smartSend(e *comm.NetArg) (err error) {
 	return err
 }
 
-func (d DNS) resolvDNSByLocation(e *comm.NetArg) (err error) {
+func (d *DNS) resolvDNSByLocation(e *comm.NetArg) (err error) {
 	err = d.resolvDNSByLocal(e)
 	// 判断IP所在位置是否适合代理
 	comm.SubSenders[comm.LOCATION].Send(e)
@@ -98,22 +101,23 @@ func (d DNS) resolvDNSByLocation(e *comm.NetArg) (err error) {
 }
 
 // proxySend 强制代理模式
-func (d DNS) proxySend(e *comm.NetArg) error {
+func (d *DNS) proxySend(e *comm.NetArg) error {
 	return d.resolvDNSByProxy(e)
 }
 
 // Type ET子协议类型
-func (d DNS) Type() comm.CMDType {
+func (d *DNS) Type() comm.CMDType {
 	return d.DNSType
 }
 
 // Name ET子协议的名字
-func (d DNS) Name() string {
+func (d *DNS) Name() string {
 	return comm.FormatEtType(d.DNSType)
 }
 
 func (d *DNS) getCacheNodeOfRemote(domain string) (node *textcache.CacheNode, loaded bool) {
 	if d.dnsRemoteCache == nil {
+		logger.Info("create textcache for dns proxy")
 		d.dnsRemoteCache = cache.CreateTextCache()
 	}
 	return d.dnsRemoteCache.Get(domain)
@@ -129,9 +133,10 @@ func (d *DNS) getCacheNodeOfLocal(domain string) (node *cache.CacheNode, loaded 
 // resolvDNSByProxy 使用代理服务器进行DNS的解析
 // 此函数主要完成缓存功能
 // 当缓存不命中则调用 DNS._resolvDNSByProxy
-func (d DNS) resolvDNSByProxy(e *comm.NetArg) (err error) {
+func (d *DNS) resolvDNSByProxy(e *comm.NetArg) (err error) {
 	node, loaded := d.getCacheNodeOfRemote(e.Domain)
 	if loaded {
+		logger.Info("wait for proxy cachenode")
 		e.IP, err = node.Wait()
 	} else {
 		err = d._resolvDNSByProxy(e)
@@ -146,7 +151,7 @@ func (d DNS) resolvDNSByProxy(e *comm.NetArg) (err error) {
 
 // _resolvDNSByProxy 使用代理服务器进行DNS的解析
 // 实际完成DNS查询操作
-func (d DNS) _resolvDNSByProxy(e *comm.NetArg) (err error) {
+func (d *DNS) _resolvDNSByProxy(e *comm.NetArg) (err error) {
 	e.IP, err = sendQuery(d, e.Domain)
 	ip := net.ParseIP(e.IP)
 	if ip == nil {
@@ -159,7 +164,7 @@ func (d DNS) _resolvDNSByProxy(e *comm.NetArg) (err error) {
 // resolvDNSByLocal 本地解析DNS
 // 此函数主要完成缓存功能
 // 当缓存不命中则进一步调用 DNS._resolvDNSByLocalClient
-func (d DNS) resolvDNSByLocal(e *comm.NetArg) (err error) {
+func (d *DNS) resolvDNSByLocal(e *comm.NetArg) (err error) {
 	node, loaded := d.getCacheNodeOfLocal(e.Domain)
 	if loaded {
 		e.IP, err = node.Wait()
@@ -176,7 +181,7 @@ func (d DNS) resolvDNSByLocal(e *comm.NetArg) (err error) {
 
 // _resolvDNSByLocalClient 本地解析DNS
 // 实际完成DNS的解析动作
-func (d DNS) _resolvDNSByLocal(e *comm.NetArg) (err error) {
+func (d *DNS) _resolvDNSByLocal(e *comm.NetArg) (err error) {
 	e.IP, err = d.DNSResolver(e.Domain)
 	// 本地解析失败应该让用户察觉，手动添加DNS白名单
 	if err != nil {

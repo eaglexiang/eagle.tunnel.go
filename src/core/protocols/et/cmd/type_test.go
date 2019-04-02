@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-04-01 22:05:31
- * @LastEditTime: 2019-04-01 22:08:42
+ * @LastEditTime: 2019-04-02 23:22:59
  */
 package cmd
 
@@ -18,11 +18,11 @@ func Test_Names(t *testing.T) {
 	tcp := TCP{}
 	testname(t, tcp, comm.TCPTxt)
 	dns := DNS{DNSType: comm.DNS}
-	testname(t, dns, comm.DNSTxt)
+	testname(t, &dns, comm.DNSTxt)
 	dns6 := DNS{DNSType: comm.DNS6}
-	testname(t, dns6, comm.DNS6Txt)
+	testname(t, &dns6, comm.DNS6Txt)
 	l := Location{}
-	testname(t, l, comm.LOCATIONTxt)
+	testname(t, &l, comm.LOCATIONTxt)
 	ck := Check{}
 	testname(t, ck, comm.CHECKTxt)
 	bd := Bind{}
@@ -33,11 +33,11 @@ func Test_Types(t *testing.T) {
 	tcp := TCP{}
 	testtype(t, tcp, comm.TCP)
 	dns := DNS{DNSType: comm.DNS}
-	testtype(t, dns, comm.DNS)
+	testtype(t, &dns, comm.DNS)
 	dns6 := DNS{DNSType: comm.DNS6}
-	testtype(t, dns6, comm.DNS6)
+	testtype(t, &dns6, comm.DNS6)
 	l := Location{}
-	testtype(t, l, comm.LOCATION)
+	testtype(t, &l, comm.LOCATION)
 	ck := Check{}
 	testtype(t, ck, comm.CHECK)
 	bd := Bind{}

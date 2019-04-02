@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-02 21:19:11
+ * @LastEditTime: 2019-04-02 21:29:36
  */
 
 package cmd
@@ -141,11 +141,11 @@ func (t TCP) Name() string {
 }
 
 func (t *TCP) connectByProxy(e *comm.NetArg) error {
-	logger.Info("connect ", e.IP, " by proxy")
 	err := comm.Connect2Remote(e.Tunnel)
 	if err != nil {
 		return err
 	}
+	logger.Info("connect ", e.IP+":"+e.Port, " by proxy")
 	req := comm.FormatEtType(comm.TCP) + " " + e.IP + " " + e.Port
 	_, err = e.Tunnel.WriteRight([]byte(req))
 	if err != nil {
