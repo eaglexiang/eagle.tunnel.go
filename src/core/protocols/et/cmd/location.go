@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-02 23:22:28
+ * @LastEditTime: 2019-04-02 23:41:23
  */
 
 package cmd
@@ -59,23 +59,34 @@ func (l *Location) Send(e *comm.NetArg) (err error) {
 func (l *Location) _Send(e *comm.NetArg, node *cache.CacheNode) (err error) {
 	switch mynet.TypeOfAddr(e.IP) {
 	case mynet.IPv6Addr:
-		// IPv6 默认代理
-		e.Location = "Ipv6"
-		node.Update(e.Location)
+		l.resolvIPv6(e, node)
 	case mynet.IPv4Addr:
-		if mynet.IsPrivateIPv4(e.IP) {
-			// 保留地址不适合代理
-			e.Location = "1;ZZ;ZZZ;Reserved"
-			node.Update(e.Location)
-		} else if err = l.checkLocationByRemote(e); err == nil {
-			node.Update(e.Location)
-		} else {
-			e.Location = "0;;;WRONG INPUT"
-			l.cacheClient.Delete(e.IP)
-		}
+		err = l.resolvIPv4(e, node)
 	default:
 		logger.Warning("invalid ip: ", e.IP)
 		err = errors.New("invalid ip")
+	}
+	return
+}
+
+func (l *Location) resolvIPv6(e *comm.NetArg, node *cache.CacheNode) {
+	e.Location = "Ipv6"
+	node.Update(e.Location)
+	logger.Info("IPv6 found, default mode for IPv6 is proxy")
+}
+
+func (l *Location) resolvIPv4(e *comm.NetArg, node *cache.CacheNode) (err error) {
+	if mynet.IsPrivateIPv4(e.IP) {
+		e.Location = "1;ZZ;ZZZ;Reserved"
+		node.Update(e.Location)
+		logger.Info("private IPv4 found: ", e.IP)
+	} else if err = l.checkLocationByRemote(e); err == nil {
+		node.Update(e.Location)
+		logger.Info("location for ", e.IP, ": ", e.Location)
+	} else {
+		e.Location = "0;;;WRONG INPUT"
+		l.cacheClient.Delete(e.IP)
+		logger.Warning(err)
 	}
 	return
 }
