@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-02 23:27:30
+ * @LastEditTime: 2019-04-03 20:49:19
  */
 
 package cmd
@@ -17,7 +17,7 @@ import (
 	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	"github.com/eaglexiang/go-textcache"
 	cache "github.com/eaglexiang/go-textcache"
-	mytunnel "github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go-tunnel"
 )
 
 // DNS ET-DNS子协议的实现
@@ -29,7 +29,7 @@ type DNS struct {
 }
 
 // Handle 处理ET-DNS请求
-func (d *DNS) Handle(req string, tunnel *mytunnel.Tunnel) error {
+func (d *DNS) Handle(req string, t *tunnel.Tunnel) error {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
 		return errors.New("ETDNS.Handle -> req is too short")
@@ -39,7 +39,7 @@ func (d *DNS) Handle(req string, tunnel *mytunnel.Tunnel) error {
 	if err != nil {
 		return err
 	}
-	_, err = tunnel.WriteLeft([]byte(e.IP))
+	_, err = t.WriteLeft([]byte(e.IP))
 	if err != nil {
 		return err
 	}

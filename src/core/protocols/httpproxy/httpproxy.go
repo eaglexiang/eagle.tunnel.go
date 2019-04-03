@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-01 21:48:38
+ * @LastEditTime: 2019-04-03 20:33:11
  */
 
 package httpproxy
@@ -16,7 +16,7 @@ import (
 
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mynet "github.com/eaglexiang/go-net"
-	mytunnel "github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go-tunnel"
 )
 
 // HTTP请求的类型
@@ -43,12 +43,12 @@ func (conn *HTTPProxy) Match(firstMsg []byte) bool {
 	}
 }
 
-func checkTunnel(tunnel *mytunnel.Tunnel) error {
-	if tunnel == nil {
-		return errors.New("HTTPProxy.Handle -> tunnel is nil")
+func checkTunnel(t *tunnel.Tunnel) error {
+	if t == nil {
+		return errors.New("tunnel is nil")
 	}
 	// 不接受来自公网IP的HTTP代理请求
-	ipOfReq := strings.Split(tunnel.Left.RemoteAddr().String(), ":")[0]
+	ipOfReq := mynet.GetIPOfConnRemote(t.Left())
 	if !mynet.IsPrivateIPv4(ipOfReq) {
 		logger.Warning("invalid public req from ", ipOfReq)
 		return errors.New("invlaid public req")

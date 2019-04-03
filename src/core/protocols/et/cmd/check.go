@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-01 22:03:16
+ * @LastEditTime: 2019-04-03 20:48:46
  */
 
 package cmd
@@ -17,7 +17,6 @@ import (
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	"github.com/eaglexiang/go-tunnel"
-	mytunnel "github.com/eaglexiang/go-tunnel"
 	version "github.com/eaglexiang/go-version"
 )
 
@@ -166,7 +165,7 @@ func SendEtCheckPingReq(sig chan string) {
 	return
 }
 
-func handleEtCheckPingReq(reqs []string, t *mytunnel.Tunnel) {
+func handleEtCheckPingReq(reqs []string, t *tunnel.Tunnel) {
 	reply := "ok"
 	t.WriteLeft([]byte(reply))
 }
@@ -199,11 +198,11 @@ func SendEtCheckUsersReq() (string, error) {
 	return comm.SendQueryReq(req)
 }
 
-func handleEtCheckUsersReq(reqs []string, tunnel *mytunnel.Tunnel) {
+func handleEtCheckUsersReq(reqs []string, t *tunnel.Tunnel) {
 	var reply string
 	for _, user := range comm.ETArg.ValidUsers {
 		line := user.ID + ": " + user.Count()
 		reply += line + "\n"
 	}
-	tunnel.WriteLeft([]byte(reply))
+	t.WriteLeft([]byte(reply))
 }

@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-29 00:13:30
+ * @LastEditTime: 2019-04-03 21:23:20
  */
 
 package core
@@ -15,7 +15,7 @@ import (
 	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	"github.com/eaglexiang/go-bytebuffer"
 	mynet "github.com/eaglexiang/go-net"
-	mytunnel "github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go-tunnel"
 )
 
 // Relay 网络入口，负责流量分发
@@ -37,36 +37,37 @@ func (relay *Relay) SetSender(sender Sender) {
 
 // Handle 处理请求连接
 func (relay *Relay) Handle(conn net.Conn) {
-	tunnel := mytunnel.GetTunnel()
-	tunnel.Timeout = Timeout
-	tunnel.Left = conn
-	firstMsg, handler, err := relay.shake(tunnel)
+	t := tunnel.GetTunnel().Update(
+		tunnel.WithTimeout(Timeout),
+		tunnel.WithLeft(conn),
+	)
+	firstMsg, handler, err := relay.shake(t)
 	defer bytebuffer.PutKBBuffer(firstMsg)
 	if err != nil {
 		return
 	}
 
 	e := &mynet.Arg{
-		Msg:    firstMsg.Data(),
-		Tunnel: tunnel,
+		Msg:    firstMsg.Cut(),
+		Tunnel: t,
 	}
-	relay.handleReqs(handler, tunnel, e)
+	relay.handleReqs(handler, t, e)
 }
 
 func (relay *Relay) handleReqs(handler Handler,
-	tunnel *mytunnel.Tunnel,
+	t *tunnel.Tunnel,
 	e *mynet.Arg) {
 	// 判断是否是sender业务
 	var need2Continue bool
 	if relay.sender.Name() == handler.Name() {
 		need2Continue = relay.handleSenderReqs(handler, e)
 	} else {
-		need2Continue = relay.handleOtherReqs(handler, tunnel, e)
+		need2Continue = relay.handleOtherReqs(handler, e)
 	}
 	if need2Continue {
-		tunnel.Flow()
+		t.Flow()
 	}
-	mytunnel.PutTunnel(tunnel)
+	tunnel.PutTunnel(t)
 }
 
 // 使用sender业务向远端发起请求
@@ -86,7 +87,6 @@ func (relay *Relay) handleSenderReqs(handler Handler,
 // 然后根据目的Host建立连接
 func (relay *Relay) handleOtherReqs(
 	handler Handler,
-	tunnel *mytunnel.Tunnel,
 	e *mynet.Arg) bool {
 	// 获取Host
 	err := handler.Handle(e)
@@ -123,11 +123,11 @@ func getHandler(firstMsg *bytebuffer.ByteBuffer, handlers []Handler) (Handler, e
 
 // shake 握手
 // 获取握手消息和对应handler
-func (relay *Relay) shake(tunnel *mytunnel.Tunnel) (
+func (relay *Relay) shake(t *tunnel.Tunnel) (
 	msg *bytebuffer.ByteBuffer,
 	handler Handler, err error) {
 	msg = bytebuffer.GetKBBuffer()
-	msg.Length, err = tunnel.ReadLeft(msg.Buf())
+	msg.Length, err = t.ReadLeft(msg.Buf())
 	if err != nil {
 		logger.Warning("fail to get first msg")
 		return

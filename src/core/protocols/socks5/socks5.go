@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-01 21:59:10
+ * @LastEditTime: 2019-04-03 20:32:11
  */
 
 package socks5
@@ -12,13 +12,11 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
-	"strings"
 
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
-
 	"github.com/eaglexiang/go-bytebuffer"
 	mynet "github.com/eaglexiang/go-net"
-	mytunnel "github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go-tunnel"
 )
 
 // CMDType 命令类型
@@ -75,12 +73,12 @@ func (conn *Socks5) Name() string {
 	return "SOCKS"
 }
 
-func checkTunnel(tunnel *mytunnel.Tunnel) error {
-	if tunnel == nil {
-		return errors.New("Socks5.Handle -> tunnel is nil")
+func checkTunnel(t *tunnel.Tunnel) error {
+	if t == nil {
+		return errors.New("tunnel is nil")
 	}
 	// 不接受来自公网IP的SOCKS5请求
-	ipOfReq := strings.Split(tunnel.Left.RemoteAddr().String(), ":")[0]
+	ipOfReq := mynet.GetIPOfConnRemote(t.Left())
 	if !mynet.IsPrivateIPv4(ipOfReq) {
 		logger.Warning("invalid public req from ", ipOfReq)
 		return errors.New("invalid public req")
@@ -88,19 +86,18 @@ func checkTunnel(tunnel *mytunnel.Tunnel) error {
 	return nil
 }
 
-func getCommand(tunnel *mytunnel.Tunnel,
-	buffer *bytebuffer.ByteBuffer) (cmd command, err error) {
-	t := CMDType(buffer.Buf()[1])
-	cmd, ok := commands[t]
+func getCMD(buffer *bytebuffer.ByteBuffer) (cmd command, err error) {
+	tp := CMDType(buffer.Buf()[1])
+	cmd, ok := commands[tp]
 	if !ok {
 		return nil, errors.New("Socks5.Handle -> invalid req")
 	}
 	return cmd, nil
 }
 
-func getMsgFromL(tunnel *mytunnel.Tunnel) (buffer *bytebuffer.ByteBuffer, err error) {
+func getMsgFromL(t *tunnel.Tunnel) (buffer *bytebuffer.ByteBuffer, err error) {
 	buffer = bytebuffer.GetKBBuffer()
-	buffer.Length, err = tunnel.ReadLeft(buffer.Buf())
+	buffer.Length, err = t.ReadLeft(buffer.Buf())
 	return
 }
 
@@ -132,7 +129,7 @@ func (conn *Socks5) Handle(e *mynet.Arg) (err error) {
 	if err != nil {
 		return err
 	}
-	cmd, err := getCommand(e.Tunnel, req)
+	cmd, err := getCMD(req)
 	if err != nil {
 		return err
 	}

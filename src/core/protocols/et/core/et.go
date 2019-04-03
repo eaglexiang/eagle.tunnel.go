@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-02 23:23:28
+ * @LastEditTime: 2019-04-03 20:36:42
  */
 
 package et
@@ -11,12 +11,13 @@ package et
 import (
 	"net"
 
+	"github.com/eaglexiang/go-tunnel"
+
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/cmd"
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mycipher "github.com/eaglexiang/go-cipher"
 	mynet "github.com/eaglexiang/go-net"
-	mytunnel "github.com/eaglexiang/go-tunnel"
 )
 
 // ET ET代理协议的实现
@@ -64,14 +65,14 @@ func (et *ET) Name() string {
 }
 
 // connect2Relay 连接到下一个Relay，完成版本校验和用户校验两个步骤
-func (et *ET) connect2Relay(tunnel *mytunnel.Tunnel) error {
+func (et *ET) connect2Relay(t *tunnel.Tunnel) error {
 	conn, err := net.DialTimeout("tcp", comm.ETArg.RemoteIPE, comm.Timeout)
 	if err != nil {
 		logger.Warning(err)
 		return err
 	}
-	tunnel.Right = conn
-	err = et.checkVersionOfRelayer(tunnel)
+	t.Update(tunnel.WithRight(conn))
+	err = et.checkVersionOfRelayer(t)
 	if err != nil {
 		return err
 	}
@@ -79,7 +80,6 @@ func (et *ET) connect2Relay(tunnel *mytunnel.Tunnel) error {
 	if c == nil {
 		panic("cipher is nil")
 	}
-	tunnel.EncryptRight = c.Encrypt
-	tunnel.DecryptRight = c.Decrypt
-	return et.checkLocalUser(tunnel)
+	t.Update(tunnel.WithRightCipher(c))
+	return et.checkLocalUser(t)
 }

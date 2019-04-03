@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-02 21:29:36
+ * @LastEditTime: 2019-04-03 20:44:20
  */
 
 package cmd
@@ -16,7 +16,7 @@ import (
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mynet "github.com/eaglexiang/go-net"
-	mytunnel "github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go-tunnel"
 )
 
 var dnsResolver map[string]func(*comm.NetArg) error
@@ -180,15 +180,17 @@ func (t *TCP) connectByLocal(e *comm.NetArg) error {
 		logger.Warning(err)
 		return err
 	}
-	e.Tunnel.Right = conn
-	e.Tunnel.EncryptRight = nil
-	e.Tunnel.DecryptRight = nil
-	e.Tunnel.SpeedLimiter = comm.ETArg.LocalUser.SpeedLimiter()
+	e.Tunnel.Update(
+		tunnel.WithRight(conn),
+		tunnel.WithRightCipher(nil),
+		tunnel.WithLeftCipher(nil),
+		tunnel.WithSpeedLimiter(comm.ETArg.LocalUser.SpeedLimiter()),
+	)
 	return nil
 }
 
 // Handle 处理ET-TCP请求
-func (t TCP) Handle(req string, tunnel *mytunnel.Tunnel) error {
+func (t TCP) Handle(req string, tn *tunnel.Tunnel) error {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 3 {
 		return errors.New("TCP.Handle -> no des ip for tcp req")
@@ -200,15 +202,15 @@ func (t TCP) Handle(req string, tunnel *mytunnel.Tunnel) error {
 			IP:   ip,
 			Port: port,
 		},
-		Tunnel: tunnel,
+		Tunnel: tn,
 	}
 	err := t.connectByLocal(e)
 	if err != nil {
-		tunnel.WriteLeft([]byte(err.Error()))
+		tn.WriteLeft([]byte(err.Error()))
 		return err
 
 	}
-	_, err = tunnel.WriteLeft([]byte("ok"))
+	_, err = tn.WriteLeft([]byte("ok"))
 	if err != nil {
 		return err
 	}

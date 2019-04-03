@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:35
- * @LastEditTime: 2019-04-01 22:09:19
+ * @LastEditTime: 2019-04-03 20:39:49
  */
 
 package et
@@ -64,13 +64,12 @@ func (et *ET) subShake(tunnel *tunnel.Tunnel) (subReq string,
 	return subReq, h, err
 }
 
-func createCipher(tunnel *tunnel.Tunnel) {
+func createCipher(t *tunnel.Tunnel) {
 	c := mycipher.DefaultCipher()
 	if c == nil {
 		panic("ET.Handle -> cipher is nil")
 	}
-	tunnel.EncryptLeft = c.Encrypt
-	tunnel.DecryptLeft = c.Decrypt
+	t.Update(tunnel.WithLeftCipher(c))
 }
 
 func (et *ET) checkHeaderOfReq(
@@ -90,30 +89,31 @@ func (et *ET) checkHeaderOfReq(
 	}
 }
 
-func (et *ET) checkUserOfReq(tunnel *tunnel.Tunnel) (err error) {
+func (et *ET) checkUserOfReq(t *tunnel.Tunnel) (err error) {
 	if comm.ETArg.ValidUsers == nil {
 		// 未启用用户校验
-		return nil
+		return
 	}
 	var user2Check *myuser.ReqUser
-	if user2Check, err = findReqUser(tunnel); err != nil {
+	if user2Check, err = findReqUser(t); err != nil {
 		logger.Warning(err)
-		return err
+		return
 	}
-	if tunnel.SpeedLimiter, err = et._checkUserOfReq(user2Check); err == nil {
-		_, err = tunnel.WriteLeft([]byte("valid"))
+	if sl, err := et._checkUserOfReq(user2Check); err == nil {
+		t.Update(tunnel.WithSpeedLimiter(sl))
+		_, err = t.WriteLeft([]byte("valid"))
 	}
-	return err
+	return
 }
 
-func findReqUser(tunnel *tunnel.Tunnel) (*myuser.ReqUser, error) {
-	userStr, err := tunnel.ReadLeftStr()
+func findReqUser(t *tunnel.Tunnel) (*myuser.ReqUser, error) {
+	userStr, err := t.ReadLeftStr()
 	if err != nil {
 		return nil, err
 	}
 	user2Check, err := parseReqUser(
 		userStr,
-		mynet.GetIPOfConnRemote(tunnel.Left))
+		mynet.GetIPOfConnRemote(t.Left()))
 	return user2Check, err
 }
 

@@ -1,3 +1,11 @@
+/*
+ * @Author: EagleXiang
+ * @LastEditors: EagleXiang
+ * @Email: eagle.xiang@outlook.com
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2019-04-03 20:30:09
+ * @LastEditTime: 2019-04-03 20:30:14
+ */
 package comm
 
 import (
@@ -14,7 +22,7 @@ var Connect2Remote func(tunnel *tunnel.Tunnel) error
 func SendQueryReq(req string) (reply string, err error) {
 	t := tunnel.GetTunnel()
 	defer tunnel.PutTunnel(t)
-	t.Timeout = Timeout
+	t.Update(tunnel.WithTimeout(Timeout))
 	err = Connect2Remote(t)
 	if err != nil {
 		return

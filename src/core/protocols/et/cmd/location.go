@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-02 23:41:23
+ * @LastEditTime: 2019-04-03 20:49:57
  */
 
 package cmd
@@ -18,7 +18,7 @@ import (
 	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mynet "github.com/eaglexiang/go-net"
 	cache "github.com/eaglexiang/go-textcache"
-	mytunnel "github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go-tunnel"
 )
 
 // Location ET-LOCATION子协议的实现
@@ -109,7 +109,7 @@ func (l *Location) checkLocationByRemote(e *comm.NetArg) (err error) {
 // Handle 处理ET-LOCATION请求
 // 此方法完成缓存的读取
 // 如果缓存不命中则进一步调用CheckLocationByWeb
-func (l *Location) Handle(req string, tunnel *mytunnel.Tunnel) (err error) {
+func (l *Location) Handle(req string, t *tunnel.Tunnel) (err error) {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
 		return errors.New("Location.Handle -> req is too short")
@@ -131,7 +131,7 @@ func (l *Location) Handle(req string, tunnel *mytunnel.Tunnel) (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = tunnel.WriteLeft([]byte(Location))
+	_, err = t.WriteLeft([]byte(Location))
 	return err
 }
 
