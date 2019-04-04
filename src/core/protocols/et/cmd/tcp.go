@@ -183,7 +183,6 @@ func (t *TCP) connectByLocal(e *comm.NetArg) error {
 	e.Tunnel.Update(
 		tunnel.WithRight(conn),
 		tunnel.WithRightCipher(nil),
-		tunnel.WithLeftCipher(nil),
 		tunnel.WithSpeedLimiter(comm.ETArg.LocalUser.SpeedLimiter()),
 	)
 	return nil
