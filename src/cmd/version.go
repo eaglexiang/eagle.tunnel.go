@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 09:42:11
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-27 23:19:00
+ * @LastEditTime: 2019-04-04 21:46:37
  */
 
 package cmd
@@ -16,7 +16,7 @@ import (
 )
 
 // ProgramVersion 程序版本
-var ProgramVersion, _ = myversion.CreateVersion("0.9.5")
+var ProgramVersion, _ = myversion.CreateVersion("0.9.6.1")
 
 // PrintVersion 打印版本信息
 func PrintVersion(programVersion, protocolVersion, ProtocolCompatibleVersion string) {
