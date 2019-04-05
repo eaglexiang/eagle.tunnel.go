@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-03 20:49:19
+ * @LastEditTime: 2019-04-05 12:56:53
  */
 
 package cmd
@@ -12,6 +12,7 @@ import (
 	"errors"
 	"net"
 	"strings"
+	"sync"
 
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
@@ -22,6 +23,7 @@ import (
 
 // DNS ET-DNS子协议的实现
 type DNS struct {
+	sync.Mutex
 	DNSType        comm.CMDType
 	dnsRemoteCache *cache.TextCache
 	dnsLocalCache  *cache.TextCache
@@ -117,16 +119,24 @@ func (d *DNS) Name() string {
 
 func (d *DNS) getCacheNodeOfRemote(domain string) (node *textcache.CacheNode, loaded bool) {
 	if d.dnsRemoteCache == nil {
-		logger.Info("create textcache for dns proxy")
-		d.dnsRemoteCache = cache.CreateTextCache()
+		d.Lock()
+		if d.dnsRemoteCache == nil {
+			logger.Info("create textcache for dns proxy")
+			d.dnsRemoteCache = cache.CreateTextCache()
+		}
+		d.Unlock()
 	}
 	return d.dnsRemoteCache.Get(domain)
 }
 
 func (d *DNS) getCacheNodeOfLocal(domain string) (node *cache.CacheNode, loaded bool) {
 	if d.dnsLocalCache == nil {
-		logger.Info("create textcache for dns local")
-		d.dnsLocalCache = cache.CreateTextCache()
+		d.Lock()
+		if d.dnsRemoteCache == nil {
+			logger.Info("create textcache for dns local")
+			d.dnsLocalCache = cache.CreateTextCache()
+		}
+		d.Unlock()
 	}
 	return d.dnsLocalCache.Get(domain)
 }
@@ -142,7 +152,7 @@ func (d *DNS) resolvDNSByProxy(e *comm.NetArg) (err error) {
 	} else {
 		err = d._resolvDNSByProxy(e)
 		if err != nil {
-			d.dnsRemoteCache.Delete(e.Domain)
+			node.Destroy()
 		} else {
 			node.Update(e.IP)
 		}
@@ -172,7 +182,7 @@ func (d *DNS) resolvDNSByLocal(e *comm.NetArg) (err error) {
 	} else {
 		err = d._resolvDNSByLocal(e)
 		if err != nil {
-			d.dnsLocalCache.Delete(e.Domain)
+			node.Destroy()
 		} else {
 			node.Update(e.IP)
 		}

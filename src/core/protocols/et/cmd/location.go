@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-03 20:49:57
+ * @LastEditTime: 2019-04-05 12:55:50
  */
 
 package cmd
@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
@@ -23,21 +24,31 @@ import (
 
 // Location ET-LOCATION子协议的实现
 type Location struct {
+	sync.Mutex
 	cacheClient *cache.TextCache
 	cacheServer *cache.TextCache
 }
 
 func (l *Location) getCacheClient(ip string) (node *cache.CacheNode, loaded bool) {
 	if l.cacheClient == nil {
-		logger.Info("create textcache for location")
-		l.cacheClient = cache.CreateTextCache(0)
+		l.Lock()
+		if l.cacheClient == nil {
+			logger.Info("create location cache for client")
+			l.cacheClient = cache.CreateTextCache(0)
+		}
+		l.Unlock()
 	}
 	return l.cacheClient.Get(ip)
 }
 
 func (l *Location) getCacheServer(ip string) (node *cache.CacheNode, loaded bool) {
 	if l.cacheServer == nil {
-		l.cacheServer = cache.CreateTextCache(0)
+		l.Lock()
+		if l.cacheServer == nil {
+			logger.Info("create location cache for server")
+			l.cacheServer = cache.CreateTextCache(0)
+		}
+		l.Unlock()
 	}
 	return l.cacheServer.Get(ip)
 }
@@ -85,7 +96,7 @@ func (l *Location) resolvIPv4(e *comm.NetArg, node *cache.CacheNode) (err error)
 		logger.Info("location for ", e.IP, ": ", e.Location)
 	} else {
 		e.Location = "0;;;WRONG INPUT"
-		l.cacheClient.Delete(e.IP)
+		node.Destroy()
 		logger.Warning(err)
 	}
 	return
@@ -123,7 +134,7 @@ func (l *Location) Handle(req string, t *tunnel.Tunnel) (err error) {
 	} else {
 		Location, err = CheckLocationByWeb(ip)
 		if err != nil {
-			l.cacheServer.Delete(ip)
+			node.Destroy()
 		} else {
 			node.Update(Location)
 		}
