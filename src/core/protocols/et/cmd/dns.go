@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-05 12:56:53
+ * @LastEditTime: 2019-04-05 13:04:06
  */
 
 package cmd
@@ -132,7 +132,7 @@ func (d *DNS) getCacheNodeOfRemote(domain string) (node *textcache.CacheNode, lo
 func (d *DNS) getCacheNodeOfLocal(domain string) (node *cache.CacheNode, loaded bool) {
 	if d.dnsLocalCache == nil {
 		d.Lock()
-		if d.dnsRemoteCache == nil {
+		if d.dnsLocalCache == nil {
 			logger.Info("create textcache for dns local")
 			d.dnsLocalCache = cache.CreateTextCache()
 		}
