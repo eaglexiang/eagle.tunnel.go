@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-03 21:23:20
+ * @LastEditTime: 2019-04-20 21:19:23
  */
 
 package core
@@ -37,7 +37,7 @@ func (relay *Relay) SetSender(sender Sender) {
 
 // Handle 处理请求连接
 func (relay *Relay) Handle(conn net.Conn) {
-	t := tunnel.GetTunnel().Update(
+	t := tunnel.NewTunnel(
 		tunnel.WithTimeout(Timeout),
 		tunnel.WithLeft(conn),
 	)
