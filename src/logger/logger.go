@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-17 15:22:44
- * @LastEditTime: 2019-03-17 17:36:00
+ * @LastEditTime: 2019-05-04 23:28:48
  */
 
 package logger
@@ -48,7 +48,14 @@ func printLog(grade uint, v ...interface{}) {
 	gradeName := logType2LogName(grade)
 
 	out := []interface{}{gradeName + ": "}
-	out = append(out, v...)
+	for _, _v := range v {
+		switch t := _v.(type) {
+		case func() string:
+			out = append(out, t())
+		default:
+			out = append(out, t)
+		}
+	}
 	log.Println(out)
 }
 

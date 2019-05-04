@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-20 21:19:23
+ * @LastEditTime: 2019-05-04 23:30:05
  */
 
 package core
@@ -65,9 +65,23 @@ func (relay *Relay) handleReqs(handler Handler,
 		need2Continue = relay.handleOtherReqs(handler, e)
 	}
 	if need2Continue {
+		printTunnelInfo(t, "start to flow between ")
 		t.Flow()
 	}
 	tunnel.PutTunnel(t)
+}
+
+func printTunnelInfo(t *tunnel.Tunnel, msg string) {
+	logger.Info(
+		msg,
+		func() string {
+			return mynet.GetIPOfConnRemote(t.Left())
+		},
+		" and ",
+		func() string {
+			return mynet.GetIPOfConnRemote(t.Right())
+		},
+	)
 }
 
 // 使用sender业务向远端发起请求
