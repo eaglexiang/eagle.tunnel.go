@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-15 00:06:54
- * @LastEditTime: 2019-06-11 22:21:35
+ * @LastEditTime: 2019-06-11 22:55:07
  -->
 # ET 配置
 
@@ -170,7 +170,8 @@ location = 1;CN;CHN;China
 
 这个列表的位置是`${config-dir}/proxylists/*`，该目录的所有`.txt`文件都会被加载。
 
-程序通常会内置一个默认的强制列表文件，它来自[SmartDNSDomainList](https://github.com/eaglexiang/SmartDNSDomainList)项目，并遵循[模板文件](https://github.com/eaglexiang/SmartDNSDomainList/raw/master/list.txt)中注释部分所述规则。用户可以依照规则自由添加新的域名。
+程序通常会内置一个默认的强制列表文件，它来自[proxy-list
+](https://github.com/remmina/proxy-list)项目，并遵循[模板文件](https://github.com/remmina/proxy-list/blob/master/rule.txt)中注释部分所述规则。用户可以依照规则自由添加新的域名。
 
 **不过更建议将自定义规则放置在单独的自定义文件中**，这可以避免你的自定义文件被更新覆盖掉。正如前文所说，*proxylists*目录的所有`.txt`文件都会被加载。
 
