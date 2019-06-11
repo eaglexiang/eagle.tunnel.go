@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-15 00:06:54
- * @LastEditTime: 2019-02-25 13:33:50
+ * @LastEditTime: 2019-06-11 22:21:35
  -->
 # ET 配置
 
@@ -166,11 +166,17 @@ location = 1;CN;CHN;China
 
 ### DNS污染
 
-智能DNS无法解决DNS污染的问题。所以我们需要将部分容易遭受污染的域名添加进`域名白名单`，使这些域名强制使用代理进行解析。**如果发现某个域名只有全局模式能打开，智能模式无法打开，请手动将其添加进`域名白名单`**。
+智能DNS无法解决DNS污染的问题。所以我们需要将部分容易遭受污染的域名添加进`强制代理列表`，使这些域名强制使用代理进行解析。**如果发现某个域名只有全局模式能打开，智能模式无法打开，请手动将其添加进`强制代理列表`**。
 
-这个白名单的位置是`${config-dir}/whitelist_domain.txt`，即配置文件目录中的`whitelist_domain.txt`。
+这个列表的位置是`${config-dir}/proxylists/*`，该目录的所有`.txt`文件都会被加载。
 
-程序通常会内置一个默认白名单文件，它来自[SmartDNSDomainList](https://github.com/eaglexiang/SmartDNSDomainList)项目，并遵循[模板文件](https://github.com/eaglexiang/SmartDNSDomainList/raw/master/list.txt)中注释部分所述规则。用户可以依照规则自由添加新的域名。**如果发现该项目漏掉的域名，欢迎PR**
+程序通常会内置一个默认的强制列表文件，它来自[SmartDNSDomainList](https://github.com/eaglexiang/SmartDNSDomainList)项目，并遵循[模板文件](https://github.com/eaglexiang/SmartDNSDomainList/raw/master/list.txt)中注释部分所述规则。用户可以依照规则自由添加新的域名。
+
+**不过更建议将自定义规则放置在单独的自定义文件中**，这可以避免你的自定义文件被更新覆盖掉。正如前文所说，*proxylists*目录的所有`.txt`文件都会被加载。
+
+与之相对的一个目录是`directlists`，其中的所有`.txt`规则文件也都会被加载，但不同的是，这里记录的所有域名，在智能模式下都会被强制使用本地直连。
+
+**将常用域名添加进proxylists或directlists会显著提高ET的性能**，因为这帮助ET省去了判断目标位置的开销。
 
 ## hosts文件
 
