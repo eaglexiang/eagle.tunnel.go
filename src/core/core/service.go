@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-27 17:25:50
+ * @LastEditTime: 2019-06-11 23:27:09
  */
 
 package core
@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/eaglexiang/go-counter"
 
 	et "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/core"
 	httpproxy "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/httpproxy"
@@ -41,7 +43,8 @@ type Service struct {
 	stopRunning chan interface{}
 	reqs        chan net.Conn
 	relay       Relay
-	clients     chan interface{} // 当前客户，用来统计当前客户数量
+	counter     counter.Counter // 当前请求的数量
+	maxCount    int64           // 当前请求的最大数量
 }
 
 func createCipher() mycipher.Cipher {
@@ -87,10 +90,11 @@ func setHandlersAndSender(service *Service) {
 }
 
 func setMaxClients(service *Service) {
-	maxclients, _ := strconv.ParseInt(settings.Get("maxclients"), 10, 64)
-	if maxclients > 0 {
-		service.clients = make(chan interface{}, maxclients)
+	maxclients, err := strconv.ParseInt(settings.Get("maxclients"), 10, 64)
+	if err != nil {
+		panic(err)
 	}
+	service.maxCount = maxclients
 }
 
 // CreateService 构造Service
@@ -126,7 +130,7 @@ func (s *Service) Start() (err error) {
 	fmt.Println("start to listen: ", ipe)
 	s.reqs = make(chan net.Conn)
 	go s.listen()
-	go s.handle()
+	go s.handleReqs()
 
 	s.stopRunning = make(chan interface{})
 	return nil
@@ -144,31 +148,79 @@ func (s *Service) listen() {
 	}
 }
 
-func (s *Service) handle() {
+// full 当前请求数已满
+func (s *Service) full() bool {
+	if s.maxCount == 0 {
+		return false
+	}
+	if s.counter.Value > s.maxCount {
+		return true
+	}
+	return false
+}
+
+// clientsUp 当前请求数+1
+func (s *Service) clientsUp() {
+	if s.maxCount == 0 {
+		return
+	}
+	s.counter.Up()
+	logger.Info("clients now: ", s.counter.Value)
+}
+
+// clientsDown 当前请求数-1
+func (s *Service) clientsDown() {
+	if s.maxCount == 0 {
+		return
+	}
+	s.counter.Down()
+	logger.Info("clients now: ", s.counter.Value)
+}
+
+func (s *Service) handleReqs() {
 	for {
-		select {
-		case req, ok := <-s.reqs:
-			if !ok {
-				return
-			}
-			if s.clients != nil {
-				s.clients <- new(interface{})
-			}
-			if Timeout != 0 {
-				req.SetReadDeadline(time.Now().Add(Timeout))
-			}
-			go s._Handle(req)
-		case <-s.stopRunning:
+		req, ok, err := s.recvReq()
+		if err != nil {
 			break
+		}
+		if ok {
+			s.handleReq(req)
 		}
 	}
 }
 
-func (s *Service) _Handle(req net.Conn) {
-	s.relay.Handle(req)
-	if s.clients != nil {
-		<-s.clients
+func (s *Service) recvReq() (req net.Conn, ok bool, err error) {
+	if s.full() {
+		time.Sleep(time.Millisecond * 100)
+		return
 	}
+
+	select {
+	case req, ok = <-s.reqs:
+		if !ok {
+			err = errors.New("no new req")
+		}
+		return
+	case <-s.stopRunning:
+		err = errors.New("stopped")
+		return
+	}
+}
+
+func (s *Service) handleReq(req net.Conn) {
+	go s._Handle(req)
+	return
+}
+
+func (s *Service) _Handle(req net.Conn) {
+	s.clientsUp()
+
+	if Timeout != 0 {
+		req.SetReadDeadline(time.Now().Add(Timeout))
+	}
+	s.relay.Handle(req)
+
+	s.clientsDown()
 }
 
 // Close 关闭服务
@@ -182,8 +234,4 @@ func (s *Service) Close() {
 	s.stopRunning = nil
 	s.listener.Close()
 	close(s.reqs)
-	if s.clients != nil {
-		close(s.clients)
-		s.clients = nil
-	}
 }
