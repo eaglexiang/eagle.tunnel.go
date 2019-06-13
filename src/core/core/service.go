@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-11 23:27:09
+ * @LastEditTime: 2019-06-13 20:47:10
  */
 
 package core
@@ -18,13 +18,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eaglexiang/go-counter"
-
 	et "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/core"
 	httpproxy "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/httpproxy"
 	socks5 "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/socks5"
 	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mycipher "github.com/eaglexiang/go-cipher"
+	"github.com/eaglexiang/go-counter"
 	settings "github.com/eaglexiang/go-settings"
 	myuser "github.com/eaglexiang/go-user"
 )
@@ -184,7 +183,7 @@ func (s *Service) handleReqs() {
 			break
 		}
 		if ok {
-			s.handleReq(req)
+			go s.handleReq(req)
 		}
 	}
 }
@@ -208,11 +207,6 @@ func (s *Service) recvReq() (req net.Conn, ok bool, err error) {
 }
 
 func (s *Service) handleReq(req net.Conn) {
-	go s._Handle(req)
-	return
-}
-
-func (s *Service) _Handle(req net.Conn) {
 	s.clientsUp()
 
 	if Timeout != 0 {
@@ -221,6 +215,7 @@ func (s *Service) _Handle(req net.Conn) {
 	s.relay.Handle(req)
 
 	s.clientsDown()
+	return
 }
 
 // Close 关闭服务
