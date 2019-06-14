@@ -3,19 +3,19 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 20:52:19
+ * @LastEditTime: 2019-06-14 21:54:15
  */
 
 package core
 
 import (
 	"bufio"
+	"github.com/eaglexiang/go-bytebuffer"
 	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
 	"plugin"
-	"strconv"
 	"strings"
 	"time"
 
@@ -85,6 +85,8 @@ func ImportConfig() (err error) {
 	if err = initLocalUser(); err != nil {
 		return
 	}
+	initTimeout()
+	initBufferSize()
 	return readConfigDir()
 }
 
@@ -100,9 +102,6 @@ func readConfigDir() (err error) {
 	}
 	// hosts文件
 	if err = execHosts(); err != nil {
-		return
-	}
-	if err = execTimeout(); err != nil {
 		return
 	}
 	// 导入Mods
@@ -199,19 +198,15 @@ func initLocalUser() (err error) {
 	return
 }
 
-func execTimeout() error {
-	_timeout := settings.Get("timeout")
-	timeout, err := strconv.ParseInt(
-		_timeout,
-		10,
-		32)
-	if err != nil {
-		logger.Error("invalid timeout", _timeout)
-		return err
-	}
+func initTimeout() {
+	timeout := settings.GetInt64("timeout")
 	Timeout = time.Second * time.Duration(timeout)
 	comm.Timeout = Timeout
-	return nil
+}
+
+func initBufferSize() {
+	size := settings.GetInt64("buffer.size")
+	bytebuffer.SetDefaultSize(int(size))
 }
 
 func execHosts() (err error) {
