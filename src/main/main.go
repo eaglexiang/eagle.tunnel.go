@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 23:08:14
+ * @LastEditTime: 2019-06-14 23:14:25
  */
 
 package main
@@ -15,12 +15,12 @@ import (
 
 	mycmd "github.com/eaglexiang/eagle.tunnel.go/src/cmd"
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/config"
-	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/core"
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/server"
 	"github.com/eaglexiang/go-logger"
 	settings "github.com/eaglexiang/go-settings"
 )
 
-var service *etcore.Service
+var service *server.Service
 
 func main() {
 	args := os.Args[1:]
@@ -72,7 +72,7 @@ func core(args []string) {
 		return
 	}
 	fmt.Println(settings.ToString())
-	service = etcore.CreateService()
+	service = server.CreateService()
 	defer service.Close()
 	go startService()
 	waitSig()

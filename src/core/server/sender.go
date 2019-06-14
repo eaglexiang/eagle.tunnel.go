@@ -3,10 +3,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:46:10
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-02-21 16:19:25
+ * @LastEditTime: 2019-06-14 23:13:39
  */
 
-package core
+package server
 
 import (
 	mynet "github.com/eaglexiang/go-net"

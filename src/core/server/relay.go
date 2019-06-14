@@ -3,10 +3,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 22:42:40
+ * @LastEditTime: 2019-06-14 23:13:34
  */
 
-package core
+package server
 
 import (
 	"errors"

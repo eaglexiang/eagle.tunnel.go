@@ -3,10 +3,10 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 22:47:03
+ * @LastEditTime: 2019-06-14 23:13:44
  */
 
-package core
+package server
 
 import (
 	"crypto/tls"
