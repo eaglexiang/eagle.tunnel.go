@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 21:54:15
+ * @LastEditTime: 2019-06-14 22:01:10
  */
 
 package core
@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"path"
 	"path/filepath"
 	"plugin"
 	"strings"
@@ -21,6 +22,7 @@ import (
 
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	mynet "github.com/eaglexiang/go-net"
 	settings "github.com/eaglexiang/go-settings"
 	myuser "github.com/eaglexiang/go-user"
 )
@@ -55,6 +57,7 @@ func init() {
 	settings.SetDefault("cipher", "simple")
 	settings.SetDefault("maxclients", "0")
 	settings.SetDefault("buffer.size", "1000")
+	settings.SetDefault("dynamic-ports", "off")
 }
 
 // readConfigFile 读取根据给定的配置文件
@@ -76,8 +79,8 @@ func ImportConfig() (err error) {
 		return
 	}
 
-	settings.Set("listen", SetIPE(settings.Get("listen")))
-	settings.Set("relay", SetIPE(settings.Get("relay")))
+	settings.Set("listen", finishPort(settings.Get("listen")))
+	settings.Set("relay", finishPort(settings.Get("relay")))
 
 	if err = SetProxyStatus(settings.Get("proxy-status")); err != nil {
 		return
@@ -179,7 +182,7 @@ func finishConfigDir() bool {
 // initUserList 初始化用户列表
 func initUserList() (err error) {
 	if settings.Get("user-check") == "on" {
-		usersPath := settings.Get("config-dir") + "/users.list"
+		usersPath := path.Join(settings.Get("config-dir"), "/users.list")
 		err = importUsers(usersPath)
 		if err != nil {
 			return
@@ -210,7 +213,7 @@ func initBufferSize() {
 }
 
 func execHosts() (err error) {
-	hostsDir := settings.Get("config-dir") + "/hosts"
+	hostsDir := path.Join(settings.Get("config-dir"), "/hosts")
 	count, err := readHosts(hostsDir)
 	if err != nil {
 		return err
@@ -288,17 +291,16 @@ func importUsers(usersPath string) (err error) {
 	return
 }
 
-// SetIPE 补全端口号
-func SetIPE(remoteIpe string) string {
-	if strings.HasPrefix(remoteIpe, "[") {
-		// IPv6
-		if strings.HasSuffix(remoteIpe, "]") {
+// finishPort 补全端口号
+func finishPort(remoteIpe string) string {
+	switch mynet.TypeOfAddr(remoteIpe) {
+	case mynet.IPv4Addr:
+		if ip := net.ParseIP(remoteIpe); ip != nil {
 			// 不包含端口号
 			remoteIpe += ":8080"
 		}
-	} else {
-		ip := net.ParseIP(remoteIpe)
-		if ip != nil {
+	case mynet.IPv6Addr:
+		if strings.HasSuffix(remoteIpe, "]") {
 			// 不包含端口号
 			remoteIpe += ":8080"
 		}
