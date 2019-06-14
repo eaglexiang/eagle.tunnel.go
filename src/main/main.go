@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 20:52:55
+ * @LastEditTime: 2019-06-14 20:59:23
  */
 
 package main
@@ -30,34 +30,17 @@ func main() {
 
 	switch args[0] {
 	case "check":
-		err := Init(args[2:])
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-		mycmd.Check(args[1])
+		check(args)
 	default:
-		err := Init(args)
-		if err != nil {
-			if err.Error() != "no need to continue" {
-				logger.Error(err)
-			}
-			return
-		}
-		fmt.Println(settings.ToString())
-		service = etcore.CreateService()
-		defer service.Close()
-		go core()
-		checkSig()
+		core(args)
 	}
 }
 
-func checkSig() {
+func waitSig() {
 	fmt.Println("press Ctrl + C to quit")
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
-	fmt.Println("stoping...")
 }
 
 // Init 初始化参数系统
@@ -69,9 +52,40 @@ func Init(args []string) error {
 	return etcore.ImportConfig()
 }
 
-func core() {
+// check check子命令
+func check(args []string) {
+	err := Init(args[2:])
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	mycmd.Check(args[1])
+}
+
+func core(args []string) {
+	err := Init(args)
+	if err != nil {
+		if err.Error() != "no need to continue" {
+			logger.Error(err)
+		}
+		return
+	}
+	fmt.Println(settings.ToString())
+	service = etcore.CreateService()
+	defer service.Close()
+	go startService()
+	waitSig()
+	fmt.Println("stoping...")
+	stopService()
+}
+
+func startService() {
 	err := service.Start()
 	if err != nil {
 		logger.Error(err)
 	}
+}
+
+func stopService() {
+	service.Close()
 }
