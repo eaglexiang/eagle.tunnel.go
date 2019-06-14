@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 21:15:46
+ * @LastEditTime: 2019-06-14 21:44:56
  */
 
 package core
@@ -15,6 +15,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,7 +39,7 @@ var Users map[string]*myuser.ValidUser
 // 必须使用CreateService方法进行构造
 type Service struct {
 	sync.Mutex
-	listener    net.Listener
+	listeners   []net.Listener
 	stopRunning chan interface{}
 	reqs        chan net.Conn
 	relay       Relay
@@ -118,10 +119,7 @@ func (s *Service) Start() (err error) {
 	}
 
 	s.disableTLS()
-
-	if err = s.start2Listen(); err != nil {
-		return
-	}
+	s.start2Listen()
 
 	s.reqs = make(chan net.Conn)
 
@@ -138,18 +136,23 @@ func (s *Service) disableTLS() {
 		&tls.Config{InsecureSkipVerify: true}
 }
 
-func (s *Service) start2Listen() (err error) {
-	ipe := settings.Get("listen")
-	if s.listener, err = net.Listen("tcp", ipe); err != nil {
-		return err
+func (s *Service) start2Listen() {
+	_ipes := settings.Get("listen")
+	ipes := strings.Split(_ipes, ",")
+	for _, ipe := range ipes {
+		s.listenIpe(ipe)
 	}
-	fmt.Println("start to listen: ", ipe)
-	return
 }
 
 func (s *Service) listen() {
+	for _, listener := range s.listeners {
+		go s.startListener(listener)
+	}
+}
+
+func (s *Service) startListener(listener net.Listener) {
 	for s.stopRunning != nil {
-		req, err := s.listener.Accept()
+		req, err := listener.Accept()
 		if err != nil {
 			fmt.Println(err.Error())
 			s.Close()
@@ -239,6 +242,17 @@ func (s *Service) Close() {
 	}
 	close(s.stopRunning)
 	s.stopRunning = nil
-	s.listener.Close()
+	for _, lis := range s.listeners {
+		lis.Close()
+	}
 	close(s.reqs)
+}
+
+func (s *Service) listenIpe(ipe string) {
+	if listener, err := net.Listen("tcp", ipe); err != nil {
+		fmt.Println(err)
+	} else {
+		s.listeners = append(s.listeners, listener)
+		fmt.Println("start to listen: ", ipe)
+	}
 }
