@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-21 19:47:50
+ * @LastEditTime: 2019-06-14 20:52:55
  */
 
 package main
@@ -66,7 +66,7 @@ func Init(args []string) error {
 	if err != nil {
 		return err
 	}
-	return etcore.ExecConfig()
+	return etcore.ImportConfig()
 }
 
 func core() {

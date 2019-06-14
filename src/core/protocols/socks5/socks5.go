@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-03 20:32:11
+ * @LastEditTime: 2019-06-14 20:38:45
  */
 
 package socks5
@@ -96,7 +96,7 @@ func getCMD(buffer *bytebuffer.ByteBuffer) (cmd command, err error) {
 }
 
 func getMsgFromL(t *tunnel.Tunnel) (buffer *bytebuffer.ByteBuffer, err error) {
-	buffer = bytebuffer.GetKBBuffer()
+	buffer = bytebuffer.GetBuffer()
 	buffer.Length, err = t.ReadLeft(buffer.Buf())
 	return
 }
@@ -125,7 +125,7 @@ func (conn *Socks5) Handle(e *mynet.Arg) (err error) {
 		return err
 	}
 	req, err := getMsgFromL(e.Tunnel)
-	defer bytebuffer.PutKBBuffer(req)
+	defer bytebuffer.PutBuffer(req)
 	if err != nil {
 		return err
 	}

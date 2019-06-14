@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-11 23:29:36
+ * @LastEditTime: 2019-06-14 20:52:19
  */
 
 package core
@@ -54,10 +54,11 @@ func init() {
 	settings.SetDefault("debug", "warning")
 	settings.SetDefault("cipher", "simple")
 	settings.SetDefault("maxclients", "0")
+	settings.SetDefault("buffer.size", "1000")
 }
 
-// readConfig 读取根据给定的配置文件
-func readConfig() error {
+// readConfigFile 读取根据给定的配置文件
+func readConfigFile() error {
 	if !settings.Exsit("config") {
 		return nil
 	}
@@ -66,33 +67,24 @@ func readConfig() error {
 	if err != nil {
 		return err
 	}
-	err = settings.ImportLines(allConfLines)
-	if err != nil {
-		return err
-	}
-	return nil
+	return settings.ImportLines(allConfLines)
 }
 
-// ExecConfig 执行配置
-func ExecConfig() (err error) {
-	err = readConfig()
-	if err != nil {
+// ImportConfig 导入配置
+func ImportConfig() (err error) {
+	if err = readConfigFile(); err != nil {
 		return
 	}
 
 	settings.Set("listen", SetIPE(settings.Get("listen")))
 	settings.Set("relay", SetIPE(settings.Get("relay")))
 
-	err = SetProxyStatus(settings.Get("proxy-status"))
-	if err != nil {
+	if err = SetProxyStatus(settings.Get("proxy-status")); err != nil {
 		return
 	}
-
-	err = initLocalUser()
-	if err != nil {
+	if err = initLocalUser(); err != nil {
 		return
 	}
-
 	return readConfigDir()
 }
 
@@ -100,20 +92,19 @@ func readConfigDir() (err error) {
 	if !finishConfigDir() {
 		return nil
 	}
-	err = initUserList()
-	if err != nil {
-		return err
+	if err = initUserList(); err != nil {
+		return
 	}
-	err = readClearDomains()
-	if err != nil {
+	if err = readClearDomains(); err != nil {
 		return
 	}
 	// hosts文件
-	err = execHosts()
-	if err != nil {
+	if err = execHosts(); err != nil {
 		return
 	}
-	execTimeout()
+	if err = execTimeout(); err != nil {
+		return
+	}
 	// 导入Mods
 	return execMods()
 }

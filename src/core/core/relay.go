@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-13 20:39:36
+ * @LastEditTime: 2019-06-14 20:45:49
  */
 
 package core
@@ -42,7 +42,7 @@ func (relay *Relay) Handle(conn net.Conn) {
 		tunnel.WithLeft(conn),
 	)
 	firstMsg, handler, err := relay.shake(t)
-	defer bytebuffer.PutKBBuffer(firstMsg)
+	defer bytebuffer.PutBuffer(firstMsg)
 	if err != nil {
 		return
 	}
@@ -126,7 +126,7 @@ func getHandler(firstMsg *bytebuffer.ByteBuffer, handlers []Handler) (Handler, e
 func (relay *Relay) shake(t *tunnel.Tunnel) (
 	msg *bytebuffer.ByteBuffer,
 	handler Handler, err error) {
-	msg = bytebuffer.GetKBBuffer()
+	msg = bytebuffer.GetBuffer()
 	msg.Length, err = t.ReadLeft(msg.Buf())
 	if err != nil {
 		logger.Warning("fail to get first msg")
