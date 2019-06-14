@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-13 20:47:10
+ * @LastEditTime: 2019-06-14 21:15:46
  */
 
 package core
@@ -117,22 +117,34 @@ func (s *Service) Start() (err error) {
 		return errors.New("service is already started")
 	}
 
-	// disable tls check for ET-LOCATION
-	http.DefaultTransport.(*http.Transport).TLSClientConfig =
-		&tls.Config{InsecureSkipVerify: true}
+	s.disableTLS()
 
-	ipe := settings.Get("listen")
-	s.listener, err = net.Listen("tcp", ipe)
-	if err != nil {
-		return err
+	if err = s.start2Listen(); err != nil {
+		return
 	}
-	fmt.Println("start to listen: ", ipe)
+
 	s.reqs = make(chan net.Conn)
+
 	go s.listen()
 	go s.handleReqs()
 
 	s.stopRunning = make(chan interface{})
-	return nil
+	return
+}
+
+// disableTLS disable tls check for ET-LOCATION
+func (s *Service) disableTLS() {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig =
+		&tls.Config{InsecureSkipVerify: true}
+}
+
+func (s *Service) start2Listen() (err error) {
+	ipe := settings.Get("listen")
+	if s.listener, err = net.Listen("tcp", ipe); err != nil {
+		return err
+	}
+	fmt.Println("start to listen: ", ipe)
+	return
 }
 
 func (s *Service) listen() {
