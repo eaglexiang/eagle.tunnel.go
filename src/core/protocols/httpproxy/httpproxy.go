@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-03 20:33:11
+ * @LastEditTime: 2019-06-14 22:39:19
  */
 
 package httpproxy
@@ -14,7 +14,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	"github.com/eaglexiang/go-logger"
 	mynet "github.com/eaglexiang/go-net"
 	"github.com/eaglexiang/go-tunnel"
 )

@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 20:45:49
+ * @LastEditTime: 2019-06-14 22:42:40
  */
 
 package core
@@ -12,8 +12,9 @@ import (
 	"errors"
 	"net"
 
-	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/config"
 	"github.com/eaglexiang/go-bytebuffer"
+	logger "github.com/eaglexiang/go-logger"
 	mynet "github.com/eaglexiang/go-net"
 	"github.com/eaglexiang/go-tunnel"
 )
@@ -38,7 +39,7 @@ func (relay *Relay) SetSender(sender Sender) {
 // Handle 处理请求连接
 func (relay *Relay) Handle(conn net.Conn) {
 	t := tunnel.NewTunnel(
-		tunnel.WithTimeout(Timeout),
+		tunnel.WithTimeout(config.Timeout),
 		tunnel.WithLeft(conn),
 	)
 	firstMsg, handler, err := relay.shake(t)

@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-17 15:07:11
+ * @LastEditTime: 2019-06-14 23:05:56
  */
 
 package cmd
@@ -14,10 +14,9 @@ import (
 	"os"
 	"strconv"
 
-	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/core"
+	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/config"
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/cmd"
 	et "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/core"
-	myet "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/core"
 	cipher "github.com/eaglexiang/go-cipher"
 	settings "github.com/eaglexiang/go-settings"
 )
@@ -93,7 +92,7 @@ func users() {
 	}
 }
 
-func createET() *myet.ET {
+func createET() *et.ET {
 	cipher.DefaultCipher = func() cipher.Cipher {
 		cipherType := cipher.ParseCipherType(settings.Get("cipher"))
 		switch cipherType {

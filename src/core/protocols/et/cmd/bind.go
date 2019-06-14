@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-24 22:53:52
- * @LastEditTime: 2019-04-01 22:07:12
+ * @LastEditTime: 2019-06-14 22:32:15
  */
 
 package cmd
@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
-	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	"github.com/eaglexiang/go-logger"
 	"github.com/eaglexiang/go-tunnel"
 )
 

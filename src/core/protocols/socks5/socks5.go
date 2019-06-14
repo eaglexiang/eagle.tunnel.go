@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 20:38:45
+ * @LastEditTime: 2019-06-14 22:39:43
  */
 
 package socks5
@@ -13,8 +13,8 @@ import (
 	"errors"
 	"net"
 
-	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	"github.com/eaglexiang/go-bytebuffer"
+	"github.com/eaglexiang/go-logger"
 	mynet "github.com/eaglexiang/go-net"
 	"github.com/eaglexiang/go-tunnel"
 )

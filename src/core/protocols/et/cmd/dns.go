@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-04-05 13:04:06
+ * @LastEditTime: 2019-06-14 22:32:46
  */
 
 package cmd
@@ -15,7 +15,7 @@ import (
 	"sync"
 
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
-	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	"github.com/eaglexiang/go-logger"
 	"github.com/eaglexiang/go-textcache"
 	cache "github.com/eaglexiang/go-textcache"
 	"github.com/eaglexiang/go-tunnel"

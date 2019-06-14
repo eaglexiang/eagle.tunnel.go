@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 20:59:23
+ * @LastEditTime: 2019-06-14 23:08:14
  */
 
 package main
@@ -14,8 +14,9 @@ import (
 	"os/signal"
 
 	mycmd "github.com/eaglexiang/eagle.tunnel.go/src/cmd"
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/config"
 	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/core"
-	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	"github.com/eaglexiang/go-logger"
 	settings "github.com/eaglexiang/go-settings"
 )
 
@@ -49,7 +50,7 @@ func Init(args []string) error {
 	if err != nil {
 		return err
 	}
-	return etcore.ImportConfig()
+	return config.ImportConfigFile()
 }
 
 // check check子命令

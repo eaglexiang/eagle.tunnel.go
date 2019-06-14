@@ -4,14 +4,14 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 05:42:47
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-03-21 19:18:31
+ * @LastEditTime: 2019-06-14 22:46:27
  */
 
 package cmd
 
 import (
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
-	"github.com/eaglexiang/eagle.tunnel.go/src/logger"
+	"github.com/eaglexiang/go-logger"
 	settings "github.com/eaglexiang/go-settings"
 
 	"errors"

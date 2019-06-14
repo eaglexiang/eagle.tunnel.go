@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 21:44:56
+ * @LastEditTime: 2019-06-14 22:47:03
  */
 
 package core
@@ -12,6 +12,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/config"
 	"net"
 	"net/http"
 	"strconv"
@@ -22,18 +23,11 @@ import (
 	et "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/core"
 	httpproxy "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/httpproxy"
 	socks5 "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/socks5"
-	logger "github.com/eaglexiang/eagle.tunnel.go/src/logger"
 	mycipher "github.com/eaglexiang/go-cipher"
 	"github.com/eaglexiang/go-counter"
+	logger "github.com/eaglexiang/go-logger"
 	settings "github.com/eaglexiang/go-settings"
-	myuser "github.com/eaglexiang/go-user"
 )
-
-// LocalUser 本地用户
-var LocalUser *myuser.ValidUser
-
-// Users 所有授权用户
-var Users map[string]*myuser.ValidUser
 
 // Service ET服务
 // 必须使用CreateService方法进行构造
@@ -61,7 +55,7 @@ func createCipher() mycipher.Cipher {
 }
 
 func setHandlersAndSender(service *Service) {
-	et := et.NewET(CreateETArg())
+	et := et.NewET(config.CreateETArg())
 
 	// 添加后端协议Handler
 	if settings.Get("et") == "on" {
@@ -224,8 +218,8 @@ func (s *Service) recvReq() (req net.Conn, ok bool, err error) {
 func (s *Service) handleReq(req net.Conn) {
 	s.clientsUp()
 
-	if Timeout != 0 {
-		req.SetReadDeadline(time.Now().Add(Timeout))
+	if config.Timeout != 0 {
+		req.SetReadDeadline(time.Now().Add(config.Timeout))
 	}
 	s.relay.Handle(req)
 
