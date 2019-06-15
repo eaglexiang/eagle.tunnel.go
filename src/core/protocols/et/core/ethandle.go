@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:35
- * @LastEditTime: 2019-06-14 22:38:37
+ * @LastEditTime: 2019-06-15 11:54:49
  */
 
 package et
@@ -79,7 +79,7 @@ func (et *ET) checkHeaderOfReq(
 	switch {
 	case len(headers) < 1:
 		return errors.New("checkHeaderOfReq -> nil req")
-	case headers[0] != comm.ETArg.Head:
+	case headers[0] != comm.DefaultArg.Head:
 		logger.Warning("invalid header of req: ", headers[0])
 		return errors.New("checkHeaderOfReq -> wrong head")
 	default:
@@ -90,7 +90,7 @@ func (et *ET) checkHeaderOfReq(
 }
 
 func (et *ET) checkUserOfReq(t *tunnel.Tunnel) (err error) {
-	if comm.ETArg.ValidUsers == nil {
+	if comm.DefaultArg.ValidUsers == nil {
 		// 未启用用户校验
 		return
 	}
@@ -118,7 +118,7 @@ func findReqUser(t *tunnel.Tunnel) (*myuser.ReqUser, error) {
 }
 
 func (et *ET) _checkUserOfReq(user2Check *myuser.ReqUser) (limiter ratelimit.Limiter, err error) {
-	validUser, ok := comm.ETArg.ValidUsers[user2Check.ID]
+	validUser, ok := comm.DefaultArg.ValidUsers[user2Check.ID]
 	if !ok {
 		logger.Warning("user not found: ", user2Check.ID)
 		return nil, errors.New("user not found")

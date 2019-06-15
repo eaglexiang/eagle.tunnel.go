@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 22:37:45
+ * @LastEditTime: 2019-06-15 11:53:46
  */
 
 package cmd
@@ -52,7 +52,7 @@ func (t TCP) Send(e *comm.NetArg) (err error) {
 	}
 
 	// 建立连接
-	switch comm.ETArg.ProxyStatus {
+	switch comm.DefaultArg.ProxyStatus {
 	case comm.ProxySMART:
 		err = t.smartSend(e)
 	case comm.ProxyENABLE:
@@ -90,9 +90,9 @@ func resolvDNS64(e *comm.NetArg) (err error) {
 }
 
 func (t TCP) resolvDNS(e *comm.NetArg) error {
-	resolver, ok := dnsResolver[comm.ETArg.IPType]
+	resolver, ok := dnsResolver[comm.DefaultArg.IPType]
 	if !ok {
-		logger.Error("invalid ip-type", comm.ETArg.IPType)
+		logger.Error("invalid ip-type", comm.DefaultArg.IPType)
 		return errors.New("invalid ip-type")
 	}
 	return resolver(e)
@@ -183,7 +183,7 @@ func (t *TCP) connectByLocal(e *comm.NetArg) error {
 	e.Tunnel.Update(
 		tunnel.WithRight(conn),
 		tunnel.WithRightCipher(nil),
-		tunnel.WithSpeedLimiter(comm.ETArg.LocalUser.SpeedLimiter()),
+		tunnel.WithSpeedLimiter(comm.DefaultArg.LocalUser.SpeedLimiter()),
 	)
 	return nil
 }

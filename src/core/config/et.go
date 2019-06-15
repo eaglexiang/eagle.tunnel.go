@@ -30,7 +30,7 @@ func CreateETArg() *comm.Arg {
 	}
 }
 
-func handleSingleHost(host string) (err error) {
+func handleSingleHost(host string) {
 	// 将所有连续空格缩减为单个空格
 	for {
 		newHost := strings.Replace(host, "  ", " ", -1)
@@ -41,7 +41,7 @@ func handleSingleHost(host string) (err error) {
 	}
 
 	if host == "" {
-		return nil
+		return
 	}
 
 	items := strings.Split(host, " ")
@@ -55,5 +55,4 @@ func handleSingleHost(host string) (err error) {
 	} else {
 		panic("invalid hosts line: " + host)
 	}
-	return nil
 }

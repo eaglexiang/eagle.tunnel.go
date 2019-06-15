@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 22:32:33
+ * @LastEditTime: 2019-06-15 11:54:14
  */
 
 package cmd
@@ -119,7 +119,7 @@ func (c Check) Name() string {
 // SendEtCheckAuthReq 发射 ET-CHECK-AUTH 请求
 func SendEtCheckAuthReq() string {
 	// null代表未启用本地用户
-	if comm.ETArg.LocalUser.ID == "null" {
+	if comm.DefaultArg.LocalUser.ID == "null" {
 		return "no local user"
 	}
 
@@ -131,7 +131,7 @@ func SendEtCheckAuthReq() string {
 		return err.Error()
 	}
 
-	return "AUTH OK with local user: " + comm.ETArg.LocalUser.ID
+	return "AUTH OK with local user: " + comm.DefaultArg.LocalUser.ID
 }
 
 // SendEtCheckVersionReq 发射 ET-CHECK-VERSION 请求
@@ -200,7 +200,7 @@ func SendEtCheckUsersReq() (string, error) {
 
 func handleEtCheckUsersReq(reqs []string, t *tunnel.Tunnel) {
 	var reply string
-	for _, user := range comm.ETArg.ValidUsers {
+	for _, user := range comm.DefaultArg.ValidUsers {
 		line := user.ID + ": " + user.Count()
 		reply += line + "\n"
 	}

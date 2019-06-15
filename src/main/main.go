@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 23:14:25
+ * @LastEditTime: 2019-06-15 12:33:54
  */
 
 package main
@@ -50,7 +50,8 @@ func Init(args []string) error {
 	if err != nil {
 		return err
 	}
-	return config.ImportConfigFile()
+	config.ImportConfigFiles()
+	return nil
 }
 
 // check check子命令

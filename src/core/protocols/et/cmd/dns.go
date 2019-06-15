@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 22:32:46
+ * @LastEditTime: 2019-06-15 11:53:58
  */
 
 package cmd
@@ -31,21 +31,18 @@ type DNS struct {
 }
 
 // Handle 处理ET-DNS请求
-func (d *DNS) Handle(req string, t *tunnel.Tunnel) error {
+func (d *DNS) Handle(req string, t *tunnel.Tunnel) (err error) {
 	reqs := strings.Split(req, " ")
 	if len(reqs) < 2 {
 		return errors.New("ETDNS.Handle -> req is too short")
 	}
 	e := comm.NetArg{NetConnArg: comm.NetConnArg{Domain: reqs[1]}}
-	err := d.resolvDNSByLocal(&e)
+	err = d.resolvDNSByLocal(&e)
 	if err != nil {
 		return err
 	}
 	_, err = t.WriteLeft([]byte(e.IP))
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }
 
 // Send 发送ET-DNS请求
@@ -57,7 +54,7 @@ func (d *DNS) Send(e *comm.NetArg) (err error) {
 		logger.Info("hosts found: ", e.Domain, " ", e.IP)
 		return nil
 	}
-	switch comm.ETArg.ProxyStatus {
+	switch comm.DefaultArg.ProxyStatus {
 	case comm.ProxySMART:
 		err = d.smartSend(e)
 	case comm.ProxyENABLE:

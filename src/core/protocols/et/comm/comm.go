@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-24 22:35:45
- * @LastEditTime: 2019-04-01 22:00:10
+ * @LastEditTime: 2019-06-15 11:36:09
  */
 
 package comm
@@ -15,52 +15,6 @@ import (
 	"time"
 
 	"github.com/eaglexiang/go-trie"
-)
-
-// CMDType ET子协议的命令类型
-type CMDType int
-
-// ET子协议的类型
-const (
-	UNKNOWN CMDType = iota
-	TCP
-	DNS
-	DNS6
-	LOCATION
-	CHECK
-	BIND
-)
-
-// ET子协议的名字
-const (
-	UNKNOWNTxt  = "UNKNOWN"
-	TCPTxt      = "TCP"
-	DNSTxt      = "DNS"
-	DNS6Txt     = "DNS6"
-	LOCATIONTxt = "LOCATION"
-	CHECKTxt    = "CHECK"
-	BINDTxt     = "BIND"
-)
-
-// 代理的状态
-const (
-	ProxyENABLE = iota
-	ProxySMART
-	ErrorProxyStatus
-)
-
-// 域名的类型
-const (
-	UncertainDomain = iota
-	ProxyDomain
-	DirectDomain
-)
-
-// 代理状态对应的文本
-const (
-	ProxyEnableText      = "ENABLE"
-	ProxySmartText       = "SMART"
-	ErrorProxyStatusText = "ERROR"
 )
 
 // EtTypes ET子协议的类型
@@ -87,6 +41,7 @@ var DirectDomains trie.StringTrie
 // Timeout 超时长度
 var Timeout time.Duration
 
+// EtTypes[txt] value
 func init() {
 	EtTypes = make(map[string]CMDType)
 	EtTypes[TCPTxt] = TCP
@@ -95,8 +50,10 @@ func init() {
 	EtTypes[LOCATIONTxt] = LOCATION
 	EtTypes[CHECKTxt] = CHECK
 	EtTypes[BINDTxt] = BIND
+	EtTypes[NEWIPETxt] = NEWIPE
 }
 
+// EtTypes[value] txt
 func init() {
 	EtNames = make(map[CMDType]string)
 	EtNames[TCP] = TCPTxt
@@ -105,13 +62,18 @@ func init() {
 	EtNames[LOCATION] = LOCATIONTxt
 	EtNames[CHECK] = CHECKTxt
 	EtNames[BIND] = BINDTxt
+	EtNames[NEWIPE] = NEWIPETxt
 }
 
+// EtProxyStatus[txt] value
 func init() {
 	EtProxyStatus = make(map[string]int)
 	EtProxyStatus[ProxyEnableText] = ProxyENABLE
 	EtProxyStatus[ProxySmartText] = ProxySMART
+}
 
+// EtProxyStatus[value] txt
+func init() {
 	EtProxyStatusText = make(map[int]string)
 	EtProxyStatusText[ProxyENABLE] = ProxyEnableText
 	EtProxyStatusText[ProxySMART] = ProxySmartText

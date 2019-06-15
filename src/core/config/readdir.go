@@ -24,66 +24,55 @@ func finishConfigDir() bool {
 	return true
 }
 
-func readConfigDir() (err error) {
+func readConfigDir() {
 	if !finishConfigDir() {
-		return nil
-	}
-	if err = initUserList(); err != nil {
 		return
 	}
-	if err = readClearDomains(); err != nil {
-		return
-	}
+
+	initUserList()
+	readClearDomains()
 	// hosts文件
-	if err = execHosts(); err != nil {
-		return
-	}
+	importHosts()
 	// 导入Mods
-	return execMods()
+	execMods()
 }
 
 // readClearDomains 读取明确连接规则的域名列表
-func readClearDomains() error {
-	if err := readDirectlist(); err != nil {
-		return err
-	}
-	return readProxylist()
+func readClearDomains() {
+	readDirectlist()
+	readProxylist()
 }
 
 // readWhitelist 读取强制代理的域名列表
-func readProxylist() (err error) {
+func readProxylist() {
 	proxyDomainsPath := path.Join(settings.Get("config-dir"), "/proxylists")
-	proxyDomains, err := readLinesFromDir(proxyDomainsPath, ".txt")
-	if err != nil {
-		return err
-	}
+	proxyDomains := readLinesFromDir(proxyDomainsPath, ".txt")
+
 	for _, domain := range proxyDomains {
 		comm.ProxyDomains.ReverseGrow(domain)
 	}
+
 	logger.Info(comm.ProxyDomains.Count(), " proxy-domains imported")
-	return
 }
 
 // readDirectlist 读取强制直连的域名列表
-func readDirectlist() (err error) {
+func readDirectlist() {
 	directDomainsPath := settings.Get("config-dir") + "/directlists"
-	directDomains, err := readLinesFromDir(directDomainsPath, ".txt")
-	if err != nil {
-		return err
-	}
+	directDomains := readLinesFromDir(directDomainsPath, ".txt")
+
 	for _, domain := range directDomains {
 		comm.DirectDomains.ReverseGrow(domain)
 	}
+
 	logger.Info(comm.DirectDomains.Count(), " direct-domains imported")
-	return
+
 }
 
 // ImportMods 导入Mods
-func ImportMods(modsDir string) error {
+func ImportMods(modsDir string) {
 	files, err := ioutil.ReadDir(modsDir)
 	if err != nil {
-		logger.Error(err)
-		return err
+		panic(err)
 	}
 	for _, file := range files {
 		if file.IsDir() {
@@ -94,47 +83,31 @@ func ImportMods(modsDir string) error {
 		if strings.HasSuffix(filename, ".so") {
 			_, err := plugin.Open(filename)
 			if err != nil {
-				logger.Error(err)
-				return err
+				panic(err)
 			}
 		}
 	}
-	return nil
 }
 
-func execMods() (err error) {
+func execMods() {
 	if modsDir := settings.Get("mod-dir"); modsDir != "" {
-		err = ImportMods(modsDir)
-		if err != nil {
-			return err
-		}
+		ImportMods(modsDir)
 	}
-	return nil
 }
 
-func execHosts() (err error) {
+func importHosts() {
 	hostsDir := path.Join(settings.Get("config-dir"), "/hosts")
-	count, err := readHosts(hostsDir)
-	if err != nil {
-		return err
-	}
+	count := readHosts(hostsDir)
 	logger.Info(count, " hosts lines imported")
-	return nil
 }
 
-func readHosts(hostsDir string) (int, error) {
-	hosts, err := readLinesFromDir(hostsDir, ".hosts")
-	if err != nil {
-		return 0, err
-	}
+func readHosts(hostsDir string) int {
+	hosts := readLinesFromDir(hostsDir, ".hosts")
 
 	var count int
 	for _, host := range hosts {
-		err = handleSingleHost(host)
-		if err != nil {
-			return 0, err
-		}
+		handleSingleHost(host)
 		count++
 	}
-	return count, nil
+	return count
 }

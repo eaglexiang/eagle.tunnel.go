@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 22:32:55
+ * @LastEditTime: 2019-06-15 11:53:54
  */
 
 package cmd
@@ -151,7 +151,7 @@ func checkProxyByLocation(Location string) bool {
 	switch Location {
 	case "0;;;WRONG INPUT":
 		return true
-	case "1;ZZ;ZZZ;Reserved", comm.ETArg.LocalLocation:
+	case "1;ZZ;ZZZ;Reserved", comm.DefaultArg.LocalLocation:
 		return false
 	default:
 		return true

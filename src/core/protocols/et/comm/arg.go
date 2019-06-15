@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-21 18:37:43
- * @LastEditTime: 2019-04-01 21:47:47
+ * @LastEditTime: 2019-06-15 11:51:52
  */
 
 package comm
@@ -36,6 +36,7 @@ type UsersArg struct {
 // ConnArg 连接相关参数集
 type ConnArg struct {
 	RemoteIPE string // IP:Port
+	LocalIPEs []string
 	Head      string // 协议头
 }
 
@@ -99,5 +100,5 @@ func ParseNetArg(e *mynet.Arg) (*NetArg, error) {
 	return &ne, nil
 }
 
-// ETArg 运行ET协议所需的公共参数集
-var ETArg *Arg
+// DefaultArg 运行ET协议所需的公共参数集
+var DefaultArg *Arg

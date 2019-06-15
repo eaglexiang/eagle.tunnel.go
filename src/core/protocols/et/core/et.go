@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 22:38:27
+ * @LastEditTime: 2019-06-15 11:54:38
  */
 
 package et
@@ -26,7 +26,7 @@ type ET struct{}
 
 // NewET 构造ET
 func NewET(arg *comm.Arg) *ET {
-	comm.ETArg = arg
+	comm.DefaultArg = arg
 
 	et := ET{}
 	dns := cmd.DNS{DNSResolver: mynet.ResolvIPv4, DNSType: comm.DNS}
@@ -56,7 +56,7 @@ func NewET(arg *comm.Arg) *ET {
 // Match 判断请求消息是否匹配该业务
 func (et *ET) Match(firstMsg []byte) bool {
 	firstMsgStr := string(firstMsg)
-	return firstMsgStr == comm.ETArg.Head
+	return firstMsgStr == comm.DefaultArg.Head
 }
 
 // Name Sender的名字
@@ -66,7 +66,7 @@ func (et *ET) Name() string {
 
 // connect2Relay 连接到下一个Relay，完成版本校验和用户校验两个步骤
 func (et *ET) connect2Relay(t *tunnel.Tunnel) error {
-	conn, err := net.DialTimeout("tcp", comm.ETArg.RemoteIPE, comm.Timeout)
+	conn, err := net.DialTimeout("tcp", comm.DefaultArg.RemoteIPE, comm.Timeout)
 	if err != nil {
 		logger.Warning(err)
 		return err

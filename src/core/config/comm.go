@@ -5,25 +5,17 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-
-	"github.com/eaglexiang/go-logger"
 )
 
 // readLinesFromDir 从目录读取所有文本行
 // filter表示后缀名
-func readLinesFromDir(dir string, filter string) (lines []string, err error) {
-	files, err := getFilesFromDir(dir)
-	if err != nil {
-		return nil, err
-	}
+func readLinesFromDir(dir string, filter string) (lines []string) {
+	files := getFilesFromDir(dir)
 	for _, file := range files {
 		if !strings.HasSuffix(file, filter) {
 			continue
 		}
-		linesTmp, err := readLinesFromFile(dir + "/" + file)
-		if err != nil {
-			return nil, err
-		}
+		linesTmp := readLinesFromFile(dir + "/" + file)
 		lines = append(lines, linesTmp...)
 	}
 	return
@@ -33,11 +25,10 @@ func readLinesFromDir(dir string, filter string) (lines []string, err error) {
 // 所有制表符会被替换为空格
 // 首尾的空格会被去除
 // # 会注释掉所有所在行剩下的内容
-func readLinesFromFile(filePath string) ([]string, error) {
+func readLinesFromFile(filePath string) []string {
 	file, err := os.Open(filePath)
 	if err != nil {
-		logger.Error(err)
-		return nil, err
+		panic(err)
 	}
 	defer file.Close()
 
@@ -52,16 +43,19 @@ func readLinesFromFile(filePath string) ([]string, error) {
 			lines = append(lines, line)
 		}
 	}
-	return lines, scanner.Err()
+	err = scanner.Err()
+	if err != nil {
+		panic(err)
+	}
+	return lines
 }
 
 // getFilesFromDir 获取指定目录中的所有文件
 // 排除掉文件夹
-func getFilesFromDir(dir string) ([]string, error) {
+func getFilesFromDir(dir string) []string {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		logger.Error(err)
-		return nil, err
+		panic(err)
 	}
 	var noDirFiles []string
 	for _, file := range files {
@@ -70,5 +64,5 @@ func getFilesFromDir(dir string) ([]string, error) {
 		}
 		noDirFiles = append(noDirFiles, file.Name())
 	}
-	return noDirFiles, nil
+	return noDirFiles
 }

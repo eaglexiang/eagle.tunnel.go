@@ -14,37 +14,36 @@ import (
 	myuser "github.com/eaglexiang/go-user"
 )
 
-// ImportConfigFile 导入配置
-func ImportConfigFile() (err error) {
-	if err = readConfigFile(); err != nil {
-		return
-	}
+// ImportConfigFiles 导入配置
+func ImportConfigFiles() {
+	readConfigFile()
 
 	settings.Set("listen", finishPort(settings.Get("listen")))
 	settings.Set("relay", finishPort(settings.Get("relay")))
 
-	if err = SetProxyStatus(settings.Get("proxy-status")); err != nil {
-		return
+	if err := SetProxyStatus(settings.Get("proxy-status")); err != nil {
+		panic(err)
 	}
-	if err = initLocalUser(); err != nil {
-		return
+	if err := initLocalUser(); err != nil {
+		panic(err)
 	}
 	initTimeout()
 	initBufferSize()
-	return readConfigDir()
+
+	readConfigDir()
 }
 
 // readConfigFile 读取根据给定的配置文件
-func readConfigFile() error {
+func readConfigFile() {
 	if !settings.Exsit("config") {
-		return nil
+		return
 	}
 	filePath := settings.Get("config")
-	allConfLines, err := readLinesFromFile(filePath)
+	allConfLines := readLinesFromFile(filePath)
+	err := settings.ImportLines(allConfLines)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	return settings.ImportLines(allConfLines)
 }
 
 func initTimeout() {
@@ -63,45 +62,42 @@ func initLocalUser() (err error) {
 	if !settings.Exsit("user") {
 		SetUser("null:null")
 	} else {
-		err = SetUser(settings.Get("user"))
+		SetUser(settings.Get("user"))
 	}
 	return
 }
 
 // initUserList 初始化用户列表
-func initUserList() (err error) {
-	if settings.Get("user-check") == "on" {
-		usersPath := path.Join(settings.Get("config-dir"), "/users.list")
-		err = importUsers(usersPath)
-		if err != nil {
-			return
-		}
+func initUserList() {
+	if settings.Get("user-check") != "on" {
+		return
 	}
-	return err
+
+	usersPath := path.Join(settings.Get("config-dir"), "/users.list")
+	importUsers(usersPath)
 }
 
 //SetUser 设置本地用户
-func SetUser(user string) (err error) {
+func SetUser(user string) {
+	var err error
 	LocalUser, err = myuser.ParseValidUser(user)
-	return
+	if err != nil {
+		panic(err)
+	}
 }
 
-func importUsers(usersPath string) (err error) {
+func importUsers(usersPath string) {
 	Users = make(map[string]*myuser.ValidUser)
-	userLines, err := readLinesFromFile(usersPath)
-	if err != nil {
-		return nil
-	}
-	var user *myuser.ValidUser
+	userLines := readLinesFromFile(usersPath)
+
 	for _, line := range userLines {
-		user, err = myuser.ParseValidUser(line)
+		user, err := myuser.ParseValidUser(line)
 		if err != nil {
-			return err
+			panic(err)
 		}
 		Users[user.ID] = user
 	}
 	logger.Info(len(Users), " users imported")
-	return
 }
 
 // finishPort 补全端口号

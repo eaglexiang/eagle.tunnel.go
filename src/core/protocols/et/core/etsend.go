@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:49
- * @LastEditTime: 2019-06-14 22:38:43
+ * @LastEditTime: 2019-06-15 11:55:02
  */
 
 package et
@@ -35,7 +35,7 @@ func (et *ET) Send(e *mynet.Arg) error {
 }
 
 func (et *ET) checkVersionOfRelayer(t *tunnel.Tunnel) error {
-	req := comm.ETArg.Head
+	req := comm.DefaultArg.Head
 	_, err := t.WriteRight([]byte(req))
 	if err != nil {
 		return err
@@ -50,10 +50,10 @@ func (et *ET) checkVersionOfRelayer(t *tunnel.Tunnel) error {
 }
 
 func (et *ET) checkLocalUser(t *tunnel.Tunnel) (err error) {
-	if comm.ETArg.LocalUser.ID == "null" {
+	if comm.DefaultArg.LocalUser.ID == "null" {
 		return nil // no need to check
 	}
-	user := comm.ETArg.LocalUser.ToString()
+	user := comm.DefaultArg.LocalUser.ToString()
 	_, err = t.WriteRight([]byte(user))
 	if err != nil {
 		return err
@@ -66,6 +66,6 @@ func (et *ET) checkLocalUser(t *tunnel.Tunnel) (err error) {
 		logger.Error("invalid reply for check local user: ", reply)
 		return errors.New("invalid reply")
 	}
-	t.Update(tunnel.WithSpeedLimiter(comm.ETArg.LocalUser.SpeedLimiter()))
+	t.Update(tunnel.WithSpeedLimiter(comm.DefaultArg.LocalUser.SpeedLimiter()))
 	return nil
 }
