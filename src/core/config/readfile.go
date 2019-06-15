@@ -18,15 +18,10 @@ import (
 func ImportConfigFiles() {
 	readConfigFile()
 
-	settings.Set("listen", finishPort(settings.Get("listen")))
-	settings.Set("relay", finishPort(settings.Get("relay")))
-
-	if err := SetProxyStatus(settings.Get("proxy-status")); err != nil {
-		panic(err)
-	}
-	if err := initLocalUser(); err != nil {
-		panic(err)
-	}
+	initListen()
+	initRelay()
+	initProxyStatus()
+	initLocalUser()
 	initTimeout()
 	initBufferSize()
 
@@ -38,6 +33,7 @@ func readConfigFile() {
 	if !settings.Exsit("config") {
 		return
 	}
+
 	filePath := settings.Get("config")
 	allConfLines := readLinesFromFile(filePath)
 	err := settings.ImportLines(allConfLines)
@@ -57,14 +53,13 @@ func initBufferSize() {
 	bytebuffer.SetDefaultSize(int(size))
 }
 
-func initLocalUser() (err error) {
+func initLocalUser() {
 	// 读取本地用户
 	if !settings.Exsit("user") {
 		SetUser("null:null")
 	} else {
 		SetUser(settings.Get("user"))
 	}
-	return
 }
 
 // initUserList 初始化用户列表
@@ -101,27 +96,49 @@ func importUsers(usersPath string) {
 }
 
 // finishPort 补全端口号
-func finishPort(remoteIpe string) string {
-	switch mynet.TypeOfAddr(remoteIpe) {
+func finishIPEPort(ipe string) string {
+	switch mynet.TypeOfAddr(ipe) {
 	case mynet.IPv4Addr:
-		if ip := net.ParseIP(remoteIpe); ip != nil {
+		if ip := net.ParseIP(ipe); ip != nil {
 			// 不包含端口号
-			remoteIpe += ":8080"
+			ipe += ":8080"
 		}
 	case mynet.IPv6Addr:
-		if strings.HasSuffix(remoteIpe, "]") {
+		if strings.HasSuffix(ipe, "]") {
 			// 不包含端口号
-			remoteIpe += ":8080"
+			ipe += ":8080"
 		}
 	}
-	return remoteIpe
+	return ipe
 }
 
-//SetProxyStatus 设置Proxy-Status，enable/smart
-func SetProxyStatus(status string) (err error) {
-	ProxyStatus, err = comm.ParseProxyStatus(status)
-	if err != nil {
-		logger.Error(err)
+// finishIPEs ipes的示例：192.168.0.1:8080,192.168.0.1:8081
+func finishIPEs(ipes string) (newIPEs string) {
+	_ipes := strings.Split(ipes, ",")
+	for _, ipe := range _ipes {
+		newIPEs += "," + finishIPEPort(ipe)
 	}
+	newIPEs = strings.TrimPrefix(newIPEs, ",") // 去掉头部多余的,符号
 	return
+}
+
+func initProxyStatus() {
+	var err error
+	s := settings.Get("proxy-status")
+	ProxyStatus, err = comm.ParseProxyStatus(s)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func initListen() {
+	ipes := settings.Get("listen")
+	ipes = finishIPEs(ipes)
+	settings.Set("listen", ipes)
+}
+
+func initRelay() {
+	ipes := settings.Get("relay")
+	ipes = finishIPEs(ipes)
+	settings.Set("relay", ipes)
 }
