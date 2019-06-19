@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 23:02:59
+ * @LastEditTime: 2019-06-19 21:23:30
  */
 
 package config
@@ -21,7 +21,7 @@ func init() {
 	settings.SetDefault("ip-type", "46")
 	settings.SetDefault("data-key", "34")
 	settings.SetDefault("head", "eagle_tunnel")
-	settings.SetDefault("proxy-status", "enable")
+	settings.SetDefault("proxy-status", "smart")
 	settings.SetDefault("user", "null:null")
 	settings.SetDefault("user-check", "off")
 	settings.SetDefault("listen", "0.0.0.0")
