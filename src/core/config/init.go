@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-19 21:23:30
+ * @LastEditTime: 2019-06-20 21:42:44
  */
 
 package config
@@ -13,6 +13,7 @@ import (
 )
 
 func init() {
+	// 绑定不同的参数名
 	settings.Bind("relayer", "relay")
 	settings.Bind("channel", "data-key")
 	// 设定参数默认值
@@ -33,5 +34,5 @@ func init() {
 	settings.SetDefault("cipher", "simple")
 	settings.SetDefault("maxclients", "0")
 	settings.SetDefault("buffer.size", "1000")
-	settings.SetDefault("dynamic-ports", "off")
+	settings.SetDefault("dynamic-ipe", "off")
 }

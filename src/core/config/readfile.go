@@ -1,15 +1,12 @@
 package config
 
 import (
-	"net"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/go-bytebuffer"
 	"github.com/eaglexiang/go-logger"
-	mynet "github.com/eaglexiang/go-net"
 	"github.com/eaglexiang/go-settings"
 	myuser "github.com/eaglexiang/go-user"
 )
@@ -93,33 +90,6 @@ func importUsers(usersPath string) {
 		Users[user.ID] = user
 	}
 	logger.Info(len(Users), " users imported")
-}
-
-// finishPort 补全端口号
-func finishIPEPort(ipe string) string {
-	switch mynet.TypeOfAddr(ipe) {
-	case mynet.IPv4Addr:
-		if ip := net.ParseIP(ipe); ip != nil {
-			// 不包含端口号
-			ipe += ":8080"
-		}
-	case mynet.IPv6Addr:
-		if strings.HasSuffix(ipe, "]") {
-			// 不包含端口号
-			ipe += ":8080"
-		}
-	}
-	return ipe
-}
-
-// finishIPEs ipes的示例：192.168.0.1:8080,192.168.0.1:8081
-func finishIPEs(ipes string) (newIPEs string) {
-	_ipes := strings.Split(ipes, ",")
-	for _, ipe := range _ipes {
-		newIPEs += "," + finishIPEPort(ipe)
-	}
-	newIPEs = strings.TrimPrefix(newIPEs, ",") // 去掉头部多余的,符号
-	return
 }
 
 func initProxyStatus() {
