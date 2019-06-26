@@ -15,6 +15,7 @@ import (
 func ImportConfigFiles() {
 	readConfigFile()
 
+	initLogger()
 	initListens()
 	initRelays()
 	initProxyStatus()
@@ -37,6 +38,10 @@ func readConfigFile() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func initLogger() {
+	logger.SetGrade(settings.Get("debug"))
 }
 
 func initTimeout() {
