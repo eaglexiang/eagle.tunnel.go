@@ -13,10 +13,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/config"
+	"github.com/eaglexiang/go-settings"
 	"net"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -26,7 +26,6 @@ import (
 	mycipher "github.com/eaglexiang/go-cipher"
 	"github.com/eaglexiang/go-counter"
 	logger "github.com/eaglexiang/go-logger"
-	settings "github.com/eaglexiang/go-settings"
 )
 
 // Service ET服务
@@ -55,7 +54,8 @@ func createCipher() mycipher.Cipher {
 }
 
 func setHandlersAndSender(service *Service) {
-	et := et.NewET(config.CreateETArg())
+	relayIPE := config.RelayIPE()
+	et := et.NewET(config.CreateETArg(relayIPE))
 
 	// 添加后端协议Handler
 	if settings.Get("et") == "on" {
@@ -113,7 +113,7 @@ func (s *Service) Start() (err error) {
 	}
 
 	s.disableTLS()
-	s.start2Listen()
+	s.start2ListenIPEs()
 
 	s.reqs = make(chan net.Conn)
 
@@ -130,11 +130,13 @@ func (s *Service) disableTLS() {
 		&tls.Config{InsecureSkipVerify: true}
 }
 
-func (s *Service) start2Listen() {
-	_ipes := settings.Get("listen")
-	ipes := strings.Split(_ipes, ",")
-	for _, ipe := range ipes {
-		s.listenIpe(ipe)
+// start2ListenIPEs 开始所有IPE的监听
+func (s *Service) start2ListenIPEs() {
+	for _, ipPorts := range config.ListenIPEs {
+		for _, port := range ipPorts.Ports {
+			ipe := ipPorts.IP + ":" + port
+			s.listenIpe(ipe)
+		}
 	}
 }
 
@@ -145,6 +147,8 @@ func (s *Service) listen() {
 }
 
 func (s *Service) startListener(listener net.Listener) {
+	defer fmt.Println("quit listener: ", listener.Addr())
+
 	for s.stopRunning != nil {
 		req, err := listener.Accept()
 		if err != nil {

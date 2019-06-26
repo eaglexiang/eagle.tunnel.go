@@ -15,8 +15,8 @@ import (
 func ImportConfigFiles() {
 	readConfigFile()
 
-	initListen()
-	initRelay()
+	initListens()
+	initRelays()
 	initProxyStatus()
 	initLocalUser()
 	initTimeout()
@@ -99,16 +99,4 @@ func initProxyStatus() {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func initListen() {
-	ipes := settings.Get("listen")
-	ipes = finishIPEs(ipes)
-	settings.Set("listen", ipes)
-}
-
-func initRelay() {
-	ipes := settings.Get("relay")
-	ipes = finishIPEs(ipes)
-	settings.Set("relay", ipes)
 }

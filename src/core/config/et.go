@@ -8,13 +8,14 @@ import (
 )
 
 // CreateETArg 构建ET.Arg
-func CreateETArg() *comm.Arg {
+func CreateETArg(relay string) *comm.Arg {
+
 	users := comm.UsersArg{
 		LocalUser:  LocalUser,
 		ValidUsers: Users,
 	}
 	connArg := comm.ConnArg{
-		RemoteIPE: settings.Get("relay"),
+		RemoteIPE: relay,
 		Head:      settings.Get("head"),
 	}
 	smartArg := comm.SmartArg{

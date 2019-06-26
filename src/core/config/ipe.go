@@ -2,10 +2,9 @@ package config
 
 import (
 	"errors"
-	"net"
 	"strings"
 
-	mynet "github.com/eaglexiang/go-net"
+	"github.com/eaglexiang/go-settings"
 )
 
 const (
@@ -13,31 +12,31 @@ const (
 	defaultPort = "8080"
 )
 
-// ipPorts 每个ipPorts由一个IP与多个Port组成，ports的长度至少为1
-type ipPorts struct {
-	ip    string
-	ports []string
+// IPPorts 每个ipPorts由一个IP与多个Port组成，ports的长度至少为1
+type IPPorts struct {
+	IP    string
+	Ports []string
 }
 
-func (ip *ipPorts) setDefaultPort(port string) {
-	if len(ip.ports) == 0 || ip.ports[0] == "" {
-		ip.ports = []string{port}
+func (ip *IPPorts) setDefaultPort(port string) {
+	if len(ip.Ports) == 0 || ip.Ports[0] == "" {
+		ip.Ports = []string{port}
 	}
 }
 
-func (ip *ipPorts) addPort(port string) {
-	for _, p := range ip.ports {
+func (ip *IPPorts) addPort(port string) {
+	for _, p := range ip.Ports {
 		if p == port {
 			return
 		}
 	}
 
-	ip.ports = append(ip.ports, port)
+	ip.Ports = append(ip.Ports, port)
 }
 
-func (ip ipPorts) toString() (result string) {
-	for _, port := range ip.ports {
-		ipe := ip.ip + ":" + port
+func (ip IPPorts) toString() (result string) {
+	for _, port := range ip.Ports {
+		ipe := ip.IP + ":" + port
 
 		if result != "" {
 			result += ipeSplitSig
@@ -47,22 +46,23 @@ func (ip ipPorts) toString() (result string) {
 	return
 }
 
-func parseIPPortsSlice(src string) []*ipPorts {
+func parseIPPortsSlice(src string) []*IPPorts {
 	// map[ipPorts.ip] ipPorts
-	ipPortsMap := make(map[string]*ipPorts)
+	ipPortsMap := make(map[string]*IPPorts)
 
 	ipes := strings.Split(src, ipeSplitSig)
 	for _, ipe := range ipes {
-		ipeArgs := strings.Split(ipe, ipeSplitSig)
-		ip := ipeArgs[0]
-		port := ipeArgs[1]
+		ip, port, err := getIPPort(ipe)
+		if err != nil {
+			panic(err)
+		}
 
 		if ipports, ok := ipPortsMap[ip]; ok {
 			ipports.addPort(port)
 		} else {
-			ipPortsMap[ip] = &ipPorts{
-				ip:    ip,
-				ports: []string{port},
+			ipPortsMap[ip] = &IPPorts{
+				IP:    ip,
+				Ports: []string{port},
 			}
 		}
 	}
@@ -72,7 +72,7 @@ func parseIPPortsSlice(src string) []*ipPorts {
 		ip.setDefaultPort(defaultPort)
 	}
 
-	ipPortsSlice := []*ipPorts{}
+	ipPortsSlice := []*IPPorts{}
 	for _, ip := range ipPortsMap {
 		ipPortsSlice = append(ipPortsSlice, ip)
 	}
@@ -86,7 +86,6 @@ func getIPPort(ipe string) (ip, port string, err error) {
 	} else {
 		ip, port, err = getIPPortFromIPv4IPE(ipe)
 	}
-
 	return
 }
 
@@ -121,29 +120,17 @@ func getIPPortFromIPv6IPE(ipe string) (ip, port string, err error) {
 	return
 }
 
-// finishPort 补全端口号
-func finishIPEPort(ipe string) string {
-	switch mynet.TypeOfAddr(ipe) {
-	case mynet.IPv4Addr:
-		if ip := net.ParseIP(ipe); ip != nil {
-			// 不包含端口号
-			ipe += ":8080"
-		}
-	case mynet.IPv6Addr:
-		if strings.HasSuffix(ipe, "]") {
-			// 不包含端口号
-			ipe += ":8080"
-		}
-	}
-	return ipe
+// initListens ipes的示例：192.168.0.1:8080,192.168.0.1:8081
+func initListens() {
+	ListenIPEs = parseIPPortsSlice(settings.Get("listen"))
 }
 
-// finishIPEs ipes的示例：192.168.0.1:8080,192.168.0.1:8081
-func finishIPEs(ipes string) (newIPEs string) {
-	_ipes := strings.Split(ipes, ",")
-	for _, ipe := range _ipes {
-		newIPEs += "," + finishIPEPort(ipe)
-	}
-	newIPEs = strings.TrimPrefix(newIPEs, ",") // 去掉头部多余的,符号
-	return
+func initRelays() {
+	RelayIPEs = parseIPPortsSlice(settings.Get("relay"))
+}
+
+func RelayIPE() string {
+	relayIPPorts := RelayIPEs[0]
+	relayIPE := relayIPPorts.IP + ":" + relayIPPorts.Ports[0]
+	return relayIPE
 }

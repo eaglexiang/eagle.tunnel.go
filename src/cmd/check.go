@@ -14,7 +14,7 @@ import (
 	"os"
 	"strconv"
 
-	etcore "github.com/eaglexiang/eagle.tunnel.go/src/core/config"
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/config"
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/cmd"
 	et "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/core"
 	cipher "github.com/eaglexiang/go-cipher"
@@ -105,7 +105,8 @@ func createET() *et.ET {
 		}
 	}
 
-	e := etcore.CreateETArg()
+	relayIPE := config.RelayIPE()
+	e := config.CreateETArg(relayIPE)
 	et := et.NewET(e)
 	return et
 }

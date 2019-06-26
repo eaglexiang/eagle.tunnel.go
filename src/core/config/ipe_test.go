@@ -26,4 +26,13 @@ func Test_getIPPort(t *testing.T) {
 	if err == nil {
 		t.Error("[9a:b2:a4:06:9a:81 is not ipv6")
 	}
+
+	ipe = "0.0.0.0"
+	ip, port, err = getIPPort(ipe)
+	if err != nil {
+		t.Error(err)
+	}
+	if ip != "0.0.0.0" {
+		t.Error("ip is not 0.0.0.0 but ", ip)
+	}
 }
