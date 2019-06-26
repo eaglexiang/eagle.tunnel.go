@@ -1,11 +1,6 @@
 package config
 
 import (
-	"path"
-	"time"
-
-	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
-	"github.com/eaglexiang/go-bytebuffer"
 	"github.com/eaglexiang/go-logger"
 	"github.com/eaglexiang/go-settings"
 	myuser "github.com/eaglexiang/go-user"
@@ -40,40 +35,6 @@ func readConfigFile() {
 	}
 }
 
-func initLogger() {
-	logger.SetGrade(settings.Get("debug"))
-}
-
-func initTimeout() {
-	timeout := settings.GetInt64("timeout")
-	Timeout = time.Second * time.Duration(timeout)
-	comm.Timeout = Timeout
-}
-
-func initBufferSize() {
-	size := settings.GetInt64("buffer.size")
-	bytebuffer.SetDefaultSize(int(size))
-}
-
-func initLocalUser() {
-	// 读取本地用户
-	if !settings.Exsit("user") {
-		SetUser("null:null")
-	} else {
-		SetUser(settings.Get("user"))
-	}
-}
-
-// initUserList 初始化用户列表
-func initUserList() {
-	if settings.Get("user-check") != "on" {
-		return
-	}
-
-	usersPath := path.Join(settings.Get("config-dir"), "/users.list")
-	importUsers(usersPath)
-}
-
 //SetUser 设置本地用户
 func SetUser(user string) {
 	var err error
@@ -95,13 +56,4 @@ func importUsers(usersPath string) {
 		Users[user.ID] = user
 	}
 	logger.Info(len(Users), " users imported")
-}
-
-func initProxyStatus() {
-	var err error
-	s := settings.Get("proxy-status")
-	ProxyStatus, err = comm.ParseProxyStatus(s)
-	if err != nil {
-		panic(err)
-	}
 }

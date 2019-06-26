@@ -3,6 +3,7 @@ package config
 import (
 	"time"
 
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/config/ipe"
 	myuser "github.com/eaglexiang/go-user"
 )
 
@@ -17,6 +18,6 @@ var (
 	ProxyStatus int
 	// Timeout 超时时间
 	Timeout    time.Duration
-	ListenIPEs []*IPPorts
-	RelayIPEs  []*IPPorts
+	ListenIPEs []*ipe.IPPorts
+	RelayIPEs  []*ipe.IPPorts
 )

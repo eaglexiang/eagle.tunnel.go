@@ -1,10 +1,8 @@
-package config
+package ipe
 
 import (
 	"errors"
 	"strings"
-
-	"github.com/eaglexiang/go-settings"
 )
 
 const (
@@ -49,7 +47,8 @@ func (ip IPPorts) ToStrings() (result []string) {
 	return
 }
 
-func parseIPPortsSlice(src string) []*IPPorts {
+// ParseIPPortsSlice 构建 []*IPPorts
+func ParseIPPortsSlice(src string) []*IPPorts {
 	// map[ipPorts.ip] ipPorts
 	ipPortsMap := make(map[string]*IPPorts)
 
@@ -121,19 +120,4 @@ func getIPPortFromIPv6IPE(ipe string) (ip, port string, err error) {
 	}
 
 	return
-}
-
-// initListens ipes的示例：192.168.0.1:8080,192.168.0.1:8081
-func initListens() {
-	ListenIPEs = parseIPPortsSlice(settings.Get("listen"))
-}
-
-func initRelays() {
-	RelayIPEs = parseIPPortsSlice(settings.Get("relay"))
-}
-
-func RelayIPE() string {
-	relayIPPorts := RelayIPEs[0]
-	relayIPE := relayIPPorts.IP + ":" + relayIPPorts.Ports[0]
-	return relayIPE
 }
