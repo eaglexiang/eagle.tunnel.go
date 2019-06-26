@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 23:13:44
+ * @LastEditTime: 2019-06-26 22:09:49
  */
 
 package server
@@ -133,9 +133,9 @@ func (s *Service) disableTLS() {
 // start2ListenIPEs 开始所有IPE的监听
 func (s *Service) start2ListenIPEs() {
 	for _, ipPorts := range config.ListenIPEs {
-		for _, port := range ipPorts.Ports {
-			ipe := ipPorts.IP + ":" + port
-			s.listenIpe(ipe)
+		ipes := ipPorts.ToStrings()
+		for _, ipe := range ipes {
+			s.listenIPE(ipe)
 		}
 	}
 }
@@ -246,7 +246,7 @@ func (s *Service) Close() {
 	close(s.reqs)
 }
 
-func (s *Service) listenIpe(ipe string) {
+func (s *Service) listenIPE(ipe string) {
 	if listener, err := net.Listen("tcp", ipe); err != nil {
 		fmt.Println(err)
 	} else {

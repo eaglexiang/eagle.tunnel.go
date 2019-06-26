@@ -3,19 +3,20 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-26 21:42:40
+ * @LastEditTime: 2019-06-26 22:16:17
  */
 
 package config
 
 import (
+	"path"
+	"time"
+
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/config/ipe"
 	"github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/comm"
 	"github.com/eaglexiang/go-bytebuffer"
 	"github.com/eaglexiang/go-logger"
 	settings "github.com/eaglexiang/go-settings"
-	"path"
-	"time"
 )
 
 func init() {
@@ -40,12 +41,17 @@ func init() {
 	settings.SetDefault("cipher", "simple")
 	settings.SetDefault("maxclients", "0")
 	settings.SetDefault("buffer.size", "1000")
-	settings.SetDefault("dynamic-ipe", "off")
+	settings.SetDefault("dynamic-ipe", "0")
 }
 
 // initListens ipes的示例：192.168.0.1:8080,192.168.0.1:8081
 func initListens() {
 	ListenIPEs = ipe.ParseIPPortsSlice(settings.Get("listen"))
+
+	randPortsCount := settings.GetInt64("dynamic-ipe")
+	for _, ipe := range ListenIPEs {
+		ipe.RandPorts(int(randPortsCount))
+	}
 }
 
 func initRelays() {
