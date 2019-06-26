@@ -34,14 +34,17 @@ func (ip *IPPorts) addPort(port string) {
 	ip.Ports = append(ip.Ports, port)
 }
 
-func (ip IPPorts) toString() (result string) {
+// ToStrings 生成IPE字符串数组
+// 示例： {"IP":"1.2.3.4","Ports":["1000","2000","3000"]}。
+// 生成：
+// "1.2.3.4:1000"，
+// "1.2.3.4:2000"，
+// "1.2.3.4:3000"
+func (ip IPPorts) ToStrings() (result []string) {
 	for _, port := range ip.Ports {
 		ipe := ip.IP + ":" + port
 
-		if result != "" {
-			result += ipeSplitSig
-		}
-		result += ipe
+		result = append(result, ipe)
 	}
 	return
 }
