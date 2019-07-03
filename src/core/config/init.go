@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-26 22:16:17
+ * @LastEditTime: 2019-07-03 21:06:42
  */
 
 package config
@@ -40,7 +40,7 @@ func init() {
 	settings.SetDefault("debug", "warning")
 	settings.SetDefault("cipher", "simple")
 	settings.SetDefault("maxclients", "0")
-	settings.SetDefault("buffer.size", "1000")
+	settings.SetDefault("buffer.size", "10000")
 	settings.SetDefault("dynamic-ipe", "0")
 }
 
