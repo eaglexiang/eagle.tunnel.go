@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-15 11:54:14
+ * @LastEditTime: 2019-07-23 23:32:12
  */
 
 package cmd
@@ -124,7 +124,7 @@ func SendEtCheckAuthReq() string {
 	}
 
 	// 当connect2Remote成功，则说明鉴权成功
-	t := tunnel.NewTunnel()
+	t := tunnel.GetTunnel()
 	defer tunnel.PutTunnel(t)
 	err := comm.Connect2Remote(t)
 	if err != nil {

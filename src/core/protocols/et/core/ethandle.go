@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:35
- * @LastEditTime: 2019-06-15 11:54:49
+ * @LastEditTime: 2019-07-23 23:36:20
  */
 
 package et
@@ -69,7 +69,7 @@ func createCipher(t *tunnel.Tunnel) {
 	if c == nil {
 		panic("ET.Handle -> cipher is nil")
 	}
-	t.Update(tunnel.WithLeftCipher(c))
+	t.SetLeftC(c)
 }
 
 func (et *ET) checkHeaderOfReq(
@@ -100,7 +100,7 @@ func (et *ET) checkUserOfReq(t *tunnel.Tunnel) (err error) {
 		return
 	}
 	if sl, err := et._checkUserOfReq(user2Check); err == nil {
-		t.Update(tunnel.WithSpeedLimiter(sl))
+		t.SetSpeedLimiter(sl)
 		_, err = t.WriteLeft([]byte("valid"))
 	}
 	return

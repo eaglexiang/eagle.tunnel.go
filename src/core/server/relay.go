@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 23:13:34
+ * @LastEditTime: 2019-07-23 23:37:33
  */
 
 package server
@@ -38,10 +38,9 @@ func (relay *Relay) SetSender(sender Sender) {
 
 // Handle 处理请求连接
 func (relay *Relay) Handle(conn net.Conn) {
-	t := tunnel.NewTunnel(
-		tunnel.WithTimeout(config.Timeout),
-		tunnel.WithLeft(conn),
-	)
+	var t = tunnel.GetTunnel()
+	t.SetTimeout(config.Timeout)
+	t.SetLeft(conn)
 	firstMsg, handler, err := relay.shake(t)
 	defer bytebuffer.PutBuffer(firstMsg)
 	if err != nil {

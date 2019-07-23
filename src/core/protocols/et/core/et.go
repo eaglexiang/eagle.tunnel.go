@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-15 11:54:38
+ * @LastEditTime: 2019-07-23 23:35:53
  */
 
 package et
@@ -71,7 +71,7 @@ func (et *ET) connect2Relay(t *tunnel.Tunnel) error {
 		logger.Warning(err)
 		return err
 	}
-	t.Update(tunnel.WithRight(conn))
+	t.SetRight(conn)
 	err = et.checkVersionOfRelayer(t)
 	if err != nil {
 		return err
@@ -80,6 +80,6 @@ func (et *ET) connect2Relay(t *tunnel.Tunnel) error {
 	if c == nil {
 		panic("cipher is nil")
 	}
-	t.Update(tunnel.WithRightCipher(c))
+	t.SetRightC(c)
 	return et.checkLocalUser(t)
 }

@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:49
- * @LastEditTime: 2019-06-15 11:55:02
+ * @LastEditTime: 2019-07-23 23:36:36
  */
 
 package et
@@ -66,6 +66,6 @@ func (et *ET) checkLocalUser(t *tunnel.Tunnel) (err error) {
 		logger.Error("invalid reply for check local user: ", reply)
 		return errors.New("invalid reply")
 	}
-	t.Update(tunnel.WithSpeedLimiter(comm.DefaultArg.LocalUser.SpeedLimiter()))
+	t.SetSpeedLimiter(comm.DefaultArg.LocalUser.SpeedLimiter())
 	return nil
 }

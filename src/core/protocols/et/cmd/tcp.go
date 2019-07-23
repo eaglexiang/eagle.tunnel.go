@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-15 11:53:46
+ * @LastEditTime: 2019-07-23 23:35:27
  */
 
 package cmd
@@ -180,11 +180,9 @@ func (t *TCP) connectByLocal(e *comm.NetArg) error {
 		logger.Warning(err)
 		return err
 	}
-	e.Tunnel.Update(
-		tunnel.WithRight(conn),
-		tunnel.WithRightCipher(nil),
-		tunnel.WithSpeedLimiter(comm.DefaultArg.LocalUser.SpeedLimiter()),
-	)
+	e.Tunnel.SetRight(conn)
+	e.Tunnel.SetRightC(nil)
+	e.Tunnel.SetSpeedLimiter(comm.DefaultArg.LocalUser.SpeedLimiter())
 	return nil
 }
 
