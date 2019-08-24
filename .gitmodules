@@ -1,0 +1,3 @@
+[submodule "clearDomains"]
+	path = clearDomains
+	url = https://github.com/remmina/proxy-list.git
