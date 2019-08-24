@@ -1,0 +1,3 @@
+# A B：所有符合A的域名，其中A的部分都会被替换为B
+
+google.cn google.com

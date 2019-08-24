@@ -1,3 +1,12 @@
+###
+# @Author: EagleXiang
+# @LastEditors: EagleXiang
+# @Email: eagle.xiang@outlook.com
+# @Github: https://github.com/eaglexiang
+# @Date: 2019-08-24 10:42:03
+# @LastEditTime: 2019-08-24 10:42:03
+###
+
 #!/bin/bash
 
 source ./scripts/env_build.sh
@@ -10,11 +19,11 @@ fi
 
 if [ $# -gt 0 ]; then
     case $1 in
-        "clean")
+    "clean")
         echo "build clean done"
         exit
         ;;
-        *)
+    *)
         mkdir -p ${PublishPath}
         source ${ScriptPath}/buildgo.sh $*
         ;;
