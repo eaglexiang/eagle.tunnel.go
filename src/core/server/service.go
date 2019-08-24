@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-26 22:09:49
+ * @LastEditTime: 2019-08-06 21:14:25
  */
 
 package server
@@ -12,13 +12,14 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/eaglexiang/eagle.tunnel.go/src/core/config"
-	"github.com/eaglexiang/go-settings"
 	"net"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/eaglexiang/eagle.tunnel.go/src/core/config"
+	"github.com/eaglexiang/go-settings"
 
 	et "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/et/core"
 	httpproxy "github.com/eaglexiang/eagle.tunnel.go/src/core/protocols/httpproxy"
@@ -203,6 +204,7 @@ func (s *Service) handleReqs() {
 
 func (s *Service) recvReq() (req net.Conn, ok bool, err error) {
 	if s.full() {
+		logger.Warning("over working... ===> ", s.counter.Value)
 		time.Sleep(time.Millisecond * 100)
 		return
 	}
