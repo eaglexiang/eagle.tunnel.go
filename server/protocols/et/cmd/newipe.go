@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-24 10:48:22
- * @LastEditTime: 2019-08-24 10:48:56
+ * @LastEditTime: 2019-08-24 11:49:42
  */
 
 package cmd
@@ -14,7 +14,7 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/eaglexiang/eagle.tunnel.go/core/protocols/et/comm"
+	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
 	myslice "github.com/eaglexiang/eagle.tunnel.go/slice"
 	"github.com/eaglexiang/go-tunnel"
 )

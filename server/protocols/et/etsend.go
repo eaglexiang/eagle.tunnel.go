@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:49
- * @LastEditTime: 2019-08-24 10:50:24
+ * @LastEditTime: 2019-08-24 11:49:07
  */
 
 package et
@@ -12,7 +12,7 @@ package et
 import (
 	"errors"
 
-	"github.com/eaglexiang/eagle.tunnel.go/core/protocols/et/comm"
+	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
 	"github.com/eaglexiang/go-logger"
 	mynet "github.com/eaglexiang/go-net"
 	"github.com/eaglexiang/go-tunnel"

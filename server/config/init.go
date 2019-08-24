@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-24 10:52:40
+ * @LastEditTime: 2019-08-24 11:53:20
  */
 
 package config
@@ -12,8 +12,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/eaglexiang/eagle.tunnel.go/core/config/ipe"
-	"github.com/eaglexiang/eagle.tunnel.go/core/protocols/et/comm"
+	"github.com/eaglexiang/eagle.tunnel.go/server/config/ipe"
+	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
 	"github.com/eaglexiang/go-logger"
 	settings "github.com/eaglexiang/go-settings"
 )

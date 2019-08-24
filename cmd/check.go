@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-02 12:42:49
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-24 10:54:06
+ * @LastEditTime: 2019-08-24 11:53:03
  */
 
 package cmd
@@ -14,9 +14,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/eaglexiang/eagle.tunnel.go/core/config"
-	et "github.com/eaglexiang/eagle.tunnel.go/core/protocols/et"
-	"github.com/eaglexiang/eagle.tunnel.go/core/protocols/et/cmd"
+	"github.com/eaglexiang/eagle.tunnel.go/server/config"
+	et "github.com/eaglexiang/eagle.tunnel.go/server/protocols/et"
+	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/cmd"
 )
 
 // Check check命令

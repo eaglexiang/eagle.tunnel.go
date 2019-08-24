@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-24 10:50:36
+ * @LastEditTime: 2019-08-24 11:48:57
  */
 
 package et
@@ -13,8 +13,8 @@ import (
 
 	"github.com/eaglexiang/go-tunnel"
 
-	"github.com/eaglexiang/eagle.tunnel.go/core/protocols/et/cmd"
-	"github.com/eaglexiang/eagle.tunnel.go/core/protocols/et/comm"
+	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/cmd"
+	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
 	"github.com/eaglexiang/go-logger"
 	mynet "github.com/eaglexiang/go-net"
 )

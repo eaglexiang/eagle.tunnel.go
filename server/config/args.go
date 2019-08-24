@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-24 10:43:53
- * @LastEditTime: 2019-08-24 10:52:52
+ * @LastEditTime: 2019-08-24 11:53:07
  */
 
 package config
@@ -12,7 +12,7 @@ package config
 import (
 	"time"
 
-	"github.com/eaglexiang/eagle.tunnel.go/core/config/ipe"
+	"github.com/eaglexiang/eagle.tunnel.go/server/config/ipe"
 	myuser "github.com/eaglexiang/go-user"
 )
 

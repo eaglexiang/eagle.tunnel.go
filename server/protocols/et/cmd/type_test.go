@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-04-01 22:05:31
- * @LastEditTime: 2019-08-24 10:49:18
+ * @LastEditTime: 2019-08-24 11:49:52
  */
 
 package cmd
@@ -12,7 +12,7 @@ package cmd
 import (
 	"testing"
 
-	"github.com/eaglexiang/eagle.tunnel.go/core/protocols/et/comm"
+	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
 )
 
 func Test_Names(t *testing.T) {

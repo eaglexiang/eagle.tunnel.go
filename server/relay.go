@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-24 10:47:23
+ * @LastEditTime: 2019-08-24 11:48:44
  */
 
 package server
@@ -12,7 +12,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/eaglexiang/eagle.tunnel.go/core/config"
+	"github.com/eaglexiang/eagle.tunnel.go/server/config"
 	"github.com/eaglexiang/go-bytebuffer"
 	logger "github.com/eaglexiang/go-logger"
 	mynet "github.com/eaglexiang/go-net"
