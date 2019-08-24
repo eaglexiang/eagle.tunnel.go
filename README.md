@@ -4,17 +4,18 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-29 15:00:05
- * @LastEditTime: 2019-03-21 19:22:28
+ * @LastEditTime: 2019-08-24 11:07:41
  -->
+
 # Eagle Tunnel Go
 
-![build](https://travis-ci.org/eaglexiang/eagle.tunnel.go.svg?branch=master) ![platforms](https://img.shields.io/badge/platform-Linux|Windows|macOS-lightgrey.svg) ![](https://img.shields.io/badge/language-go-blue.svg) [![codebeat badge](https://codebeat.co/badges/cab6956f-534d-48e5-b751-35c14c777ec2)](https://codebeat.co/projects/github-com-eaglexiang-eagle-tunnel-go-master) ![license](https://img.shields.io/badge/license-MIT-black.svg)
+![build](https://travis-ci.org/eaglexiang/eagle.tunnel.go.svg?branch=master) ![platforms](https://img.shields.io/badge/platform-Linux|Windows|macOS-lightgrey.svg) ![language](https://img.shields.io/badge/language-go-blue.svg) [![codebeat badge](https://codebeat.co/badges/cab6956f-534d-48e5-b751-35c14c777ec2)](https://codebeat.co/projects/github-com-eaglexiang-eagle-tunnel-go-master) ![license](https://img.shields.io/badge/license-MIT-black.svg)
 
 ## 什么是ET
 
 一个轻量且简单易用的代理工具
 
-## 它有什么优势？
+## 它有什么优势
 
 ### 稳定
 
