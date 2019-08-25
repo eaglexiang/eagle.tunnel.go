@@ -6,7 +6,7 @@
 # @Email: eagle.xiang@outlook.com
 # @Github: https://github.com/eaglexiang
 # @Date: 2019-08-24 11:16:00
-# @LastEditTime: 2019-08-25 12:10:45
+# @LastEditTime: 2019-08-25 13:31:50
 ###
 
 # $1 为文件名
@@ -51,15 +51,15 @@ mkdir -p "$root/etc/eagle-tunnel.d"
 copy_config client.conf
 copy_config server.conf
 copy_config users.list
-\cp -rf ./hosts "$root/etc/eagle-tunnel.d/"
+\cp -rf ./config/hosts "$root/etc/eagle-tunnel.d/"
 # proxylists
 proxylists_dir="$root/etc/eagle-tunnel.d/proxylists"
 mkdir -p "$proxylists_dir"
-cp ./clearDomains/proxylist.txt "$proxylists_dir/"
+cp ./config/clearDomains/proxylist.txt "$proxylists_dir/"
 # directlists
 directlists_dir="$root/etc/eagle-tunnel.d/directlists"
 mkdir -p "$directlists_dir"
-cp ./clearDomains/directlist.txt "$directlists_dir/"
+cp ./config/clearDomains/directlist.txt "$directlists_dir/"
 
 # bin
 echo "bin installing..."
