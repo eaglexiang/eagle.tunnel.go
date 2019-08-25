@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:35
- * @LastEditTime: 2019-08-24 11:49:02
+ * @LastEditTime: 2019-08-25 11:45:49
  */
 
 package et
@@ -28,6 +28,10 @@ func (et *ET) Handle(e *mynet.Arg) (err error) {
 	if err != nil {
 		return err
 	}
+	// cipher
+	conn := comm.NewCipherConn(tunnel.Left())
+	tunnel.SetLeft(conn)
+	// check auth
 	err = et.checkUserOfReq(tunnel)
 	if err != nil {
 		return err

@@ -4,14 +4,14 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-24 10:50:13
- * @LastEditTime: 2019-08-24 10:51:05
+ * @LastEditTime: 2019-08-25 11:43:16
  */
 package et
 
 import (
 	"testing"
 
-	"github.com/eaglexiang/eagle.tunnel.go/core/protocols/et/comm"
+	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
 	"github.com/eaglexiang/go-settings"
 )
 
