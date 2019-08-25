@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:35
- * @LastEditTime: 2019-08-25 13:13:50
+ * @LastEditTime: 2019-08-25 20:27:31
  */
 
 package et
@@ -13,11 +13,10 @@ import (
 	"errors"
 	"strings"
 
-	speedlimitconn "github.com/eaglexiang/go-speedlimit-conn"
-
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
 	"github.com/eaglexiang/go-logger"
 	mynet "github.com/eaglexiang/go-net"
+	speedlimitconn "github.com/eaglexiang/go-speedlimit-conn"
 	"github.com/eaglexiang/go-tunnel"
 	myuser "github.com/eaglexiang/go-user"
 	"go.uber.org/ratelimit"
@@ -80,7 +79,7 @@ func (et *ET) checkHeaderOfReq(
 		return errors.New("checkHeaderOfReq -> wrong head")
 	default:
 		reply := "valid valid valid"
-		_, err := tunnel.WriteLeft([]byte(reply))
+		err := tunnel.WriteLeftStr(reply)
 		return err
 	}
 }
@@ -107,7 +106,7 @@ func (et *ET) checkUserOfReq(t *tunnel.Tunnel) (err error) {
 	right := speedlimitconn.New(t.Right(), sl)
 	t.SetRight(right)
 
-	_, err = t.WriteLeft([]byte("valid"))
+	err = t.WriteLeftStr("valid")
 	return
 }
 

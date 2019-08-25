@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 22:39:19
+ * @LastEditTime: 2019-08-25 20:21:11
  */
 
 package httpproxy
@@ -80,7 +80,7 @@ func (conn *HTTPProxy) Handle(e *mynet.Arg) error {
 
 func (conn *HTTPProxy) handleConnect(e *mynet.Arg) {
 	e.Delegates = append(e.Delegates, func() bool {
-		_, err := e.Tunnel.WriteLeft([]byte(re443))
+		err := e.Tunnel.WriteLeftStr(re443)
 		return err == nil
 	})
 }
@@ -88,7 +88,7 @@ func (conn *HTTPProxy) handleConnect(e *mynet.Arg) {
 func (conn *HTTPProxy) handleOthers(e *mynet.Arg, reqStr string) {
 	e.Delegates = append(e.Delegates, func() bool {
 		newReq := createNewRequest(reqStr)
-		_, err := e.Tunnel.WriteRight([]byte(newReq))
+		err := e.Tunnel.WriteRightStr(newReq)
 		return err == nil
 	})
 }

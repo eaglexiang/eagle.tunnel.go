@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 22:39:43
+ * @LastEditTime: 2019-08-25 20:23:06
  */
 
 package socks5
@@ -97,7 +97,7 @@ func getCMD(buffer *bytebuffer.ByteBuffer) (cmd command, err error) {
 
 func getMsgFromL(t *tunnel.Tunnel) (buffer *bytebuffer.ByteBuffer, err error) {
 	buffer = bytebuffer.GetBuffer()
-	buffer.Length, err = t.ReadLeft(buffer.Buf())
+	err = t.ReadLeft(buffer)
 	return
 }
 
@@ -107,11 +107,9 @@ func checkVersion(e *mynet.Arg) (err error) {
 		return errors.New("Socks5.Handle -> invalid socks version")
 	}
 	reply := "\u0005\u0000"
-	count, err := e.Tunnel.WriteLeft([]byte(reply))
-	if count < 2 {
-		return errors.New("Scosk5.Handle -> fail to reply")
-	}
-	return nil
+
+	err = e.Tunnel.WriteLeftStr(reply)
+	return
 }
 
 // Handle 处理SOCKS5请求

@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-24 11:49:39
+ * @LastEditTime: 2019-08-25 20:25:24
  */
 
 package cmd
@@ -140,10 +140,11 @@ func (l *Location) Handle(req string, t *tunnel.Tunnel) (err error) {
 		}
 	}
 	if err != nil {
-		return err
+		return
 	}
-	_, err = t.WriteLeft([]byte(Location))
-	return err
+
+	err = t.WriteLeftStr(Location)
+	return
 }
 
 // checkProxyByLocation 本地解析IP是否需要使用代理

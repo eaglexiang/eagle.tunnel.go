@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-24 11:48:44
+ * @LastEditTime: 2019-08-25 20:16:57
  */
 
 package server
@@ -18,6 +18,13 @@ import (
 	mynet "github.com/eaglexiang/go-net"
 	"github.com/eaglexiang/go-tunnel"
 )
+
+// HTTPReqSize 允许HTTP请求的最大长度
+const HTTPReqSize = 2e5
+
+func init() {
+	bytebuffer.RegisterPool(HTTPReqSize)
+}
 
 // Relay 网络入口，负责流量分发
 // 必须使用CreateRelay方法进行构造
@@ -123,11 +130,9 @@ func getHandler(firstMsg *bytebuffer.ByteBuffer, handlers []Handler) (Handler, e
 
 // shake 握手
 // 获取握手消息和对应handler
-func (relay *Relay) shake(t *tunnel.Tunnel) (
-	msg *bytebuffer.ByteBuffer,
-	handler Handler, err error) {
-	msg = bytebuffer.GetBuffer()
-	msg.Length, err = t.ReadLeft(msg.Buf())
+func (relay *Relay) shake(t *tunnel.Tunnel) (msg *bytebuffer.ByteBuffer, handler Handler, err error) {
+	msg = bytebuffer.GetBuffer(HTTPReqSize)
+	err = t.ReadLeft(msg)
 	if err != nil {
 		logger.Warning("fail to get first msg")
 		return

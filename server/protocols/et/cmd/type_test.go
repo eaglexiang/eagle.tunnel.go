@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-04-01 22:05:31
- * @LastEditTime: 2019-08-24 11:49:52
+ * @LastEditTime: 2019-08-25 20:26:51
  */
 
 package cmd
@@ -26,8 +26,8 @@ func Test_Names(t *testing.T) {
 	testname(t, &l, comm.LOCATIONTxt)
 	ck := Check{}
 	testname(t, ck, comm.CHECKTxt)
-	bd := Bind{}
-	testname(t, bd, comm.BINDTxt)
+	// bd := Bind{}
+	// testname(t, bd, comm.BINDTxt)
 }
 
 func Test_Types(t *testing.T) {
@@ -41,8 +41,8 @@ func Test_Types(t *testing.T) {
 	testtype(t, &l, comm.LOCATION)
 	ck := Check{}
 	testtype(t, ck, comm.CHECK)
-	bd := Bind{}
-	testtype(t, bd, comm.BIND)
+	// bd := Bind{}
+	// testtype(t, bd, comm.BIND)
 }
 
 func testname(t *testing.T, s comm.Handler, name string) {

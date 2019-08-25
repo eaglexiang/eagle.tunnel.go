@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-24 10:48:22
- * @LastEditTime: 2019-08-24 11:49:42
+ * @LastEditTime: 2019-08-25 20:25:49
  */
 
 package cmd
@@ -30,7 +30,7 @@ func (p NewIPE) Handle(req string, tunnel *tunnel.Tunnel) (err error) {
 	}
 	oldIPE := args[1]
 	newIPE := p.RandIPE(oldIPE)
-	_, err = tunnel.WriteLeft([]byte(newIPE))
+	err = tunnel.WriteLeftStr(newIPE)
 	return
 }
 

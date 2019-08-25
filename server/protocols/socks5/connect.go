@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-24 17:56:31
- * @LastEditTime: 2019-04-01 21:57:55
+ * @LastEditTime: 2019-08-25 20:22:43
  */
 
 package socks5
@@ -18,18 +18,16 @@ import (
 type connect struct {
 }
 
-func (conn connect) Handle(req []byte, e *mynet.Arg) error {
+func (conn connect) Handle(req []byte, e *mynet.Arg) (err error) {
 	host, _port, err := getHostAndPort(req)
 	if err != nil {
-		return err
+		return
 	}
 	port := strconv.FormatInt(int64(_port), 10)
 	e.Host = host + ":" + port
 	e.TheType = int(mynet.CONNECT)
 	reply := "\u0005\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000"
-	_, err = e.Tunnel.WriteLeft([]byte(reply))
-	if err != nil {
-		return err
-	}
-	return nil
+
+	err = e.Tunnel.WriteLeftStr(reply)
+	return
 }

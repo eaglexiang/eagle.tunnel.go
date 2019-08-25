@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-24 18:40:56
- * @LastEditTime: 2019-04-01 21:57:44
+ * @LastEditTime: 2019-08-25 20:21:53
  */
 
 package socks5
@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/eaglexiang/go-bytebuffer"
 	mynet "github.com/eaglexiang/go-net"
 )
 
@@ -34,7 +35,13 @@ func (b bind) Handle(req []byte, e *mynet.Arg) error {
 	// 根据BIND的结果对客户端进行反馈
 	e.Delegates = append(e.Delegates, func() bool {
 		var reply []byte
-		defer e.Tunnel.WriteLeft(reply)
+		defer func() {
+			b := bytebuffer.GetBytesBuffer(reply)
+			defer bytebuffer.PutBuffer(b)
+
+			e.Tunnel.WriteLeft(b)
+		}()
+
 		if e.TheType != 0 {
 			reply = []byte{5, byte(REPERROR), 0, 1, 0, 0, 0, 0, 0, 0}
 			return false

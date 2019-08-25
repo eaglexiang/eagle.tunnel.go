@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-24 11:49:32
+ * @LastEditTime: 2019-08-25 20:24:19
  */
 
 package cmd
@@ -36,12 +36,14 @@ func (d *DNS) Handle(req string, t *tunnel.Tunnel) (err error) {
 	if len(reqs) < 2 {
 		return errors.New("ETDNS.Handle -> req is too short")
 	}
+
 	e := comm.NetArg{NetConnArg: comm.NetConnArg{Domain: reqs[1]}}
 	err = d.resolvDNSByLocal(&e)
 	if err != nil {
-		return err
+		return
 	}
-	_, err = t.WriteLeft([]byte(e.IP))
+
+	err = t.WriteLeftStr(e.IP)
 	return
 }
 

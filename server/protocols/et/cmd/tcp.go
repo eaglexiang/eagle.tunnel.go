@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-25 13:14:52
+ * @LastEditTime: 2019-08-25 20:26:33
  */
 
 package cmd
@@ -148,7 +148,7 @@ func (t *TCP) connectByProxy(e *comm.NetArg) error {
 	}
 	logger.Info("connect ", e.IP+":"+e.Port, " by proxy")
 	req := comm.FormatEtType(comm.TCP) + " " + e.IP + " " + e.Port
-	_, err = e.Tunnel.WriteRight([]byte(req))
+	err = e.Tunnel.WriteRightStr(req)
 	if err != nil {
 		return err
 	}
@@ -205,11 +205,11 @@ func (t TCP) Handle(req string, tn *tunnel.Tunnel) error {
 	}
 	err := t.connectByLocal(e)
 	if err != nil {
-		tn.WriteLeft([]byte(err.Error()))
+		tn.WriteLeftStr(err.Error())
 		return err
 
 	}
-	_, err = tn.WriteLeft([]byte("ok"))
+	err = tn.WriteLeftStr("ok")
 	if err != nil {
 		return err
 	}

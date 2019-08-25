@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-04-03 20:30:09
- * @LastEditTime: 2019-07-23 23:29:31
+ * @LastEditTime: 2019-08-25 20:19:40
  */
 
 package comm
@@ -21,16 +21,17 @@ var Connect2Remote func(tunnel *tunnel.Tunnel) error
 // 连接 - 发送请求 - 得到反馈 - 关闭连接
 // 区别仅仅在请求命令的内容
 func SendQueryReq(req string) (reply string, err error) {
-	var t = tunnel.GetTunnel()
-	t.SetTimeout(Timeout)
+	t := tunnel.GetTunnel()
 	defer tunnel.PutTunnel(t)
+
+	t.SetTimeout(Timeout)
 	err = Connect2Remote(t)
 	if err != nil {
 		return
 	}
 
 	// 发送请求
-	_, err = t.WriteRight([]byte(req))
+	err = t.WriteRightStr(req)
 	if err != nil {
 		return "", err
 	}

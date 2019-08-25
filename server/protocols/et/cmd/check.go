@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:42
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-24 11:50:40
+ * @LastEditTime: 2019-08-25 20:19:21
  */
 
 package cmd
@@ -167,28 +167,28 @@ func SendEtCheckPingReq(sig chan string) {
 
 func handleEtCheckPingReq(reqs []string, t *tunnel.Tunnel) {
 	reply := "ok"
-	t.WriteLeft([]byte(reply))
+
+	t.WriteLeftStr(reply)
 }
 
 func handleEtCheckVersionReq(reqs []string, t *tunnel.Tunnel) {
+	var reply string
+	defer t.WriteLeftStr(reply)
+
 	if len(reqs) < 3 {
-		reply := "no protocol version value"
-		t.WriteLeft([]byte(reply))
+		reply = "no protocol version value"
 		return
 	}
 	versionOfReq, err := version.CreateVersion(reqs[2])
 	if err != nil {
-		reply := err.Error()
-		t.WriteLeft([]byte(reply))
+		reply = err.Error()
 		return
 	}
 	if versionOfReq.IsLessThan(comm.ProtocolCompatibleVersion) {
-		reply := "the version of protocol may be incompatible"
-		t.WriteLeft([]byte(reply))
+		reply = "the version of protocol may be incompatible"
 		return
 	}
-	reply := "Protocol Version OK"
-	t.WriteLeft([]byte(reply))
+	reply = "Protocol Version OK"
 }
 
 // SendEtCheckUsersReq 发射 ET-CHECK-USERS 请求
@@ -204,5 +204,5 @@ func handleEtCheckUsersReq(reqs []string, t *tunnel.Tunnel) {
 		line := user.ID + ": " + user.Count()
 		reply += line + "\n"
 	}
-	t.WriteLeft([]byte(reply))
+	t.WriteLeftStr(reply)
 }
