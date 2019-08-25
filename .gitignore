@@ -18,3 +18,4 @@ zip/*
 pkg/*
 src/github.com/*
 src/go.uber.org/*
+et.go.*

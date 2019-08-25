@@ -6,12 +6,12 @@
 # @Email: eagle.xiang@outlook.com
 # @Github: https://github.com/eaglexiang
 # @Date: 2019-08-24 11:16:00
-# @LastEditTime: 2019-08-24 22:19:48
+# @LastEditTime: 2019-08-25 12:10:45
 ###
 
 # $1 为文件名
 copy_config() {
-    if [ -f "$1" ]; then
+    if [ -f "$root/etc/eagle-tunnel.d/$1" ]; then
         echo "find $1, new file will be named $1_new"
         cp "./config/$1" "$root/etc/eagle-tunnel.d/$1_new"
     else
@@ -20,6 +20,15 @@ copy_config() {
 }
 
 # main
+if [ "$1" == "test" ] && [ "$2" == "clean" ]
+then
+    rm -rf "$(pwd)/test"
+    exit 0
+elif [ "$1" == "test" ]
+then
+    root="$(pwd)/test"
+fi
+
 
 # user check
 if [ X"$root" == "X" ];then # root not specific
