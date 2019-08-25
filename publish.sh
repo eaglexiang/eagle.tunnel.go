@@ -5,7 +5,7 @@
 # @Email: eagle.xiang@outlook.com
 # @Github: https://github.com/eaglexiang
 # @Date: 2019-08-24 16:56:37
-# @LastEditTime: 2019-08-24 22:07:24
+# @LastEditTime: 2019-08-25 11:12:18
 ###
 
 defaultOS=linux
@@ -77,6 +77,7 @@ compress() {
     cp -f ./config/* $release_config
     # clear_domains
     release_clear_domains=$release_config/clearDomains
+    mkdir -p $release_clear_domains
     cp -f ./clearDomains/proxylist.txt $release_clear_domains/
     cp -f ./clearDomains/directlist.txt $release_clear_domains/
     # hosts
