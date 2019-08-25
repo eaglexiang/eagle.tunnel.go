@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-25 11:48:37
+ * @LastEditTime: 2019-08-25 18:53:14
  */
 
 package config
@@ -14,6 +14,7 @@ import (
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/config/ipe"
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
+	"github.com/eaglexiang/go-bytebuffer"
 	"github.com/eaglexiang/go-logger"
 	settings "github.com/eaglexiang/go-settings"
 )
@@ -73,10 +74,10 @@ func initTimeout() {
 	comm.Timeout = Timeout
 }
 
-// func initBufferSize() {
-// 	size := settings.GetInt64("buffer.size")
-// 	bytebuffer.SetDefaultSize(int(size))
-// }
+func initBufferSize() {
+	size := settings.GetInt64("buffer.size")
+	bytebuffer.SetDefaultSize(int(size))
+}
 
 func initLocalUser() {
 	// 读取本地用户

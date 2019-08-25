@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-24 10:52:26
- * @LastEditTime: 2019-08-24 10:52:27
+ * @LastEditTime: 2019-08-25 18:53:39
  */
 
 package config
@@ -25,7 +25,7 @@ func ImportConfigFiles() {
 	initProxyStatus()
 	initLocalUser()
 	initTimeout()
-	// initBufferSize()
+	initBufferSize()
 
 	readConfigDir()
 }
