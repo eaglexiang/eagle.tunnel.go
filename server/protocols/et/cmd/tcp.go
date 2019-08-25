@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-24 11:49:48
+ * @LastEditTime: 2019-08-25 13:14:52
  */
 
 package cmd
@@ -16,6 +16,7 @@ import (
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
 	"github.com/eaglexiang/go-logger"
 	mynet "github.com/eaglexiang/go-net"
+	speedlimitconn "github.com/eaglexiang/go-speedlimit-conn"
 	"github.com/eaglexiang/go-tunnel"
 )
 
@@ -180,8 +181,10 @@ func (t *TCP) connectByLocal(e *comm.NetArg) error {
 		logger.Warning(err)
 		return err
 	}
+	// limiter
+	l := comm.DefaultArg.LocalUser.SpeedLimiter()
+	conn = speedlimitconn.New(conn, l)
 	e.Tunnel.SetRight(conn)
-	e.Tunnel.SetSpeedLimiter(comm.DefaultArg.LocalUser.SpeedLimiter())
 	return nil
 }
 

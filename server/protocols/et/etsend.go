@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:49
- * @LastEditTime: 2019-08-24 11:49:07
+ * @LastEditTime: 2019-08-25 13:14:59
  */
 
 package et
@@ -15,6 +15,7 @@ import (
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
 	"github.com/eaglexiang/go-logger"
 	mynet "github.com/eaglexiang/go-net"
+	speedlimitconn "github.com/eaglexiang/go-speedlimit-conn"
 	"github.com/eaglexiang/go-tunnel"
 )
 
@@ -66,6 +67,9 @@ func (et *ET) checkLocalUser(t *tunnel.Tunnel) (err error) {
 		logger.Error("invalid reply for check local user: ", reply)
 		return errors.New("invalid reply")
 	}
-	t.SetSpeedLimiter(comm.DefaultArg.LocalUser.SpeedLimiter())
+	// limiter
+	l := comm.DefaultArg.LocalUser.SpeedLimiter()
+	conn := speedlimitconn.New(t.Right(), l)
+	t.SetRight(conn)
 	return nil
 }

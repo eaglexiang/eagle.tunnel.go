@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:35
- * @LastEditTime: 2019-08-25 11:45:49
+ * @LastEditTime: 2019-08-25 13:13:50
  */
 
 package et
@@ -12,6 +12,8 @@ package et
 import (
 	"errors"
 	"strings"
+
+	speedlimitconn "github.com/eaglexiang/go-speedlimit-conn"
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
 	"github.com/eaglexiang/go-logger"
@@ -88,15 +90,24 @@ func (et *ET) checkUserOfReq(t *tunnel.Tunnel) (err error) {
 		// 未启用用户校验
 		return
 	}
+
 	var user2Check *myuser.ReqUser
 	if user2Check, err = findReqUser(t); err != nil {
 		logger.Warning(err)
 		return
 	}
-	if sl, err := et._checkUserOfReq(user2Check); err == nil {
-		t.SetSpeedLimiter(sl)
-		_, err = t.WriteLeft([]byte("valid"))
+	sl, err := et._checkUserOfReq(user2Check)
+	if err != nil {
+		return
 	}
+
+	// set speed limiter
+	left := speedlimitconn.New(t.Left(), sl)
+	t.SetLeft(left)
+	right := speedlimitconn.New(t.Right(), sl)
+	t.SetRight(right)
+
+	_, err = t.WriteLeft([]byte("valid"))
 	return
 }
 
