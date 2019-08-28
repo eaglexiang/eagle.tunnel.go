@@ -6,7 +6,7 @@
 # @Email: eagle.xiang@outlook.com
 # @Github: https://github.com/eaglexiang
 # @Date: 2019-08-24 11:16:00
-# @LastEditTime: 2019-08-25 13:31:50
+# @LastEditTime: 2019-08-28 21:33:55
 ###
 
 # $1 为文件名
@@ -19,7 +19,18 @@ copy_config() {
     fi
 }
 
+# $1 为文件夹名
+copy_config_dir() {
+    \cp -rf "./config/$1" "$root/etc/eagle-tunnel.d/"
+}
+
 # main
+
+if [ ! -f  "./et.go.linux" ];then
+    echo "no et.go.linux"
+    exit 1
+fi
+
 if [ "$1" == "test" ] && [ "$2" == "clean" ]
 then
     rm -rf "$(pwd)/test"
@@ -51,15 +62,10 @@ mkdir -p "$root/etc/eagle-tunnel.d"
 copy_config client.conf
 copy_config server.conf
 copy_config users.list
-\cp -rf ./config/hosts "$root/etc/eagle-tunnel.d/"
-# proxylists
-proxylists_dir="$root/etc/eagle-tunnel.d/proxylists"
-mkdir -p "$proxylists_dir"
-cp ./config/clearDomains/proxylist.txt "$proxylists_dir/"
-# directlists
-directlists_dir="$root/etc/eagle-tunnel.d/directlists"
-mkdir -p "$directlists_dir"
-cp ./config/clearDomains/directlist.txt "$directlists_dir/"
+
+copy_config_dir hosts
+copy_config_dir proxylists
+copy_config_dir directlists
 
 # bin
 echo "bin installing..."
@@ -69,7 +75,7 @@ ln -sf "$root/usr/lib/eagle-tunnel/et.go.linux" "$root/bin/et"
 # systemd
 echo "systemd units installing..."
 mkdir -p "$root/usr/lib/systemd/system"
-\cp -f ./nix/systemd/* "$root/usr/lib/systemd/system"
+\cp -f ./config/nix/systemd/* "$root/usr/lib/systemd/system"
 if [ X"$root" == "X" ];then # root not specific
     systemctl daemon-reload
 fi

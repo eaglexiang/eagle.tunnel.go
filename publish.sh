@@ -5,7 +5,7 @@
 # @Email: eagle.xiang@outlook.com
 # @Github: https://github.com/eaglexiang
 # @Date: 2019-08-24 16:56:37
-# @LastEditTime: 2019-08-25 13:29:48
+# @LastEditTime: 2019-08-28 21:41:55
 ###
 
 defaultOS=linux
@@ -70,23 +70,14 @@ compress() {
     release_folder="EagleTunnel"
     
     mkdir -p $release_folder
-    cp -f $bin $release_folder
+    \cp -f $bin $release_folder
     # config
     release_config=$release_folder/config
     mkdir -p $release_config
-    cp -f ./config/* $release_config
-    # clear_domains
-    release_clear_domains=$release_config/clearDomains
-    mkdir -p $release_clear_domains
-    cp -f ./clearDomains/proxylist.txt $release_clear_domains/
-    cp -f ./clearDomains/directlist.txt $release_clear_domains/
-    # hosts
-    cp -rf ./hosts $release_config/
-    # systemd units
-    cp -rf ./nix $release_folder/
+    \cp -rf ./config/* $release_config
     # scripts
-    cp -f ./install_linux.sh $release_folder/
-    cp -f ./uninstall_linux.sh $release_folder/
+    \cp -f ./install_linux.sh $release_folder/
+    \cp -f ./uninstall_linux.sh $release_folder/
     
     echo -e "COMPRESS:\t$release"
     if [ $os == "windows" ];then
@@ -134,6 +125,17 @@ publish() {
     mv $release ./zip/
 }
 
+if [ "$1" ] && [ "$1" == "clean" ]
+then
+    rm -rf ./zip
+    echo ""
+    exit 0
+fi
+
+# update clear domains
+./update_clear_domains.sh
+echo ""
+
 if [ "$1" ] && [ "$1" == "all" ]
 then
     publish linux amd64
@@ -153,10 +155,6 @@ then
     publish darwin 386
     echo ""
     echo "RELEASES PUBLISH FINISHED"
-elif [ "$1" ] && [ "$1" == "clean" ]
-then
-    rm -rf ./zip
-    echo ""
 else
     publish "$1" "$2"
 fi
