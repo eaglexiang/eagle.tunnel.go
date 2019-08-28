@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-24 10:48:22
- * @LastEditTime: 2019-08-25 20:25:49
+ * @LastEditTime: 2019-08-28 19:57:37
  */
 
 package cmd
@@ -16,7 +16,7 @@ import (
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
 	myslice "github.com/eaglexiang/eagle.tunnel.go/slice"
-	"github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go/tunnel"
 )
 
 // NewIPE NEWPORT子协议

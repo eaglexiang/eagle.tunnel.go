@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-25 20:24:19
+ * @LastEditTime: 2019-08-28 19:58:28
  */
 
 package cmd
@@ -15,10 +15,9 @@ import (
 	"sync"
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
-	"github.com/eaglexiang/go-logger"
-	"github.com/eaglexiang/go-textcache"
-	cache "github.com/eaglexiang/go-textcache"
-	"github.com/eaglexiang/go-tunnel"
+	cache "github.com/eaglexiang/go/cache/text"
+	"github.com/eaglexiang/go/logger"
+	"github.com/eaglexiang/go/tunnel"
 )
 
 // DNS ET-DNS子协议的实现
@@ -116,7 +115,7 @@ func (d *DNS) Name() string {
 	return comm.FormatEtType(d.DNSType)
 }
 
-func (d *DNS) getCacheNodeOfRemote(domain string) (node *textcache.CacheNode, loaded bool) {
+func (d *DNS) getCacheNodeOfRemote(domain string) (node *cache.CacheNode, loaded bool) {
 	if d.dnsRemoteCache == nil {
 		d.Lock()
 		if d.dnsRemoteCache == nil {

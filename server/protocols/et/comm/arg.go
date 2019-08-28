@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-21 18:37:43
- * @LastEditTime: 2019-06-15 11:51:52
+ * @LastEditTime: 2019-08-28 19:42:18
  */
 
 package comm
@@ -13,9 +13,9 @@ import (
 	"net"
 	"strings"
 
-	mynet "github.com/eaglexiang/go-net"
-	"github.com/eaglexiang/go-tunnel"
-	"github.com/eaglexiang/go-user"
+	mynet "github.com/eaglexiang/go/net"
+	"github.com/eaglexiang/go/tunnel"
+	"github.com/eaglexiang/go/user"
 )
 
 // Arg 启动ET协议需要的的参数集

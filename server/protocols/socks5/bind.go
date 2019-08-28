@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-24 18:40:56
- * @LastEditTime: 2019-08-25 20:21:53
+ * @LastEditTime: 2019-08-28 19:51:03
  */
 
 package socks5
@@ -16,8 +16,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/eaglexiang/go-bytebuffer"
-	mynet "github.com/eaglexiang/go-net"
+	"github.com/eaglexiang/go/bytebuffer"
+	mynet "github.com/eaglexiang/go/net"
 )
 
 type bind struct {

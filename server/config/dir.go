@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-24 10:43:58
- * @LastEditTime: 2019-08-24 11:53:11
+ * @LastEditTime: 2019-08-28 20:53:12
  */
 
 package config
@@ -17,8 +17,8 @@ import (
 	"strings"
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
-	"github.com/eaglexiang/go-logger"
-	"github.com/eaglexiang/go-settings"
+	"github.com/eaglexiang/go/logger"
+	"github.com/eaglexiang/go/settings"
 )
 
 // finishConfigDir 补全config-dir
@@ -99,7 +99,8 @@ func ImportMods(modsDir string) {
 }
 
 func execMods() {
-	if modsDir := settings.Get("mod-dir"); modsDir != "" {
+	if settings.Exsit("mod-dir") {
+		modsDir := settings.Get("mod-dir")
 		ImportMods(modsDir)
 	}
 }

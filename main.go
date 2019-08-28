@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:38:06
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-24 11:52:43
+ * @LastEditTime: 2019-08-28 20:00:23
  */
 
 package main
@@ -16,8 +16,8 @@ import (
 	mycmd "github.com/eaglexiang/eagle.tunnel.go/cmd"
 	"github.com/eaglexiang/eagle.tunnel.go/server"
 	"github.com/eaglexiang/eagle.tunnel.go/server/config"
-	"github.com/eaglexiang/go-logger"
-	settings "github.com/eaglexiang/go-settings"
+	"github.com/eaglexiang/go/logger"
+	"github.com/eaglexiang/go/settings"
 )
 
 var service *server.Service

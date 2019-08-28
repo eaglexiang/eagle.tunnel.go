@@ -4,7 +4,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 09:42:11
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-11 22:25:56
+ * @LastEditTime: 2019-08-28 20:00:07
  */
 
 package cmd
@@ -12,7 +12,7 @@ package cmd
 import (
 	"fmt"
 
-	myversion "github.com/eaglexiang/go-version"
+	myversion "github.com/eaglexiang/go/version"
 )
 
 // ProgramVersion 程序版本

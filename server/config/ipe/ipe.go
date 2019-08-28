@@ -1,3 +1,12 @@
+/*
+ * @Author: EagleXiang
+ * @LastEditors: EagleXiang
+ * @Email: eagle.xiang@outlook.com
+ * @Github: https://github.com/eaglexiang
+ * @Date: 2019-08-28 19:50:11
+ * @LastEditTime: 2019-08-28 19:50:29
+ */
+
 package ipe
 
 import (

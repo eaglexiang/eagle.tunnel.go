@@ -4,15 +4,15 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-24 10:52:26
- * @LastEditTime: 2019-08-25 18:53:39
+ * @LastEditTime: 2019-08-28 20:50:35
  */
 
 package config
 
 import (
-	"github.com/eaglexiang/go-logger"
-	"github.com/eaglexiang/go-settings"
-	myuser "github.com/eaglexiang/go-user"
+	"github.com/eaglexiang/go/logger"
+	"github.com/eaglexiang/go/settings"
+	myuser "github.com/eaglexiang/go/user"
 )
 
 // ImportConfigFiles 导入配置

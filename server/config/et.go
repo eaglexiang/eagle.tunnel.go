@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-24 10:44:02
- * @LastEditTime: 2019-08-24 11:53:15
+ * @LastEditTime: 2019-08-28 19:49:10
  */
 
 package config
@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
-	"github.com/eaglexiang/go-settings"
+	"github.com/eaglexiang/go/settings"
 )
 
 // CreateETArg 构建ET.Arg

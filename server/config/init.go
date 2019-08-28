@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:37:36
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-25 18:53:14
+ * @LastEditTime: 2019-08-28 20:47:38
  */
 
 package config
@@ -14,26 +14,22 @@ import (
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/config/ipe"
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
-	"github.com/eaglexiang/go-bytebuffer"
-	"github.com/eaglexiang/go-logger"
-	settings "github.com/eaglexiang/go-settings"
+	"github.com/eaglexiang/go/bytebuffer"
+	"github.com/eaglexiang/go/logger"
+	"github.com/eaglexiang/go/settings"
 )
 
 func init() {
 	// 绑定不同的参数名
-	settings.Bind("relayer", "relay")
 	settings.Bind("channel", "data-key")
 	// 设定参数默认值
 	settings.SetDefault("timeout", "30")
-	settings.SetDefault("location", "1;CN;CHN;China")
-	settings.SetDefault("ip-type", "46")
 	settings.SetDefault("data-key", "34")
 	settings.SetDefault("head", "eagle_tunnel")
 	settings.SetDefault("proxy-status", "enable")
 	settings.SetDefault("user", "null:null")
 	settings.SetDefault("user-check", "off")
 	settings.SetDefault("listen", "0.0.0.0")
-	settings.SetDefault("relay", "127.0.0.1")
 	settings.SetDefault("http", "off")
 	settings.SetDefault("socks", "off")
 	settings.SetDefault("et", "off")

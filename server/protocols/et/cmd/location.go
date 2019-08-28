@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 19:04:31
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-25 20:25:24
+ * @LastEditTime: 2019-08-28 19:57:28
  */
 
 package cmd
@@ -16,10 +16,10 @@ import (
 	"sync"
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
-	logger "github.com/eaglexiang/go-logger"
-	mynet "github.com/eaglexiang/go-net"
-	cache "github.com/eaglexiang/go-textcache"
-	"github.com/eaglexiang/go-tunnel"
+	cache "github.com/eaglexiang/go/cache/text"
+	"github.com/eaglexiang/go/logger"
+	mynet "github.com/eaglexiang/go/net"
+	"github.com/eaglexiang/go/tunnel"
 )
 
 // Location ET-LOCATION子协议的实现

@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-24 10:43:53
- * @LastEditTime: 2019-08-24 11:53:07
+ * @LastEditTime: 2019-08-28 19:48:59
  */
 
 package config
@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/config/ipe"
-	myuser "github.com/eaglexiang/go-user"
+	myuser "github.com/eaglexiang/go/user"
 )
 
 // LocalUser 本地用户

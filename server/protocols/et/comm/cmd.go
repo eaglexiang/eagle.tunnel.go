@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-04-01 22:01:39
- * @LastEditTime: 2019-04-01 22:07:56
+ * @LastEditTime: 2019-08-28 19:47:14
  */
 
 package comm
@@ -12,7 +12,7 @@ package comm
 import (
 	"errors"
 
-	"github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go/tunnel"
 )
 
 // Handler ET子协议的handler接口

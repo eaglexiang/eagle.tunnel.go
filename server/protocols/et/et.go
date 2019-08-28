@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-25 11:44:16
+ * @LastEditTime: 2019-08-28 19:58:45
  */
 
 package et
@@ -11,12 +11,11 @@ package et
 import (
 	"net"
 
-	"github.com/eaglexiang/go-tunnel"
-
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/cmd"
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
-	"github.com/eaglexiang/go-logger"
-	mynet "github.com/eaglexiang/go-net"
+	"github.com/eaglexiang/go/logger"
+	mynet "github.com/eaglexiang/go/net"
+	"github.com/eaglexiang/go/tunnel"
 )
 
 // ET ET代理协议的实现

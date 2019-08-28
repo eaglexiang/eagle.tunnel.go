@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-24 22:35:45
- * @LastEditTime: 2019-06-15 11:36:09
+ * @LastEditTime: 2019-08-28 19:47:23
  */
 
 package comm
@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eaglexiang/go-trie"
+	"github.com/eaglexiang/go/trie"
 )
 
 // EtTypes ET子协议的类型

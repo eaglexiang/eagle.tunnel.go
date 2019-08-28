@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-24 17:56:31
- * @LastEditTime: 2019-08-25 20:22:43
+ * @LastEditTime: 2019-08-28 19:51:07
  */
 
 package socks5
@@ -12,7 +12,7 @@ package socks5
 import (
 	"strconv"
 
-	mynet "github.com/eaglexiang/go-net"
+	mynet "github.com/eaglexiang/go/net"
 )
 
 type connect struct {

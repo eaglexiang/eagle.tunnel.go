@@ -3,12 +3,12 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:46:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 23:13:26
+ * @LastEditTime: 2019-08-28 20:00:34
  */
 
 package server
 
-import mynet "github.com/eaglexiang/go-net"
+import mynet "github.com/eaglexiang/go/net"
 
 // Handler 请求处理者
 type Handler interface {

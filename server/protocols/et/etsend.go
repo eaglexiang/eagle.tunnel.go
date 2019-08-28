@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:49
- * @LastEditTime: 2019-08-25 20:28:03
+ * @LastEditTime: 2019-08-28 19:59:23
  */
 
 package et
@@ -13,10 +13,10 @@ import (
 	"errors"
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
-	"github.com/eaglexiang/go-logger"
-	mynet "github.com/eaglexiang/go-net"
-	speedlimitconn "github.com/eaglexiang/go-speedlimit-conn"
-	"github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go/logger"
+	mynet "github.com/eaglexiang/go/net"
+	speedlimitconn "github.com/eaglexiang/go/net/conn/speedlimit"
+	"github.com/eaglexiang/go/tunnel"
 )
 
 // Send 发送ET请求

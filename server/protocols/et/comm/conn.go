@@ -4,13 +4,13 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-04-03 20:30:09
- * @LastEditTime: 2019-08-25 20:19:40
+ * @LastEditTime: 2019-08-28 19:47:29
  */
 
 package comm
 
 import (
-	"github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go/tunnel"
 )
 
 // Connect2Remote 连接到远端

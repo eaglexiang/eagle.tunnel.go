@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-24 10:50:13
- * @LastEditTime: 2019-08-25 11:43:16
+ * @LastEditTime: 2019-08-28 20:29:40
  */
 package et
 
@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
-	"github.com/eaglexiang/go-settings"
+	"github.com/eaglexiang/go/settings"
 )
 
 func Test_ET(t *testing.T) {

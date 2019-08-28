@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-25 20:26:33
+ * @LastEditTime: 2019-08-28 19:57:59
  */
 
 package cmd
@@ -14,10 +14,10 @@ import (
 	"strings"
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et/comm"
-	"github.com/eaglexiang/go-logger"
-	mynet "github.com/eaglexiang/go-net"
-	speedlimitconn "github.com/eaglexiang/go-speedlimit-conn"
-	"github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go/logger"
+	mynet "github.com/eaglexiang/go/net"
+	speedlimitconn "github.com/eaglexiang/go/net/conn/speedlimit"
+	"github.com/eaglexiang/go/tunnel"
 )
 
 var dnsResolver map[string]func(*comm.NetArg) error

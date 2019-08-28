@@ -4,13 +4,13 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-02-24 23:05:00
- * @LastEditTime: 2019-04-01 21:56:12
+ * @LastEditTime: 2019-08-28 19:50:50
  */
 
 package socks5
 
 import (
-	mynet "github.com/eaglexiang/go-net"
+	mynet "github.com/eaglexiang/go/net"
 )
 
 // AddrType 地址类型

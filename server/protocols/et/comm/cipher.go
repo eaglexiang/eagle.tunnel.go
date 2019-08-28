@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-08-25 11:33:14
- * @LastEditTime: 2019-08-25 11:42:27
+ * @LastEditTime: 2019-08-28 19:47:05
  */
 
 package comm
@@ -12,9 +12,9 @@ package comm
 import (
 	"net"
 
-	"github.com/eaglexiang/go-cipher"
-	cipherconn "github.com/eaglexiang/go-cipher-conn"
-	"github.com/eaglexiang/go-settings"
+	"github.com/eaglexiang/go/cipher"
+	cipherconn "github.com/eaglexiang/go/net/conn/cipher"
+	"github.com/eaglexiang/go/settings"
 )
 
 // NewCipherConn 构造新的CipherConn

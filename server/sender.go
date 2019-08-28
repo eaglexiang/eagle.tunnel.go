@@ -3,13 +3,13 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:46:10
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-06-14 23:13:39
+ * @LastEditTime: 2019-08-28 20:00:40
  */
 
 package server
 
 import (
-	mynet "github.com/eaglexiang/go-net"
+	mynet "github.com/eaglexiang/go/net"
 )
 
 // Sender 请求发送者

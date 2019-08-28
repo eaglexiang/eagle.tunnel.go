@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 17:56:15
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-25 20:23:06
+ * @LastEditTime: 2019-08-28 19:51:22
  */
 
 package socks5
@@ -13,10 +13,10 @@ import (
 	"errors"
 	"net"
 
-	"github.com/eaglexiang/go-bytebuffer"
-	"github.com/eaglexiang/go-logger"
-	mynet "github.com/eaglexiang/go-net"
-	"github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go/bytebuffer"
+	"github.com/eaglexiang/go/logger"
+	mynet "github.com/eaglexiang/go/net"
+	"github.com/eaglexiang/go/tunnel"
 )
 
 // CMDType 命令类型

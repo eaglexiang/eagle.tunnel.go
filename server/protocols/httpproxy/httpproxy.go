@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-04 14:30:39
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-25 20:21:11
+ * @LastEditTime: 2019-08-28 19:51:38
  */
 
 package httpproxy
@@ -14,9 +14,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/eaglexiang/go-logger"
-	mynet "github.com/eaglexiang/go-net"
-	"github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go/logger"
+	mynet "github.com/eaglexiang/go/net"
+	"github.com/eaglexiang/go/tunnel"
 )
 
 // HTTP请求的类型

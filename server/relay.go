@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-25 20:16:57
+ * @LastEditTime: 2019-08-28 19:52:02
  */
 
 package server
@@ -13,10 +13,10 @@ import (
 	"net"
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/config"
-	"github.com/eaglexiang/go-bytebuffer"
-	logger "github.com/eaglexiang/go-logger"
-	mynet "github.com/eaglexiang/go-net"
-	"github.com/eaglexiang/go-tunnel"
+	"github.com/eaglexiang/go/bytebuffer"
+	"github.com/eaglexiang/go/logger"
+	mynet "github.com/eaglexiang/go/net"
+	"github.com/eaglexiang/go/tunnel"
 )
 
 // HTTPReqSize 允许HTTP请求的最大长度
