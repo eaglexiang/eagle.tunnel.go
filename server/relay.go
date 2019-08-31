@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-03 15:27:00
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-28 19:52:02
+ * @LastEditTime: 2019-08-31 12:04:58
  */
 
 package server
@@ -73,6 +73,7 @@ func (relay *Relay) handleReqs(handler Handler,
 	}
 	if need2Continue {
 		t.Flow()
+		t.Close()
 	}
 	tunnel.PutTunnel(t)
 }

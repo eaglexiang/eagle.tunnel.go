@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-01-13 06:34:08
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-28 19:52:22
+ * @LastEditTime: 2019-08-31 12:04:17
  */
 
 package server
@@ -19,11 +19,11 @@ import (
 	"time"
 
 	"github.com/eaglexiang/eagle.tunnel.go/server/config"
-	et "github.com/eaglexiang/eagle.tunnel.go/server/protocols/et"
-	httpproxy "github.com/eaglexiang/eagle.tunnel.go/server/protocols/httpproxy"
-	socks5 "github.com/eaglexiang/eagle.tunnel.go/server/protocols/socks5"
+	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/et"
+	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/httpproxy"
+	"github.com/eaglexiang/eagle.tunnel.go/server/protocols/socks5"
 	"github.com/eaglexiang/go/counter"
-	logger "github.com/eaglexiang/go/logger"
+	"github.com/eaglexiang/go/logger"
 	"github.com/eaglexiang/go/settings"
 )
 
