@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-27 08:24:57
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-28 19:58:45
+ * @LastEditTime: 2019-09-08 12:02:50
  */
 
 package et
@@ -62,17 +62,22 @@ func (et *ET) Name() string {
 	return "ET"
 }
 
+func (et *ET) dailRelay() (conn net.Conn, err error) {
+	conn, err = net.DialTimeout("tcp", comm.DefaultArg.RemoteIPE, comm.Timeout)
+	return
+}
+
 // connect2Relay 连接到下一个Relay，完成版本校验和用户校验两个步骤。版本校验完成后流量会开始加密
 func (et *ET) connect2Relay(t *tunnel.Tunnel) (err error) {
 	// dail
-	conn, err := net.DialTimeout("tcp", comm.DefaultArg.RemoteIPE, comm.Timeout)
+	conn, err := et.dailRelay()
 	if err != nil {
 		logger.Warning(err)
 		return err
 	}
 	t.SetRight(conn)
 	// check version
-	err = et.checkVersionOfRelayer(t)
+	err = et.checkVersionOfRelay(t)
 	if err != nil {
 		return err
 	}

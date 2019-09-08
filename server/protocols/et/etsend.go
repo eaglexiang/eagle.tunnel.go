@@ -4,7 +4,7 @@
  * @Email: eagle.xiang@outlook.com
  * @Github: https://github.com/eaglexiang
  * @Date: 2019-03-19 20:08:49
- * @LastEditTime: 2019-08-28 19:59:23
+ * @LastEditTime: 2019-09-08 12:02:48
  */
 
 package et
@@ -35,7 +35,7 @@ func (et *ET) Send(e *mynet.Arg) error {
 	return sender.Send(newE)
 }
 
-func (et *ET) checkVersionOfRelayer(t *tunnel.Tunnel) error {
+func (et *ET) checkVersionOfRelay(t *tunnel.Tunnel) error {
 	req := comm.DefaultArg.Head
 	err := t.WriteRightStr(req)
 	if err != nil {

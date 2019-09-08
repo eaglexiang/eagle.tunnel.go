@@ -1,5 +1,7 @@
 github.com/eaglexiang/go v0.0.0-20190828125558-08aaaa6ff47a h1:4/8eFMtuGgUHoQHlikq2WdWGe9N3sGmN8wNF4iRr3t0=
 github.com/eaglexiang/go v0.0.0-20190828125558-08aaaa6ff47a/go.mod h1:0gtAIG4ykU4KlKWu05QEn6Gs38l746uTvz7knyyHM90=
+github.com/eaglexiang/go v0.0.0-20190908034202-4032fcc34d7f h1:sXfwS/SDkzEJNUr0bLA6TMXCyGkzuhVb/Z6ngzLm/Dk=
+github.com/eaglexiang/go v0.0.0-20190908034202-4032fcc34d7f/go.mod h1:IUJsedCG/LRSE+lGTMGd721PxvnmS5MoSx9T8A7ptus=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 go.uber.org/ratelimit v0.1.0 h1:U2AruXqeTb4Eh9sYQSTrMhH8Cb7M0Ian2ibBOnBcnAw=

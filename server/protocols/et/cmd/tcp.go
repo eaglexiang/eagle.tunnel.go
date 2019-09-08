@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-28 19:57:59
+ * @LastEditTime: 2019-09-08 12:02:37
  */
 
 package cmd
@@ -158,7 +158,7 @@ func (t *TCP) connectByProxy(e *comm.NetArg) error {
 	}
 	if reply != "ok" {
 		logger.Warning("invalid reply for ", req, ": ", reply)
-		err = errors.New("failed 2 connect 2 server by relayer")
+		err = errors.New("failed 2 connect 2 server by relay")
 	}
 	return err
 }
