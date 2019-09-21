@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-13 18:54:13
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-28 19:58:28
+ * @LastEditTime: 2019-09-21 14:32:47
  */
 
 package cmd
@@ -19,6 +19,12 @@ import (
 	"github.com/eaglexiang/go/logger"
 	"github.com/eaglexiang/go/tunnel"
 )
+
+// ErrADHostsFound 发现广告 hosts
+var ErrADHostsFound = errors.New("ad hosts found")
+
+// ErrInvalidProxyStatus 非法的 proxy-status
+var ErrInvalidProxyStatus = errors.New("invalid proxy-status")
 
 // DNS ET-DNS子协议的实现
 type DNS struct {
@@ -46,15 +52,33 @@ func (d *DNS) Handle(req string, t *tunnel.Tunnel) (err error) {
 	return
 }
 
+func (d *DNS) look4Hosts(domain string) (ip string, ok bool, err error) {
+	ip, ok = comm.HostsCache[domain]
+	if !ok {
+		return
+	}
+	logger.Info("hosts found: ", domain, " ", ip)
+
+	if ip == "::" {
+		err = ErrADHostsFound
+		logger.Info("ad hosts found: ", domain)
+	}
+	return
+}
+
 // Send 发送ET-DNS请求
 func (d *DNS) Send(e *comm.NetArg) (err error) {
 	logger.Info("resolv dns for domain: ", e.Domain)
-	ip, result := comm.HostsCache[e.Domain]
-	if result {
-		e.IP = ip
-		logger.Info("hosts found: ", e.Domain, " ", e.IP)
-		return nil
+
+	ip, ok, err := d.look4Hosts(e.Domain)
+	if err != nil {
+		return
 	}
+	if ok {
+		e.IP = ip
+		return
+	}
+
 	switch comm.DefaultArg.ProxyStatus {
 	case comm.ProxySMART:
 		err = d.smartSend(e)
@@ -62,7 +86,7 @@ func (d *DNS) Send(e *comm.NetArg) (err error) {
 		err = d.proxySend(e)
 	default:
 		logger.Error("dns.send invalid proxy-status")
-		err = errors.New("invalid proxy-status")
+		err = ErrInvalidProxyStatus
 	}
 	logger.Info("ip for ", e.Domain, " is ", e.IP)
 	return err

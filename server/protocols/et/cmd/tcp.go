@@ -3,7 +3,7 @@
  * @Github: https://github.com/eaglexiang
  * @Date: 2018-12-23 22:54:58
  * @LastEditors: EagleXiang
- * @LastEditTime: 2019-08-28 19:57:59
+ * @LastEditTime: 2019-09-21 14:35:41
  */
 
 package cmd
@@ -19,6 +19,9 @@ import (
 	speedlimitconn "github.com/eaglexiang/go/net/conn/speedlimit"
 	"github.com/eaglexiang/go/tunnel"
 )
+
+// ErrInvalidIPType 非法的 IP 类型
+var ErrInvalidIPType = errors.New("invalid ip-type")
 
 var dnsResolver map[string]func(*comm.NetArg) error
 
@@ -90,13 +93,15 @@ func resolvDNS64(e *comm.NetArg) (err error) {
 	return
 }
 
-func (t TCP) resolvDNS(e *comm.NetArg) error {
+func (t TCP) resolvDNS(e *comm.NetArg) (err error) {
 	resolver, ok := dnsResolver[comm.DefaultArg.IPType]
 	if !ok {
 		logger.Error("invalid ip-type", comm.DefaultArg.IPType)
-		return errors.New("invalid ip-type")
+		err = ErrInvalidIPType
+		return
 	}
-	return resolver(e)
+	err = resolver(e)
+	return
 }
 
 func (t *TCP) smartSend(e *comm.NetArg) (err error) {
